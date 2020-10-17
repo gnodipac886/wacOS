@@ -37,7 +37,6 @@ tss_bottom:
     .align  16
 gdt:
 _gdt:
-
     # First GDT entry cannot be used
     .quad 0
 
