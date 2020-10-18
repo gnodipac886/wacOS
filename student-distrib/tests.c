@@ -67,6 +67,13 @@ int deref_NULL_ptr(){
 	return 1;
 }
 
+// idt test
+// divide error
+// invalid opcode
+// overflow test
+// bound range test
+// system call test
+
 /* Checkpoint 2 tests */
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
@@ -75,7 +82,7 @@ int deref_NULL_ptr(){
 
 /* Test suite entry point */
 void launch_tests(){
-	TEST_OUTPUT("idt_test", idt_test());
+	// TEST_OUTPUT("idt_test", idt_test());
 	TEST_OUTPUT("divide by 0 test", divide_error_test());
 	// TEST_OUTPUT("Deref NULL ptr test", deref_NULL_ptr());
 

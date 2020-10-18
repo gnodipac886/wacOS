@@ -5,7 +5,7 @@
 
 #include "multiboot.h"
 #include "x86_desc.h"
-#include "interrupt.h"
+#include "idt.h"
 
 .text
 
