@@ -33,7 +33,6 @@ int idt_test(){
 	TEST_HEADER;
 
 	int i;
-	printf("TEST1\n");
 	int result = PASS;
 	for (i = 0; i < 9; ++i){
 		if ((idt[i].offset_15_00 == NULL) && 
@@ -51,7 +50,6 @@ int idt_test(){
 int divide_error_test(){
 	TEST_HEADER;
 
-	printf("TEST DIV 0\n");
 	int i;
 	int y;
 
@@ -78,7 +76,7 @@ int deref_NULL_ptr(){
 /* Test suite entry point */
 void launch_tests(){
 	TEST_OUTPUT("idt_test", idt_test());
-	// TEST_OUTPUT("divide by 0 test", divide_error_test());
+	TEST_OUTPUT("divide by 0 test", divide_error_test());
 	// TEST_OUTPUT("Deref NULL ptr test", deref_NULL_ptr());
 
 

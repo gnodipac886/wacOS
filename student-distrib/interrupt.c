@@ -118,35 +118,15 @@ void simd_float_exc(){
 	exception();
 }
 
-void __init_idt__(){
-	int i;
-
-	for(i = 0; i < 20; i++){
-		if(i != 9 || i != 15){ 							// we want to skip the intel reserved ones
-			idt[i].seg_selector = KERNEL_CS;
-			idt[i].reserved4 = 0;
-			idt[i].reserved3 = i == 2 ? 0 : 1; 	// #2 is an interrupt
-			idt[i].reserved2 = 1;
-			idt[i].reserved1 = 1;
-			idt[i].size = 1;
-			idt[i].reserved0 = 0;
-			idt[i].dpl = 0;
-			idt[i].present = 1;
-		}
-	}
-}
-
-
-
 void system_call_handler() {
 	//hard interrupts have higher priority
 	printf("System call was called");
 }
 
+
 void __init_idt__(){
 	int i;
 
-	//initialize trap-gates
 	for(i = 0; i < 20; i++){
 		if(i != 9 || i != 15){ 							// we want to skip the intel reserved ones
 			idt[i].seg_selector = KERNEL_CS;
@@ -162,23 +142,23 @@ void __init_idt__(){
 	}
 
 	SET_IDT_ENTRY(idt[DE], divide_error); 			// divide by zero error
-	SET_IDT_ENTRY(idt[DB], reserv); 						// reserved
-	SET_IDT_ENTRY(idt[BP], breakp); 						// Breakpoint
-	SET_IDT_ENTRY(idt[OF], overflow); 					// Overflow
+	SET_IDT_ENTRY(idt[DB], reserv); 				// reserved
+	SET_IDT_ENTRY(idt[MI], nmi_interrupt); 			// NMI Interrupt
+	SET_IDT_ENTRY(idt[BP], breakp); 				// Breakpoint
+	SET_IDT_ENTRY(idt[OF], overflow); 				// Overflow
 	SET_IDT_ENTRY(idt[BR], bounds_range_ex); 		// Bounds range exceeded
-	SET_IDT_ENTRY(idt[UD], invalid_op); 				// Invalid opcode
+	SET_IDT_ENTRY(idt[UD], invalid_op); 			// Invalid opcode
 	SET_IDT_ENTRY(idt[NM], dev_not_avail); 			// Device not available
 	SET_IDT_ENTRY(idt[DF], double_fault); 			// Double fault
-	SET_IDT_ENTRY(idt[TS], invalid_tss); 				// Invalid TSS
+	SET_IDT_ENTRY(idt[TS], invalid_tss); 			// Invalid TSS
 	SET_IDT_ENTRY(idt[NP], seg_not_pres); 			// Segment not present
 	SET_IDT_ENTRY(idt[SS], stack_seg_fault); 		// Stack-segment fault
 	SET_IDT_ENTRY(idt[GP], gen_prot_fault); 		// General protection fault
-	SET_IDT_ENTRY(idt[PF], page_fault); 				// Page fault
+	SET_IDT_ENTRY(idt[PF], page_fault); 			// Page fault
 	SET_IDT_ENTRY(idt[MF], x87_fpu_fault); 			// x87 FPU error
-	SET_IDT_ENTRY(idt[AC], align_check); 				// Alignment check
-	SET_IDT_ENTRY(idt[MC], mach_check); 				// Machine check
+	SET_IDT_ENTRY(idt[AC], align_check); 			// Alignment check
+	SET_IDT_ENTRY(idt[MC], mach_check); 			// Machine check
 	SET_IDT_ENTRY(idt[XF], simd_float_exc); 		// SIMD Floating-Point Exception
-
 
 	//initialize interrupt-gates
 	for(i = 32; i < NUM_VEC; i++){				// all non-reserved
@@ -209,4 +189,5 @@ void __init_idt__(){
 			SET_IDT_ENTRY(idt[i], system_call_handler);
 		}
 	}
+
 }
