@@ -5,6 +5,7 @@
 
 #include "multiboot.h"
 #include "x86_desc.h"
+#include "interrupt.h"
 
 .text
 
@@ -30,6 +31,21 @@ continue:
 	ljmp	$KERNEL_CS, $keep_going
 
 keep_going:
+	# save caller registers
+	pushl 	%eax 		
+	pushl 	%edx 		
+	pushl 	%ecx 		
+
+	# call init idt function
+	call 	__init_idt__
+
+	# load caller registers
+	popl 	%ecx
+	popl 	%edx
+	popl 	%eax
+
+	lidt 	idt_desc_ptr
+
 	# Set up ESP so we can have an initial stack
 	movl	$0x800000, %esp
 
