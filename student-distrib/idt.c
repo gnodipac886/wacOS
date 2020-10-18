@@ -2,6 +2,8 @@
 #include "assembly_linkage.h"
 #include "x86_desc.h"
 #include "lib.h"
+#include "keyboard.h"
+#include "rtc.h"
 
 void exception() {
 	//disable interrupts
