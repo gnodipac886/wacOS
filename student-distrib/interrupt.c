@@ -2,143 +2,137 @@
 #include "x86_desc.h"
 #include "lib.h"
 
-void divide_error();
-void exception();
-void divide_error();
-void reserv();
-void nmi_interrupt();
-void breakp();
-void overflow();
-void bounds_range_ex();
-void invalid_op();
-void dev_not_avail();
-void double_fault();
-void invalid_tss();
-void seg_not_pres();
-void stack_seg_fault();
-void gen_prot_fault();
-void page_fault();
-void x87_fpu_fault();
-void align_check();
-void mach_check();
-void simd_float_exc();
-
-
-
-void divide_error(){
-	cli();
-	printf("Exception: divide error");
-	exception();
-}
-
-void reserv(){
-	cli();
-	printf("Exception: Reserved");
-	exception();
-}
-
-void nmi_interrupt(){
-	cli();
-	printf("Exception: NMI Interrupt");
-	exception();
-}
-
-void breakp(){
-	cli();
-	printf("Exception: Breakpoint");
-	exception();
-}
-
-void overflow(){
-	cli();
-	printf("Exception: Overflow");
-	exception();
-}
-
-void bounds_range_ex(){
-	cli();
-	printf("Exception: Bounds range exceeded");
-	exception();
-}
-
-void invalid_op(){
-	cli();
-	printf("Exception: Invalid opcode");
-	exception();
-}
-
-void dev_not_avail(){
-	cli();
-	printf("Exception: Device not available");
-	exception();
-}
-
-void double_fault(){
-	cli();
-	printf("Exception: Double fault");
-	exception();
-}
-
-void invalid_tss(){
-	cli();
-	printf("Exception: Invalid TSS");
-	exception();
-}
-
-void seg_not_pres(){
-	cli();
-	printf("Exception: Segment not present");
-	exception();
-}
-
-void stack_seg_fault(){
-	cli();
-	printf("Exception: Stack-segment fault");
-	exception();
-}
-
-void gen_prot_fault(){
-	cli();
-	printf("Exception: General protection fault");
-	exception();
-}
-
-void page_fault(){
-	cli();
-	printf("Exception: Page fault");
-	exception();
-}
-
-void x87_fpu_fault(){
-	cli();
-	printf("Exception: x87 FPU error");
-	exception();
-}
-
-void align_check(){
-	cli();
-	printf("Exception: Alignment check");
-	exception();
-}
-
-void mach_check(){
-	cli();
-	printf("Exception: Machine check");
-	exception();
-}
-
-void simd_float_exc(){
-	cli();
-	printf("Exception: SIMD Floating-Point Exception");
-	exception();
-}
 void exception() {
 	//disable interrupts
 	//squash(?) user-level program
 	//return control to shell
 
-	while (1) {
-		continue;
+	while (1);
+}
+
+void divide_error(){
+	cli();
+	printf("Exception: divide error\n");
+	exception();
+}
+
+void reserv(){
+	cli();
+	printf("Exception: Reserved\n");
+	exception();
+}
+
+void nmi_interrupt(){
+	cli();
+	printf("Exception: NMI Interrupt\n");
+	exception();
+}
+
+void breakp(){
+	cli();
+	printf("Exception: Breakpoint\n");
+	exception();
+}
+
+void overflow(){
+	cli();
+	printf("Exception: Overflow\n");
+	exception();
+}
+
+void bounds_range_ex(){
+	cli();
+	printf("Exception: Bounds range exceeded\n");
+	exception();
+}
+
+void invalid_op(){
+	cli();
+	printf("Exception: Invalid opcode\n");
+	exception();
+}
+
+void dev_not_avail(){
+	cli();
+	printf("Exception: Device not available\n");
+	exception();
+}
+
+void double_fault(){
+	cli();
+	printf("Exception: Double fault\n");
+	exception();
+}
+
+void invalid_tss(){
+	cli();
+	printf("Exception: Invalid TSS\n");
+	exception();
+}
+
+void seg_not_pres(){
+	cli();
+	printf("Exception: Segment not present\n");
+	exception();
+}
+
+void stack_seg_fault(){
+	cli();
+	printf("Exception: Stack-segment fault\n");
+	exception();
+}
+
+void gen_prot_fault(){
+	cli();
+	printf("Exception: General protection fault\n");
+	exception();
+}
+
+void page_fault(){
+	cli();
+	printf("Exception: Page fault\n");
+	exception();
+}
+
+void x87_fpu_fault(){
+	cli();
+	printf("Exception: x87 FPU error\n");
+	exception();
+}
+
+void align_check(){
+	cli();
+	printf("Exception: Alignment check\n");
+	exception();
+}
+
+void mach_check(){
+	cli();
+	printf("Exception: Machine check\n");
+	exception();
+}
+
+void simd_float_exc(){
+	cli();
+	printf("Exception: SIMD Floating-Point Exception\n");
+	exception();
+}
+
+void __init_idt__(){
+	int i;
+
+	for(i = 0; i < 20; i++){
+		if(i != 9 || i != 15){ 							// we want to skip the intel reserved ones
+			idt[i].seg_selector = KERNEL_CS;
+			idt[i].reserved4 = 0;
+			idt[i].reserved3 = i == 2 ? 0 : 1; 	// #2 is an interrupt
+			idt[i].reserved2 = 1;
+			idt[i].reserved1 = 1;
+			idt[i].size = 1;
+			idt[i].reserved0 = 0;
+			idt[i].dpl = 0;
+			idt[i].present = 1;
+		}
 	}
 }
 

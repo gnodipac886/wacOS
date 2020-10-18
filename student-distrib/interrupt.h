@@ -1,8 +1,9 @@
-
+#ifndef _INTERRUPT_H
+#define _INTERRUPT_H
 
 #define DE 0x00     /*Divide Error*/
 #define DB 0x01     /*RESERVED*/
-
+#define MI 0x02 	/*NMI Interrupt*/
 #define BP 0x03     /*Breakpoint*/
 #define OF 0x04     /*Overflow*/
 #define BR 0x05     /*BOUND Range Exceeded*/
@@ -24,3 +25,5 @@
 #ifndef ASM
 extern void __init_idt__();
 #endif /* ASM */
+
+#endif /* _INTERRUPT_H */
