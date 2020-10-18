@@ -34,7 +34,7 @@ int idt_test(){
 
 	int i;
 	int result = PASS;
-	for (i = 0; i < 10; ++i){
+	for (i = 0; i < 9; ++i){
 		if ((idt[i].offset_15_00 == NULL) && 
 			(idt[i].offset_31_16 == NULL)){
 			assertion_failure();
@@ -48,9 +48,23 @@ int idt_test(){
 // add more tests here
 
 int divide_error_test(){
+	TEST_HEADER;
+
 	int i;
-	i = 0 / 0;
+	int y;
+
+	i = 0;
+	y = 2 / i;
 	return 0;
+}
+
+int deref_NULL_ptr(){
+	int * ptr;
+	int x;
+	ptr = NULL;
+	x = *ptr;
+
+	return 1;
 }
 
 /* Checkpoint 2 tests */
@@ -61,8 +75,9 @@ int divide_error_test(){
 
 /* Test suite entry point */
 void launch_tests(){
-	// TEST_OUTPUT("idt_test", idt_test());
+	TEST_OUTPUT("idt_test", idt_test());
 	TEST_OUTPUT("divide by 0 test", divide_error_test());
+	// TEST_OUTPUT("Deref NULL ptr test", deref_NULL_ptr());
 
 
 	// launch your tests here
