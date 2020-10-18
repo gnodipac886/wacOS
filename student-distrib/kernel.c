@@ -10,6 +10,7 @@
 #include "tests.h"
 #include "idt.h"
 #include "rtc.h"
+#include "keyboard.h"
 
 #define RUN_TESTS
 #define RTC_IRQ     0x8
@@ -156,19 +157,18 @@ void entry(unsigned long magic, unsigned long addr) {
     rtc_init();             // Initialize rtc
     enable_irq(RTC_IRQ);    // Enable device on PIC 
 
-    
-
+    __keyboard_init__();
 
     /* Enable interrupts */
     /* Do not enable the following until after you have set up your
      * IDT correctly otherwise QEMU will triple fault and simple close
      * without showing you any output */
-    // printf("Enabling Interrupts\n");
-    // sti();
+    printf("Enabling Interrupts\n");
+    sti();
 
 #ifdef RUN_TESTS
     /* Run tests */
-    launch_tests();
+    // launch_tests();
 #endif
     /* Execute the first program ("shell") ... */
 
