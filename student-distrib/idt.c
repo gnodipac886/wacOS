@@ -1,4 +1,4 @@
-#include "interrupt.h"
+#include "idt.h"
 #include "x86_desc.h"
 #include "lib.h"
 

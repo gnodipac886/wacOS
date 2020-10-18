@@ -8,9 +8,11 @@
 #include "i8259.h"
 #include "debug.h"
 #include "tests.h"
-#include "interrupt.h"
+#include "idt.h"
+#include "rtc.h"
 
 #define RUN_TESTS
+#define RTC_IRQ     0x8
 
 /* Macros. */
 /* Check if the bit BIT in FLAGS is set. */
@@ -136,6 +138,10 @@ void entry(unsigned long magic, unsigned long addr) {
         tss.esp0 = 0x800000;
         ltr(KERNEL_TSS);
     }
+
+
+    //cli();
+
     /* Mask all interrupts on PIC */
     uint32_t mask_i;
     for(mask_i=0; mask_i< 16; mask_i++){
@@ -147,6 +153,8 @@ void entry(unsigned long magic, unsigned long addr) {
 
     /* Initialize devices, memory, filesystem, enable device interrupts on the
      * PIC, any other initialization stuff... */
+    rtc_init();             // Initialize rtc
+    enable_irq(RTC_IRQ);    // Enable device on PIC 
 
     
 
