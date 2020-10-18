@@ -1,5 +1,4 @@
 #include "idt.h"
-#include "keyboard.h"
 #include "x86_desc.h"
 #include "lib.h"
 
@@ -13,8 +12,7 @@ void exception() {
 
 void divide_error(){
 	cli();
-	clear();
-	printf("Exception: divide error\n");
+	printf("Hello Exception: dividess error\n");
 	exception();
 }
 

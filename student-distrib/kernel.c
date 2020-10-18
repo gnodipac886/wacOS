@@ -9,8 +9,6 @@
 #include "debug.h"
 #include "tests.h"
 #include "idt.h"
-#include "rtc.h"
-#include "keyboard.h"
 
 #define RUN_TESTS
 #define RTC_IRQ     0x8
