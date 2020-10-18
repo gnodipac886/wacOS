@@ -22,6 +22,11 @@
 #define MC 0x12     /*Machine Check*/
 #define XF 0x13     /*SIMD Floating-Point Exception*/
 
+#define SYS_CALL 	0x80
+#define IRQ0 		0x20
+#define IRQ1 		0x21
+#define IRQ15 		0x2F
+
 #ifndef ASM
 extern void __init_idt__();
 #endif /* ASM */

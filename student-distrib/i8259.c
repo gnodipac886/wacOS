@@ -40,7 +40,7 @@ void i8259_init(void) {
     
     /* restore saved mask */
     outb(_master_mask_save, MASTER_8259_PORT+1);
-    outb(_slave_mask_save, SLAVE_8259_PORT);
+    outb(_slave_mask_save, SLAVE_8259_PORT+1);
 
     /* release spin lock (uncomment later)
     spin_unlock_irqrestore(&i8259_lock, flags);
@@ -49,35 +49,54 @@ void i8259_init(void) {
 
 /* Enable (unmask) the specified IRQ */
 void enable_irq(uint32_t irq_num) {
+    if(irq_num < IRQ0 || irq_num > IRQ15){
+        return;
+    }
     /* bit "x" is set to 0 if pin "x" (master or slave PIC) is enabled*/
     uint8_t x;
     if(irq_num>=8){ //irq is 8~15, which is a slave mask.
         x = irq_num-8;
-        slave_mask = slave_mask & ((0x1<<x)^0xFF );
-    }else{          //irq is 0~8, which is a master mask
+        slave_mask = slave_mask & ~(0x1<<x);
+        //outb()          // to do
+        outb(slave_mask, SLAVE_8259_PORT+1);
+    }else{      //irq is 0~8, which is a master mask
         x = irq_num;
-        master_mask = master_mask & ((0x1<<x)^0xFF);
+        master_mask = master_mask & ~(0x1<<x);
+        outb(master_mask, MASTER_8259_PORT+1);
     }
 }
 
 /* Disable (mask) the specified IRQ */
 void disable_irq(uint32_t irq_num) {
+    if(irq_num < IRQ0 || irq_num > IRQ15){
+        return;
+    }
     /* bit "x" is set to 1 if pin "x" (master or slave PIC) is enabled*/
     uint8_t x;
     if(irq_num>=8){ //irq is 8~15, which is a slave mask.
         x = irq_num-8;
         slave_mask = slave_mask | (0x1<<x);
-    }else{          //irq is 0~8, which is a master mask
+        outb(slave_mask, SLAVE_8259_PORT+1);
+        // here too
+    }else{      //irq is 0~8, which is a master mask
         x = irq_num;
         master_mask = master_mask | (0x1<<x);
+        outb(master_mask, MASTER_8259_PORT+1);
     }
 }
 
 /* Send end-of-interrupt signal for the specified IRQ */
 void send_eoi(uint32_t irq_num) {
+    if(irq_num < IRQ0 || irq_num > IRQ15){
+        return;
+    }
     /*if IRQ came from slave, then send EOI signal to both master and slave.
       else only send EOI to master.*/
-    if(irq_num >= 8) // if IRQ came from slave, then send EOI signal to slave.
-        outb(EOI, SLAVE_8259_PORT);
-    outb(EOI, MASTER_8259_PORT); // Send EOI to master.
-}
+    if(irq_num >= 8){ // if IRQ came from slave, then send EOI signal to slave.
+        outb((irq_num - 8) | EOI, SLAVE_8259_PORT);
+        outb(IRQ2 | EOI, MASTER_8259_PORT);
+    }
+    else{
+        outb(irq_num | EOI, MASTER_8259_PORT); // Send EOI to master.
+    }
+}   
