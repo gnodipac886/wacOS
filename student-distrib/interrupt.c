@@ -2,6 +2,27 @@
 #include "x86_desc.h"
 #include "lib.h"
 
+void divide_error();
+void exception();
+void divide_error();
+void reserv();
+void nmi_interrupt();
+void breakp();
+void overflow();
+void bounds_range_ex();
+void invalid_op();
+void dev_not_avail();
+void double_fault();
+void invalid_tss();
+void seg_not_pres();
+void stack_seg_fault();
+void gen_prot_fault();
+void page_fault();
+void x87_fpu_fault();
+void align_check();
+void mach_check();
+void simd_float_exc();
+
 void __init_idt__(){
 	int i;
 
@@ -151,6 +172,6 @@ void exception() {
 	//return control to shell
 
 	while (1) {
-		printf("\n");
+		continue;
 	}
 }

@@ -20,3 +20,7 @@
 #define AC 0x11     /*Alignment Check*/
 #define MC 0x12     /*Machine Check*/
 #define XF 0x13     /*SIMD Floating-Point Exception*/
+
+#ifndef ASM
+extern void __init_idt__();
+#endif /* ASM */
