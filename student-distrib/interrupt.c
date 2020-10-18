@@ -20,22 +20,22 @@ void __init_idt__(){
 	}
 
 	SET_IDT_ENTRY(idt[DE], divide_error); 			// divide by zero error
-	SET_IDT_ENTRY(idt[DB], divide_error); 			// reserved
-	SET_IDT_ENTRY(idt[BP], divide_error); 			// divide by zero error
-	SET_IDT_ENTRY(idt[OF], divide_error); 			// divide by zero error
-	SET_IDT_ENTRY(idt[BR], divide_error); 			// divide by zero error
-	SET_IDT_ENTRY(idt[UD], divide_error); 			// divide by zero error
-	SET_IDT_ENTRY(idt[NM], divide_error); 			// divide by zero error
-	SET_IDT_ENTRY(idt[DF], divide_error); 			// divide by zero error
-	SET_IDT_ENTRY(idt[TS], divide_error); 			// divide by zero error
-	SET_IDT_ENTRY(idt[NP], divide_error); 			// divide by zero error
-	SET_IDT_ENTRY(idt[SS], divide_error); 			// divide by zero error
-	SET_IDT_ENTRY(idt[GP], divide_error); 			// divide by zero error
-	SET_IDT_ENTRY(idt[PF], divide_error); 			// divide by zero error
-	SET_IDT_ENTRY(idt[MF], divide_error); 			// divide by zero error
-	SET_IDT_ENTRY(idt[AC], divide_error); 			// divide by zero error
-	SET_IDT_ENTRY(idt[MC], divide_error); 			// divide by zero error
-	SET_IDT_ENTRY(idt[XF], divide_error); 			// divide by zero error
+	SET_IDT_ENTRY(idt[DB], reserv); 						// reserved
+	SET_IDT_ENTRY(idt[BP], breakp); 						// Breakpoint
+	SET_IDT_ENTRY(idt[OF], overflow); 					// Overflow
+	SET_IDT_ENTRY(idt[BR], bounds_range_ex); 		// Bounds range exceeded
+	SET_IDT_ENTRY(idt[UD], invalid_op); 				// Invalid opcode
+	SET_IDT_ENTRY(idt[NM], dev_not_avail); 			// Device not available
+	SET_IDT_ENTRY(idt[DF], double_fault); 			// Double fault
+	SET_IDT_ENTRY(idt[TS], invalid_tss); 				// Invalid TSS
+	SET_IDT_ENTRY(idt[NP], seg_not_pres); 			// Segment not present
+	SET_IDT_ENTRY(idt[SS], stack_seg_fault); 		// Stack-segment fault
+	SET_IDT_ENTRY(idt[GP], gen_prot_fault); 		// General protection fault
+	SET_IDT_ENTRY(idt[PF], page_fault); 				// Page fault
+	SET_IDT_ENTRY(idt[MF], x87_fpu_fault); 			// x87 FPU error
+	SET_IDT_ENTRY(idt[AC], align_check); 				// Alignment check
+	SET_IDT_ENTRY(idt[MC], mach_check); 				// Machine check
+	SET_IDT_ENTRY(idt[XF], simd_float_exc); 		// SIMD Floating-Point Exception
 }
 
 void divide_error(){
@@ -44,6 +44,107 @@ void divide_error(){
 	exception();
 }
 
+void reserv(){
+	cli();
+	printf("Exception: Reserved");
+	exception();
+}
+
+void nmi_interrupt(){
+	cli();
+	printf("Exception: NMI Interrupt");
+	exception();
+}
+
+void breakp(){
+	cli();
+	printf("Exception: Breakpoint");
+	exception();
+}
+
+void overflow(){
+	cli();
+	printf("Exception: Overflow");
+	exception();
+}
+
+void bounds_range_ex(){
+	cli();
+	printf("Exception: Bounds range exceeded");
+	exception();
+}
+
+void invalid_op(){
+	cli();
+	printf("Exception: Invalid opcode");
+	exception();
+}
+
+void dev_not_avail(){
+	cli();
+	printf("Exception: Device not available");
+	exception();
+}
+
+void double_fault(){
+	cli();
+	printf("Exception: Double fault");
+	exception();
+}
+
+void invalid_tss(){
+	cli();
+	printf("Exception: Invalid TSS");
+	exception();
+}
+
+void seg_not_pres(){
+	cli();
+	printf("Exception: Segment not present");
+	exception();
+}
+
+void stack_seg_fault(){
+	cli();
+	printf("Exception: Stack-segment fault");
+	exception();
+}
+
+void gen_prot_fault(){
+	cli();
+	printf("Exception: General protection fault");
+	exception();
+}
+
+void page_fault(){
+	cli();
+	printf("Exception: Page fault");
+	exception();
+}
+
+void x87_fpu_fault(){
+	cli();
+	printf("Exception: x87 FPU error");
+	exception();
+}
+
+void align_check(){
+	cli();
+	printf("Exception: Alignment check");
+	exception();
+}
+
+void mach_check(){
+	cli();
+	printf("Exception: Machine check");
+	exception();
+}
+
+void simd_float_exc(){
+	cli();
+	printf("Exception: SIMD Floating-Point Exception");
+	exception();
+}
 void exception() {
 	//disable interrupts
 	//squash(?) user-level program
