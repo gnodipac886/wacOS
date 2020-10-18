@@ -47,6 +47,12 @@ int idt_test(){
 
 // add more tests here
 
+int divide_error_test(){
+	int i;
+	i = 0 / 0;
+	return 0;
+}
+
 /* Checkpoint 2 tests */
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
@@ -55,6 +61,9 @@ int idt_test(){
 
 /* Test suite entry point */
 void launch_tests(){
-	TEST_OUTPUT("idt_test", idt_test());
+	// TEST_OUTPUT("idt_test", idt_test());
+	TEST_OUTPUT("divide by 0 test", divide_error_test());
+
+
 	// launch your tests here
 }
