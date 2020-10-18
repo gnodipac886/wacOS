@@ -136,12 +136,20 @@ void entry(unsigned long magic, unsigned long addr) {
         tss.esp0 = 0x800000;
         ltr(KERNEL_TSS);
     }
-
+    /* Mask all interrupts on PIC */
+    uint32_t mask_i;
+    for(mask_i=0; mask_i< 16; mask_i++){
+        disable_irq(mask_i);
+    }
+    
     /* Init the PIC */
     i8259_init();
 
     /* Initialize devices, memory, filesystem, enable device interrupts on the
      * PIC, any other initialization stuff... */
+
+    
+
 
     /* Enable interrupts */
     /* Do not enable the following until after you have set up your
