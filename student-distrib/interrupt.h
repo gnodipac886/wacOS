@@ -9,6 +9,7 @@
 #define UD 0x06     /*Invalid Opcode (Undefined Opcode)*/
 #define NM 0x07     /*Device Not Available (No Math Coprocessor)*/
 #define DF 0x08     /*Double Fault*/
+
 #define TS 0x0A     /*Invalid TSS*/
 #define NP 0x0B     /*Segment Not Present*/
 #define SS 0x0C     /*Stack-Segment Fault*/
