@@ -118,6 +118,12 @@ void simd_float_exc(){
 	exception();
 }
 
+void system_call_handler() {
+	//hard interrupts have higher priority
+	printf("System call was called");
+}
+
+
 void __init_idt__(){
 	int i;
 
@@ -153,4 +159,35 @@ void __init_idt__(){
 	SET_IDT_ENTRY(idt[AC], align_check); 			// Alignment check
 	SET_IDT_ENTRY(idt[MC], mach_check); 			// Machine check
 	SET_IDT_ENTRY(idt[XF], simd_float_exc); 		// SIMD Floating-Point Exception
+
+	//initialize interrupt-gates
+	for(i = 32; i < NUM_VEC; i++){				// all non-reserved
+		if(i != 0x80){ 							
+			idt[i].seg_selector = KERNEL_CS;
+			idt[i].reserved4 = 0;
+			idt[i].reserved3 = 0; 	
+			idt[i].reserved2 = 1;
+			idt[i].reserved1 = 1;
+			idt[i].size = 1;
+			idt[i].reserved0 = 0;
+			idt[i].dpl = 0;
+			idt[i].present = 0;
+
+			SET_IDT_ENTRY(idt[i], NULL);
+
+		} else {			//iniitalize task-gate
+			idt[i].seg_selector = KERNEL_CS;
+			//[i].reserved4 = 0;
+			idt[i].reserved3 = 1; 	
+			idt[i].reserved2 = 0;
+			idt[i].reserved1 = 1;
+			idt[i].size = 0;
+			idt[i].reserved0 = 0;
+			idt[i].dpl = 3;
+			idt[i].present = 1;
+
+			SET_IDT_ENTRY(idt[i], system_call_handler);
+		}
+	}
+
 }
