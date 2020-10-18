@@ -1,4 +1,4 @@
-boot.o: boot.S multiboot.h x86_desc.h types.h
+boot.o: boot.S multiboot.h x86_desc.h types.h interrupt.h
 x86_desc.o: x86_desc.S x86_desc.h types.h
 i8259.o: i8259.c i8259.h types.h lib.h
 interrupt.o: interrupt.c interrupt.h x86_desc.h types.h lib.h

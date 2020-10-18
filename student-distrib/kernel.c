@@ -87,7 +87,7 @@ void entry(unsigned long magic, unsigned long addr) {
         for (mmap = (memory_map_t *)mbi->mmap_addr;
                 (unsigned long)mmap < mbi->mmap_addr + mbi->mmap_length;
                 mmap = (memory_map_t *)((unsigned long)mmap + mmap->size + sizeof (mmap->size)))
-            printf("    size = 0x%x, base_addr = 0x%#x%#x\n    type = 0x%x,  length    = 0x%#x%#x\n",
+            printf("    size = 0x%x, base_addr = 0x%#x%#x\n type = 0x%x,  length = 0x%#x%#x\n",
                     (unsigned)mmap->size,
                     (unsigned)mmap->base_addr_high,
                     (unsigned)mmap->base_addr_low,
@@ -100,13 +100,13 @@ void entry(unsigned long magic, unsigned long addr) {
     {
         seg_desc_t the_ldt_desc;
         the_ldt_desc.granularity = 0x0;
-        the_ldt_desc.opsize      = 0x1;
-        the_ldt_desc.reserved    = 0x0;
-        the_ldt_desc.avail       = 0x0;
+        the_ldt_desc.opsize   = 0x1;
+        the_ldt_desc.reserved   = 0x0;
+        the_ldt_desc.avail     = 0x0;
         the_ldt_desc.present     = 0x1;
         the_ldt_desc.dpl         = 0x0;
         the_ldt_desc.sys         = 0x0;
-        the_ldt_desc.type        = 0x2;
+        the_ldt_desc.type      = 0x2;
 
         SET_LDT_PARAMS(the_ldt_desc, &ldt, ldt_size);
         ldt_desc_ptr = the_ldt_desc;
@@ -117,14 +117,14 @@ void entry(unsigned long magic, unsigned long addr) {
     {
         seg_desc_t the_tss_desc;
         the_tss_desc.granularity   = 0x0;
-        the_tss_desc.opsize        = 0x0;
-        the_tss_desc.reserved      = 0x0;
-        the_tss_desc.avail         = 0x0;
+        the_tss_desc.opsize  = 0x0;
+        the_tss_desc.reserved     = 0x0;
+        the_tss_desc.avail     = 0x0;
         the_tss_desc.seg_lim_19_16 = TSS_SIZE & 0x000F0000;
         the_tss_desc.present       = 0x1;
         the_tss_desc.dpl           = 0x0;
         the_tss_desc.sys           = 0x0;
-        the_tss_desc.type          = 0x9;
+        the_tss_desc.type        = 0x9;
         the_tss_desc.seg_lim_15_00 = TSS_SIZE & 0x0000FFFF;
 
         SET_TSS_PARAMS(the_tss_desc, &tss, tss_size);
@@ -147,10 +147,8 @@ void entry(unsigned long magic, unsigned long addr) {
     /* Do not enable the following until after you have set up your
      * IDT correctly otherwise QEMU will triple fault and simple close
      * without showing you any output */
-    printf("Enabling Interrupts\n");
-    __init_idt__();
-    lidt(idt);
-    sti();
+    // printf("Enabling Interrupts\n");
+    // sti();
 
 #ifdef RUN_TESTS
     /* Run tests */
