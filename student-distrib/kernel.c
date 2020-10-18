@@ -11,7 +11,6 @@
 #include "idt.h"
 
 #define RUN_TESTS
-#define RTC_IRQ     0x8
 
 /* Macros. */
 /* Check if the bit BIT in FLAGS is set. */
@@ -153,7 +152,6 @@ void entry(unsigned long magic, unsigned long addr) {
     /* Initialize devices, memory, filesystem, enable device interrupts on the
      * PIC, any other initialization stuff... */
     rtc_init();             // Initialize rtc
-    enable_irq(RTC_IRQ);    // Enable device on PIC 
 
     __keyboard_init__();
 

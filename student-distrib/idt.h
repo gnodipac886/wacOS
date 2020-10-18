@@ -25,6 +25,7 @@
 #define SYS_CALL 	0x80
 #define IRQ0 		0x20
 #define IRQ1 		0x21
+#define IRQ8        0x28
 #define IRQ15 		0x2F
 
 #ifndef ASM
