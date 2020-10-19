@@ -28,7 +28,7 @@ interrupt_handler_jump:
     .long 0
     .long 0
 
-    .long handle_rtc_interrupt               /*handler ptrs for IR lines of Slave PIC*/
+    .long handle_rtc_interrupt                  /*handler ptrs for IR lines of Slave PIC*/
     .long 0
     .long 0
     .long 0

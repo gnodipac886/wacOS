@@ -16,17 +16,15 @@ void rtc_init(){
 
 /* handle_rtc_interrupt */
 void handle_rtc_interrupt(){
-    cli();
+    //cli();//if in cp3/4 has lag,then put send_eoi here
 	clear();
 	printf("RTC Interrupt\n");
-
-	send_eoi(RTC_IRQ);
 
     /* Clear register C to allow another interrupt.*/
     outb(0x0C, RTC_IO_PORT);                // Select RTC status register C
     inb(CMOS_IO_PORT);                      // Dump the content
-
-	sti();
+    send_eoi(RTC_IRQ); 
+    //sti();                     
 }
 
 /* void rtc_freq_set(uint32_t){
