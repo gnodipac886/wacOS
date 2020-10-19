@@ -103,9 +103,18 @@ int bound_range_test() {
 	return 0;
 }
 
+// info mem
 
 /*
 int system_call_test() {
+	asm volatile(
+		"movl $0x80, %%eax;"
+		"call (%%eax);"
+		: 								//no output operands yet
+		:								//no input operands yet
+		: "memory", "%eax", "%eip"		//clobbered registers	
+	);
+
 	return 0;
 }
 */

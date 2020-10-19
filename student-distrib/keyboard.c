@@ -28,7 +28,7 @@ void __keyboard_init__(){
  *		Side Effects: none
  */
 void handle_keyboard_interrupt(){
-	cli();
+	//cli();
 
 	char kb_char;
 	char keyboard_input = inb(KB_PORT);
@@ -53,16 +53,16 @@ void handle_keyboard_interrupt(){
 					kb_char = kb_sc_row3_let[keyboard_input - 0x2B]; // 0x2C for the offset mapping in the array
 				} else{
 					send_eoi(KB_IRQ);
-					sti();
+					//sti();
 					return;
 				}
 	} else{
 		send_eoi(KB_IRQ);
-		sti();
+		//sti();
 		return;
 		}
 	printf("%c", kb_char);
 	send_eoi(KB_IRQ);
-	sti();
+	//sti();
 	return;
 }
