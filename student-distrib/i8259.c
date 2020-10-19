@@ -17,9 +17,11 @@ void i8259_init(void) {
     */
 
     // save mask
-    uint32_t _master_mask_save, _slave_mask_save;
-    _master_mask_save = inb(MASTER_8259_PORT+1);
-    _slave_mask_save = inb(SLAVE_8259_PORT+1);
+    // uint32_t _master_mask_save, _slave_mask_save;
+    // _master_mask_save = inb(MASTER_8259_PORT+1);
+    // _slave_mask_save = inb(SLAVE_8259_PORT+1);
+    master_mask = INIT_MASK_ALL;
+    slave_mask = INIT_MASK_ALL;
 
     outb(ICW1, MASTER_8259_PORT);   // Starts initialization ICW1 (cascade mode)
     outb(ICW1, SLAVE_8259_PORT);
@@ -39,8 +41,8 @@ void i8259_init(void) {
     outb(ICW4, SLAVE_8259_PORT+1);
     
     /* restore saved mask */
-    outb(_master_mask_save, MASTER_8259_PORT+1);
-    outb(_slave_mask_save, SLAVE_8259_PORT+1);
+    outb(master_mask, MASTER_8259_PORT+1);
+    outb(slave_mask, SLAVE_8259_PORT+1);
 
     /* release spin lock (uncomment later)
     spin_unlock_irqrestore(&i8259_lock, flags);
@@ -56,12 +58,14 @@ void enable_irq(uint32_t irq_num) {
     uint8_t x;
     if(irq_num>=8){ //irq is 8~15, which is a slave mask.
         x = irq_num-8;
-        slave_mask = slave_mask & ~(0x1<<x);
-        //outb()          // to do
+        slave_mask &= ~(0x1<<x);
         outb(slave_mask, SLAVE_8259_PORT+1);
+
+        master_mask &= UNMASK_IRQ2;
+        outb(master_mask, MASTER_8259_PORT+1);
     }else{      //irq is 0~8, which is a master mask
         x = irq_num;
-        master_mask = master_mask & ~(0x1<<x);
+        master_mask &= ~(0x1<<x);
         outb(master_mask, MASTER_8259_PORT+1);
     }
 }
@@ -75,12 +79,14 @@ void disable_irq(uint32_t irq_num) {
     uint8_t x;
     if(irq_num>=8){ //irq is 8~15, which is a slave mask.
         x = irq_num-8;
-        slave_mask = slave_mask | (0x1<<x);
+        slave_mask |= (0x1<<x);
         outb(slave_mask, SLAVE_8259_PORT+1);
-        // here too
+        
+        master_mask |= ~UNMASK_IRQ2;
+        outb(master_mask, MASTER_8259_PORT+1);
     }else{      //irq is 0~8, which is a master mask
         x = irq_num;
-        master_mask = master_mask | (0x1<<x);
+        master_mask |= (0x1<<x);
         outb(master_mask, MASTER_8259_PORT+1);
     }
 }

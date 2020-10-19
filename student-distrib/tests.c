@@ -103,6 +103,7 @@ int bound_range_test() {
 	return 0;
 }
 
+// info mem
 
 /*
 int system_call_test() {
