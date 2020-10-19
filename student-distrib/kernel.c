@@ -9,8 +9,12 @@
 #include "debug.h"
 #include "tests.h"
 #include "idt.h"
+#include "rtc.h"
+#include "keyboard.h"
+#include "paging.h"
 
 #define RUN_TESTS
+#define RTC_IRQ	 0x8
 
 /* Macros. */
 /* Check if the bit BIT in FLAGS is set. */
@@ -161,11 +165,11 @@ void entry(unsigned long magic, unsigned long addr) {
     sti();
 
 #ifdef RUN_TESTS
-    /* Run tests */
-    // launch_tests();
+	/* Run tests */
+	launch_tests();
 #endif
-    /* Execute the first program ("shell") ... */
+	/* Execute the first program ("shell") ... */
 
-    /* Spin (nicely, so we don't chew up cycles) */
-    asm volatile (".1: hlt; jmp .1;");
+	/* Spin (nicely, so we don't chew up cycles) */
+	asm volatile (".1: hlt; jmp .1;");
 }

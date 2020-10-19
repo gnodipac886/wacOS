@@ -11,10 +11,13 @@
 /* Segment selector values */
 #define KERNEL_CS   0x0010
 #define KERNEL_DS   0x0018
-#define USER_CS	 0x0023
-#define USER_DS	 0x002B
+#define USER_CS	 	0x0023
+#define USER_DS	 	0x002B
 #define KERNEL_TSS  0x0030
 #define KERNEL_LDT  0x0038
+#define PDE 		1024
+#define PTE 		1024
+#define ALIGN4KB 	0x1000
 
 /* Size of the task state segment (TSS) */
 #define TSS_SIZE	104
@@ -110,6 +113,28 @@ typedef struct __attribute__((packed)) tss_t {
 	uint16_t io_pad	 : 15;
 	uint16_t io_base_addr;
 } tss_t;
+
+typedef struct page_desc{
+	union{
+		uint32_t val;
+		struct{
+			uint32_t present 			: 1; 		// if 1, is in physical memory
+			uint32_t read_write			: 1; 		// if 1, read and write, if 0, read only
+			uint32_t user_supervisor 	: 1; 		// privilege level, 0 - supervisor, 1 - user
+			uint32_t write_through 		: 1; 		// if 1, write through caching is enabled
+			uint32_t cache_disable		: 1; 		// if 1, page will not be cached
+			uint32_t accessed 			: 1; 		// indicate whether a page has been accessed
+			uint32_t dirty 				: 1; 		// processor handled bit for PDE 4MB and PTE 4kB, 0 for PDE 4kB
+			uint32_t size 				: 1; 		// 0 for 4kB, 1 for 4MB
+			uint32_t global 			: 1;		// set for kernel pages only, "think shared memory for all"
+			uint32_t available 			: 3; 		// not used in out case
+			uint32_t addr 				: 20;
+		} __attribute__ ((packed));
+	};
+} page_desc_t;
+
+extern page_desc_t page_table[PTE];
+extern page_desc_t page_directory[PDE];
 
 /* Some external descriptors declared in .S files */
 extern x86_desc_t gdt_desc;
