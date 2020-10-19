@@ -14,11 +14,11 @@
 .globl page_table, page_directory
 
 .align 4
-
+# initializing GDT
 gdt_desc:
-	.word 0
+	.word 0                       # padding
 	.word gdt_bottom - gdt - 1		# size of gdt
-	.long gdt 						# address of gdt
+	.long gdt 					        	# address of gdt
 
 tss_size:
 	.long tss_bottom - tss - 1
