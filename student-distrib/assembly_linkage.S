@@ -11,17 +11,17 @@ rtc_interrupt_stub:
 common_interrupt:
     pushal
     movl $32(%esp), %eax                        /*Get neg IRQ num on Kernel stack*/
-    notl %eax                                   /*Negate for offset from IRQ0 Vector #*/
-    //sti                                         
+    notl %eax                                   /*Negate for offset from IRQ0 Vector #*/   
+    cli                                   
     call interrupt_handler_jump(,%eax,4)      
-    //cli
+    sti
     popal
     addl $4, %esp
     iret                                       /*return from interrupt*/
 
 interrupt_handler_jump:
     .long 0                                    /*handler ptrs for IR lines of Master PIC*/
-    .long keyboard_interrupt_handler    
+    .long handle_keyboard_interrupt  
     .long 0
     .long 0
     .long 0
@@ -29,7 +29,7 @@ interrupt_handler_jump:
     .long 0
     .long 0
 
-    .long rtc_interrupt_handler                /*handler ptrs for IR lines of Slave PIC*/
+    .long handle_rtc_interrupt               /*handler ptrs for IR lines of Slave PIC*/
     .long 0
     .long 0
     .long 0
