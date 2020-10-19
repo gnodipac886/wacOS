@@ -134,13 +134,21 @@ int bound_range_test() {
  *		Side Effects: none
  */
 /*
+<<<<<<< HEAD
 int system_call_test()
+=======
+int system_call_test() {
+>>>>>>> 9c6682e623d7506bee170819340d835f2e3478cd
 	asm volatile(
 		"movl $0x80, %%eax;"
 		"call (%%eax);"
 		: 								//no output operands yet
 		:								//no input operands yet
+<<<<<<< HEAD
 		: "memory", "%eax", "%eip"		//clobbered registers
+=======
+		: "memory", "%eax", "%eip"		//clobbered registers	
+>>>>>>> 9c6682e623d7506bee170819340d835f2e3478cd
 	);
 
 	return 0;
