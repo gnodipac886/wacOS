@@ -315,7 +315,6 @@ void __init_idt__(){
 			continue;
 		}
 		idt[i].seg_selector = KERNEL_CS;
-<<<<<<< HEAD
 		idt[i].reserved4 = 0;		// reserved to 0
 		idt[i].reserved3 = 0; 	// i == SYS_CALL ? 1 : 0;
 		idt[i].reserved2 = 1; 	// i == SYS_CALL ? 0 : 1;
@@ -324,16 +323,6 @@ void __init_idt__(){
 		idt[i].reserved0 = 0; // reserved to 0
 		idt[i].dpl = i == SYS_CALL ? 0x3 : 0x0; // SYS_CALL = 0x03, interrupts = 0x0
 		idt[i].present = 1; // valid interrupt descriptor
-=======
-		idt[i].reserved4 = 0;
-		idt[i].reserved3 = 0; 	// i == SYS_CALL ? 1 : 0;
-		idt[i].reserved2 = 1; 	// i == SYS_CALL ? 0 : 1;
-		idt[i].reserved1 = 1;
-		idt[i].size = 1; 		// i == SYS_CALL ? 0 : 1;
-		idt[i].reserved0 = 0;
-		idt[i].dpl = i == SYS_CALL ? 0x3 : 0x0;
-		idt[i].present = 1;
->>>>>>> 9c6682e623d7506bee170819340d835f2e3478cd
 	}
 
 	SET_IDT_ENTRY(idt[DE], divide_error); 			// divide by zero error
