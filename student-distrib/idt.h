@@ -23,10 +23,10 @@
 #define XF 0x13     /*SIMD Floating-Point Exception*/
 
 #define SYS_CALL 	0x80
-#define IRQ0 		0x20
-#define IRQ1 		0x21    /*keyboard IR line*/  
-#define IRQ8        0x28    /*rtc IR line*/
-#define IRQ15 		0x2F
+#define IRQ0_IDT	0x20
+#define IRQ1_IDT	0x21
+#define IRQ8_IDT  0x28    /*rtc IR line*/
+#define IRQ15_IDT 	0x2F
 
 #ifndef ASM
 extern void __init_idt__();
