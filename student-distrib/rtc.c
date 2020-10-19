@@ -12,17 +12,13 @@ void rtc_init(){
     outb(reg_value | 0x40, CMOS_IO_PORT);   // Turn on Register B bit 6
 
     enable_irq(RTC_IRQ);                    // Enable interrupt for RTC on PIC
-
-    /*Just in case: clear register C to allow interrupt.*/
-    outb(0x0C, RTC_IO_PORT);                // Select RTC status register C
-    inb(CMOS_IO_PORT);                      // Dump the content
     sti();
 }
 
 /* handle_rtc_interrupt */
 void handle_rtc_interrupt(){
     cli();
-    send_eoi(RTC_IRQ);
+	send_eoi(RTC_IRQ);
 
     /* Clear register C to allow another interrupt.*/
     outb(RTC_STATUS_REG+0x0C, RTC_IO_PORT);                 // Select RTC status register C
@@ -30,7 +26,7 @@ void handle_rtc_interrupt(){
 
     test_interrupts();
 
-    sti();
+	sti();
 }
 
 /* void rtc_freq_set(uint32_t){

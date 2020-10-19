@@ -103,15 +103,16 @@ int bound_range_test() {
 	return 0;
 }
 
-/*
+// info mem
 
+/*
 int system_call_test() {
-	asm(
+	asm volatile(
 		"movl $0x80, %%eax;"
-		"call idt(,%%eax,8);"
+		"call (%%eax);"
 		: 								//no output operands yet
-		: 								//no input operands yet
-		: "%eax", "%eip"				//clobbered registers	
+		:								//no input operands yet
+		: "memory", "%eax", "%eip"		//clobbered registers	
 	);
 
 	return 0;
@@ -143,8 +144,6 @@ void launch_tests(){
 	// TEST_OUTPUT("invalid_opcode_test", invalid_opcode_test());
 	// TEST_OUTPUT("overflow_test", overflow_test());
 	// TEST_OUTPUT("bound range test", bound_range_test());
-	// TEST_OUTPUT("system call test", system_call_test());
-	// TEST_OUTPUT("deref NULL ptr test", deref_NULL_ptr_test());
 
 	// launch your tests here
 }
