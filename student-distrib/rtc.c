@@ -34,7 +34,7 @@ void handle_rtc_interrupt(){
     outb(RTC_STATUS_REG+0x0C, RTC_IO_PORT);                 // Select RTC status register C
     inb(CMOS_IO_PORT);                                      // Dump the content
 
-    test_interrupts();
+    //test_interrupts();
 
 	sti();
 }

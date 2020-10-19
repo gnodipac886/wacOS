@@ -125,6 +125,71 @@ int bound_range_test() {
 	return 0;
 }
 
+/* Video Memory Paging Test
+ *  Description: Check for proper video memory paging
+ * 	Inputs: None
+ *  Outputs: PASS - if no page fault
+ *  Side Effects: None
+ *  Function: dereferences first 10 video memory linear addresses
+ */
+int vid_mem_paging_test() {
+	TEST_HEADER;
+
+	int i, VM_data;
+	int * VM_addr;
+
+	for (i = 0; i < 9; i++){
+		VM_addr = (int *)(0x000B8000 + i);
+		VM_data = *VM_addr;
+	}
+
+	return PASS;
+
+}
+
+
+/* Kernel Paging Test
+ *  Description: Check for proper Kernel paging
+ * 	Inputs: None
+ *  Outputs: PASS - if no page fault
+ *  Side Effects: None
+ *  Function: dereferences first 10 kernel linear addresses
+ */
+int kernel_paging_test() {
+	TEST_HEADER;
+
+	int i, kernel_data;
+	int * kernel_addr;
+
+	for (i = 0; i < 9; i++){
+		kernel_addr = (int *)(0x00400000 + i);
+		kernel_data = *kernel_addr;
+	}
+
+	return PASS;
+
+}
+
+/* Unused Page Page Fault Test
+ *  Description: Check for proper paging via addr in unused page
+ * 	Inputs: None
+ *  Outputs: PASS - if page fault
+ *  Side Effects: None
+ *  Function: dereferences addr in unused page
+ */
+int unused_paging_test() {
+	TEST_HEADER;
+
+	int * ptr;			//not in Video Memory nor Kernel page range
+	int x;
+	ptr = (int *)(0x080000B);
+	x = *ptr;
+
+	return 1;
+
+}
+
+//paging structure test
 // info mem
 
 /* system_call_test
@@ -150,6 +215,8 @@ int system_call_test() {
 		: "memory", "%eax", "%eip"		//clobbered registers	
 >>>>>>> 9c6682e623d7506bee170819340d835f2e3478cd
 	);
+
+	or something like.... asm volatile("int $0x80");
 
 	return 0;
 }
@@ -185,6 +252,10 @@ void launch_tests(){
 	// TEST_OUTPUT("invalid_opcode_test", invalid_opcode_test());
 	// TEST_OUTPUT("overflow_test", overflow_test());
 	// TEST_OUTPUT("bound range test", bound_range_test());
+	// TEST_OUTPUT("video memory paging test", vid_mem_paging_test());
+	// TEST_OUTPUT("kernel paging test", kernel_paging_test());
+	
+	// TEST_OUTPUT("unused page page fault test", unused_paging_test());
 
 	// launch your tests here
 }
