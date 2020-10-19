@@ -138,8 +138,6 @@ void entry(unsigned long magic, unsigned long addr) {
     }
 
 
-    //cli();
-
     /* Mask all interrupts on PIC */
     uint32_t mask_i;
     for(mask_i=0; mask_i< 16; mask_i++){
