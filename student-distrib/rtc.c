@@ -2,20 +2,30 @@
 #include "lib.h"
 #include "i8259.h"
 
-/* Initialize RTC */
-void rtc_init(){
+/* rtc_init
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: Initializes rtc and writes to the correct ports
+ *		Side Effects: enables interrupt on PIC
+ */
+void __rtc_init__(){
     cli();
     /*set IRQ8 */
     outb(RTC_STATUS_REG+0xB, RTC_IO_PORT);  // Select RTC status register B (offset = 0xB)
     uint8_t reg_value = inb(CMOS_IO_PORT);  // Read register B value
-    outb(RTC_STATUS_REG+0xB, RTC_IO_PORT);  // Select RTC status register B 
+    outb(RTC_STATUS_REG+0xB, RTC_IO_PORT);  // Select RTC status register B
     outb(reg_value | 0x40, CMOS_IO_PORT);   // Turn on Register B bit 6
 
     enable_irq(RTC_IRQ);                    // Enable interrupt for RTC on PIC
     sti();
 }
 
-/* handle_rtc_interrupt */
+/* handle_rtc_interrupt
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: handles rtc interrupt and writes to the ports
+ *		Side Effects: Tests the interrupts
+ */
 void handle_rtc_interrupt(){
     cli();
 	send_eoi(RTC_IRQ);

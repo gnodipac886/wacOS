@@ -12,6 +12,12 @@
 #define MASTER_8259_PORT    0x20
 #define SLAVE_8259_PORT     0xA0
 
+#define MASTER_CMD          MASTER_8259_PORT
+#define MASTER_DATA         MASTER_8259_PORT + 1
+
+#define SLAVE_CMD           SLAVE_8259_PORT
+#define SLAVE_DATA          SLAVE_8259_PORT + 1
+
 /* Initialization control words to init each PIC.
  * See the Intel manuals for details on the meaning
  * of each word */
@@ -33,6 +39,7 @@
 
 #define INIT_MASK_ALL 		0xFF
 #define UNMASK_IRQ2			0xFB
+#define SLAVE_IRQ_NUM   0x08
 
 /* Externally-visible functions */
 
