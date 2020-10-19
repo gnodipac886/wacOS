@@ -12,6 +12,12 @@
 #define MASTER_8259_PORT    0x20
 #define SLAVE_8259_PORT     0xA0
 
+#define MASTER_CMD          MASTER_8259_PORT
+#define MASTER_DATA         MASTER_8259_PORT + 1
+
+#define SLAVE_CMD           SLAVE_8259_PORT
+#define SLAVE_DATA          SLAVE_8259_PORT + 1
+
 /* Initialization control words to init each PIC.
  * See the Intel manuals for details on the meaning
  * of each word */
@@ -27,6 +33,14 @@
  * to declare the interrupt finished */
 #define EOI                 0x60
 
+#define IRQ0_PIC			0x00
+#define IRQ2_PIC			0x02
+#define IRQ15_PIC 			0x0F
+
+#define INIT_MASK_ALL 		0xFF
+#define UNMASK_IRQ2			0xFB
+#define SLAVE_IRQ_NUM   0x08
+
 /* Externally-visible functions */
 
 /* Initialize both PICs */
@@ -37,5 +51,7 @@ void enable_irq(uint32_t irq_num);
 void disable_irq(uint32_t irq_num);
 /* Send end-of-interrupt signal for the specified IRQ */
 void send_eoi(uint32_t irq_num);
+
+extern void test_interrupts(void);
 
 #endif /* _I8259_H */
