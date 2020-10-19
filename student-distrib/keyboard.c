@@ -53,12 +53,12 @@ void handle_keyboard_interrupt(){
 					kb_char = kb_sc_row3_let[keyboard_input - 0x2B]; // 0x2C for the offset mapping in the array
 				} else{
 					send_eoi(KB_IRQ);
-					cli();
+					sti();
 					return;
 				}
 	} else{
 		send_eoi(KB_IRQ);
-		cli();
+		sti();
 		return;
 		}
 	printf("%c", kb_char);
