@@ -28,7 +28,7 @@ void __keyboard_init__(){
  *		Side Effects: none
  */
 void handle_keyboard_interrupt(){
-	sti();
+	cli();
 
 	char kb_char;
 	char keyboard_input = inb(KB_PORT);
@@ -63,6 +63,6 @@ void handle_keyboard_interrupt(){
 		}
 	printf("%c", kb_char);
 	send_eoi(KB_IRQ);
-	cli();
+	sti();
 	return;
 }
