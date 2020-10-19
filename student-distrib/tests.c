@@ -247,8 +247,7 @@ void launch_tests(){
 	// TEST_OUTPUT("bound range test", bound_range_test());
 	// TEST_OUTPUT("video memory paging test", vid_mem_paging_test());
 	// TEST_OUTPUT("kernel paging test", kernel_paging_test());
-
 	// TEST_OUTPUT("unused page page fault test", unused_paging_test());
-
+	// TEST_OUTPUT("deref_NULL_ptr_test", deref_NULL_ptr_test());
 	// launch your tests here
 }
