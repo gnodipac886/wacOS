@@ -19,6 +19,7 @@ void divide_error(){
 	clear();
 	printf("Exception: Divides 0 error\n");
 	exception();
+	sti();
 }
 
 void reserv(){
@@ -26,6 +27,7 @@ void reserv(){
 	clear();
 	printf("Exception: Reserved\n");
 	exception();
+	sti();
 }
 
 void nmi_interrupt(){
@@ -33,6 +35,7 @@ void nmi_interrupt(){
 	clear();
 	printf("Exception: NMI Interrupt\n");
 	exception();
+	sti();
 }
 
 void breakp(){
@@ -40,6 +43,7 @@ void breakp(){
 	clear();
 	printf("Exception: Breakpoint\n");
 	exception();
+	sti();
 }
 
 void overflow(){
@@ -47,6 +51,7 @@ void overflow(){
 	clear();
 	printf("Exception: Overflow\n");
 	exception();
+	sti();
 }
 
 void bounds_range_ex(){
@@ -54,6 +59,7 @@ void bounds_range_ex(){
 	clear();
 	printf("Exception: Bounds range exceeded\n");
 	exception();
+	sti();
 }
 
 void invalid_op(){
@@ -61,6 +67,7 @@ void invalid_op(){
 	clear();
 	printf("Exception: Invalid opcode\n");
 	exception();
+	sti();
 }
 
 void dev_not_avail(){
@@ -68,6 +75,7 @@ void dev_not_avail(){
 	clear();
 	printf("Exception: Device not available\n");
 	exception();
+	sti();
 }
 
 void double_fault(){
@@ -75,6 +83,7 @@ void double_fault(){
 	clear();
 	printf("Exception: Double fault\n");
 	exception();
+	sti();
 }
 
 void invalid_tss(){
@@ -82,6 +91,7 @@ void invalid_tss(){
 	clear();
 	printf("Exception: Invalid TSS\n");
 	exception();
+	sti();
 }
 
 void seg_not_pres(){
@@ -89,6 +99,7 @@ void seg_not_pres(){
 	clear();
 	printf("Exception: Segment not present\n");
 	exception();
+	sti();
 }
 
 void stack_seg_fault(){
@@ -96,6 +107,7 @@ void stack_seg_fault(){
 	clear();
 	printf("Exception: Stack-segment fault\n");
 	exception();
+	sti();
 }
 
 void gen_prot_fault(){
@@ -103,6 +115,7 @@ void gen_prot_fault(){
 	clear();
 	printf("Exception: General protection fault\n");
 	exception();
+	sti();
 }
 
 void page_fault(){
@@ -110,6 +123,7 @@ void page_fault(){
 	clear();
 	printf("Exception: Page fault\n");
 	exception();
+	sti();
 }
 
 void x87_fpu_fault(){
@@ -117,6 +131,7 @@ void x87_fpu_fault(){
 	clear();
 	printf("Exception: x87 FPU error\n");
 	exception();
+	sti();
 }
 
 void align_check(){
@@ -124,6 +139,7 @@ void align_check(){
 	clear();
 	printf("Exception: Alignment check\n");
 	exception();
+	sti();
 }
 
 void mach_check(){
@@ -131,6 +147,7 @@ void mach_check(){
 	clear();
 	printf("Exception: Machine check\n");
 	exception();
+	sti();
 }
 
 void simd_float_exc(){
@@ -138,10 +155,12 @@ void simd_float_exc(){
 	clear();
 	printf("Exception: SIMD Floating-Point Exception\n");
 	exception();
+	sti();
 }
 
 void system_call_handler() {
 	//hard interrupts have higher priority
+	//sti();
 	clear();
 	printf("System call was called");
 }
@@ -157,12 +176,15 @@ void __init_idt__(){
 	int i;
 
 	for(i = 0; i < NUM_VEC; i++){
+		if (i == 9 || i == 15 || (i >= 20 && i <= 31)) {
+			continue;
+		}
 		idt[i].seg_selector = KERNEL_CS;
 		idt[i].reserved4 = 0;
-		idt[i].reserved3 = (i == 2 || (i >= IRQ0_IDT && i <= IRQ15_IDT)) ? 0 : 1; 	// #2 is an interrupt
-		idt[i].reserved2 = 1;
+		idt[i].reserved3 = i == SYS_CALL ? 1 : 0;
+		idt[i].reserved2 = i == SYS_CALL ? 0 : 1;
 		idt[i].reserved1 = 1;
-		idt[i].size = 1;
+		idt[i].size = i == SYS_CALL ? 0 : 1;
 		idt[i].reserved0 = 0;
 		idt[i].dpl = i == SYS_CALL ? 0x3 : 0x0;
 		idt[i].present = 1;
@@ -170,7 +192,7 @@ void __init_idt__(){
 
 	SET_IDT_ENTRY(idt[DE], divide_error); 			// divide by zero error
 	SET_IDT_ENTRY(idt[DB], reserv); 				// reserved
-	SET_IDT_ENTRY(idt[MI], nmi_interrupt); 			// NMI Interrupt
+	SET_IDT_ENTRY(idt[MI], nmi_interrupt); 			// NMI Interrupt........................
 	SET_IDT_ENTRY(idt[BP], breakp); 				// Breakpoint
 	SET_IDT_ENTRY(idt[OF], overflow); 				// Overflow
 	SET_IDT_ENTRY(idt[BR], bounds_range_ex); 		// Bounds range exceeded
@@ -188,4 +210,5 @@ void __init_idt__(){
 	SET_IDT_ENTRY(idt[XF], simd_float_exc); 		// SIMD Floating-Point Exception
 	SET_IDT_ENTRY(idt[IRQ1_IDT], keyboard_interrupt_stub); 		// handle keyboard interrupt
 	SET_IDT_ENTRY(idt[IRQ8_IDT], rtc_interrupt_stub); 		// handle rtc interrupt
+	SET_IDT_ENTRY(idt[SYS_CALL], system_call_handler);	//handle system call
 }
