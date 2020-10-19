@@ -13,7 +13,7 @@ common_interrupt:
     pushal
     movl 32(%esp), %eax                        /*Get neg IRQ num on Kernel stack*/
     notl %eax                                   /*Negate for offset from IRQ0 Vector #*/
-    call interrupt_handler_jump(,%eax,4)
+    call *interrupt_handler_jump(,%eax,4)
     popal
     addl $4, %esp
     iret                                       /*return from interrupt*/
