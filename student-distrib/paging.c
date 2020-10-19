@@ -2,6 +2,12 @@
 #include "x86_desc.h"
 #include "types.h"
 
+/* __init_paging__
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: initializing paging, sets up page directory, page table
+ *		Side Effects: none
+ */
 void __init_paging__(){
 	// counter for for loops
 	int i;
@@ -63,7 +69,7 @@ void __init_paging__(){
 		"movl 	%%cr0, 			%%eax;"		// dump out cr0
 		"orl 	$0x80000000,	%%eax;"		// make the first and last bits 1
 		"movl 	%%eax, 			%%cr0;"		// put it back into cr0
-		
+
 		:							// not outputs yet
 		:"r"(page_directory) 		// input is page directory
 		:"%eax" 					// clobbered register

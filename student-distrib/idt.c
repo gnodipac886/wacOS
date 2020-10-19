@@ -4,8 +4,16 @@
 #include "lib.h"
 #include "keyboard.h"
 #include "rtc.h"
+// functions from assembly_linkage
 extern void keyboard_interrupt_stub();
 extern void rtc_interrupt_stub();
+
+/* exception
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: Once reached an exception, kills everything else
+ *		Side Effects: none
+ */
 void exception() {
 	//disable interrupts
 	//squash(?) user-level program
@@ -14,6 +22,12 @@ void exception() {
 	while (1);
 }
 
+/* divide_error
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: Clears screen and prints out the exception eror
+ *		Side Effects: Halts everything
+ */
 void divide_error(){
 	//cli();
 	clear();
@@ -22,6 +36,12 @@ void divide_error(){
 	sti();
 }
 
+/* reserv
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: Clears screen and prints out the exception eror
+ *		Side Effects: Halts everything
+ */
 void reserv(){
 	//cli();
 	clear();
@@ -30,6 +50,12 @@ void reserv(){
 	sti();
 }
 
+/* nmi_interrupt
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: Clears screen and prints out the exception eror
+ *		Side Effects: Halts everything
+ */
 void nmi_interrupt(){
 	//cli();
 	clear();
@@ -38,6 +64,12 @@ void nmi_interrupt(){
 	sti();
 }
 
+/* breakp
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: Clears screen and prints out the exception eror
+ *		Side Effects: Halts everything
+ */
 void breakp(){
 	//cli();
 	clear();
@@ -46,6 +78,12 @@ void breakp(){
 	sti();
 }
 
+/* overflow
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: Clears screen and prints out the exception eror
+ *		Side Effects: Halts everything
+ */
 void overflow(){
 	//cli();
 	clear();
@@ -54,6 +92,12 @@ void overflow(){
 	sti();
 }
 
+/* bounds_range_ex
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: Clears screen and prints out the exception eror
+ *		Side Effects: Halts everything
+ */
 void bounds_range_ex(){
 	//cli();
 	clear();
@@ -62,6 +106,12 @@ void bounds_range_ex(){
 	sti();
 }
 
+/* invalid_op
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: Clears screen and prints out the exception eror
+ *		Side Effects: Halts everything
+ */
 void invalid_op(){
 	//cli();
 	clear();
@@ -70,6 +120,12 @@ void invalid_op(){
 	sti();
 }
 
+/* dev_not_avail
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: Clears screen and prints out the exception eror
+ *		Side Effects: Halts everything
+ */
 void dev_not_avail(){
 	//cli();
 	clear();
@@ -78,6 +134,12 @@ void dev_not_avail(){
 	sti();
 }
 
+/* double_fault
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: Clears screen and prints out the exception eror
+ *		Side Effects: Halts everything
+ */
 void double_fault(){
 	//cli();
 	clear();
@@ -86,6 +148,12 @@ void double_fault(){
 	sti();
 }
 
+/* invalid_tss
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: Clears screen and prints out the exception eror
+ *		Side Effects: Halts everything
+ */
 void invalid_tss(){
 	//cli();
 	clear();
@@ -94,6 +162,12 @@ void invalid_tss(){
 	sti();
 }
 
+/* seg_not_pres
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: Clears screen and prints out the exception eror
+ *		Side Effects: Halts everything
+ */
 void seg_not_pres(){
 	//cli();
 	clear();
@@ -102,6 +176,12 @@ void seg_not_pres(){
 	sti();
 }
 
+/* stack_seg_fault
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: Clears screen and prints out the exception eror
+ *		Side Effects: Halts everything
+ */
 void stack_seg_fault(){
 	//cli();
 	clear();
@@ -110,6 +190,12 @@ void stack_seg_fault(){
 	sti();
 }
 
+/* gen_prot_fault
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: Clears screen and prints out the exception eror
+ *		Side Effects: Halts everything
+ */
 void gen_prot_fault(){
 	//cli();
 	clear();
@@ -118,6 +204,12 @@ void gen_prot_fault(){
 	sti();
 }
 
+/* page_fault
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: Clears screen and prints out the exception eror
+ *		Side Effects: Halts everything
+ */
 void page_fault(){
 	//cli();
 	clear();
@@ -126,6 +218,12 @@ void page_fault(){
 	sti();
 }
 
+/* x87_fpu_fault
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: Clears screen and prints out the exception eror
+ *		Side Effects: Halts everything
+ */
 void x87_fpu_fault(){
 	//cli();
 	clear();
@@ -134,6 +232,12 @@ void x87_fpu_fault(){
 	sti();
 }
 
+/* align_check
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: Clears screen and prints out the exception eror
+ *		Side Effects: Halts everything
+ */
 void align_check(){
 	//cli();
 	clear();
@@ -142,6 +246,12 @@ void align_check(){
 	sti();
 }
 
+/* mach_check
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: Clears screen and prints out the exception eror
+ *		Side Effects: Halts everything
+ */
 void mach_check(){
 	//cli();
 	clear();
@@ -150,6 +260,12 @@ void mach_check(){
 	sti();
 }
 
+/* simd_float_exc
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: Clears screen and prints out the exception eror
+ *		Side Effects: Halts everything
+ */
 void simd_float_exc(){
 	//cli();
 	clear();
@@ -158,6 +274,12 @@ void simd_float_exc(){
 	sti();
 }
 
+/* system_call_handler
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: Clears screen and prints out the exception eror
+ *		Side Effects: Halts everything
+ */
 void system_call_handler() {
 	//hard interrupts have higher priority
 	sti();
@@ -165,6 +287,12 @@ void system_call_handler() {
 	printf("System call was called");
 }
 
+/* interrupt_dummy
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: Clears screen and prints out the exception eror
+ *		Side Effects: Halts everything
+ */
 void interrupt_dummy(){
 	//cli();
 	clear();
@@ -172,22 +300,29 @@ void interrupt_dummy(){
 	sti();
 }
 
+/* __init_idt__
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: initializing all IDT interrupt descriptors
+ *		Side Effects: mapping the first 20 interrupts to the IDT
+ */
 void __init_idt__(){
 	int i;
 
+	// sets the interrupt descriptors, skips over 9, 15, and anything less than 31 - intel reserved
 	for(i = 0; i < NUM_VEC; i++){
-		if (i == 9 || i == 15 || (i >= 20 && i <= 31)) {
+		if (i == 9 || i == 15 || (i >= 20 && i <= 31)) { 			// 9, 15, 20, 31 are intel reserved trap vectors
 			continue;
 		}
 		idt[i].seg_selector = KERNEL_CS;
-		idt[i].reserved4 = 0;
+		idt[i].reserved4 = 0;		// reserved to 0
 		idt[i].reserved3 = 0; 	// i == SYS_CALL ? 1 : 0;
 		idt[i].reserved2 = 1; 	// i == SYS_CALL ? 0 : 1;
-		idt[i].reserved1 = 1;
+		idt[i].reserved1 = 1;		// reserved to 1
 		idt[i].size = 1; 		// i == SYS_CALL ? 0 : 1;
-		idt[i].reserved0 = 0;
-		idt[i].dpl = i == SYS_CALL ? 0x3 : 0x0;
-		idt[i].present = 1;
+		idt[i].reserved0 = 0; // reserved to 0
+		idt[i].dpl = i == SYS_CALL ? 0x3 : 0x0; // SYS_CALL = 0x03, interrupts = 0x0
+		idt[i].present = 1; // valid interrupt descriptor
 	}
 
 	SET_IDT_ENTRY(idt[DE], divide_error); 			// divide by zero error
