@@ -27,9 +27,9 @@
  * to declare the interrupt finished */
 #define EOI                 0x60
 
-#define IRQ0 				0x00
-#define IRQ2 				0x02
-#define IRQ15 				0x0F
+#define IRQ0_PIC			0x00
+#define IRQ2_PIC			0x02
+#define IRQ15_PIC 			0x0F
 
 /* Externally-visible functions */
 
