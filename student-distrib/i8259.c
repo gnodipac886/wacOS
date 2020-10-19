@@ -27,8 +27,8 @@ void i8259_init(void) {
     outb(ICW2_MASTER, MASTER_8259_PORT+1); // ICW2_MASTER: Master PIC vector offset
     outb(ICW2_SLAVE, SLAVE_8259_PORT+1);   // ICW2_SLAVE: SLAVE PIC vector offset
     
-    outb(ICW3_MASTER, MASTER_8259_PORT+1);  // ICW3_MASTER: Tell Master PIC the slave PIC is on IRQ2
-    outb(ICW3_SLAVE, SLAVE_8259_PORT+1);   // ICW3_SLAVE: Tell Slave PIC its a slave on the Master PIC IRQ2.
+    outb(ICW3_MASTER, MASTER_8259_PORT+1);  // ICW3_MASTER: Tell Master PIC the slave PIC is on IRQ2_PIC
+    outb(ICW3_SLAVE, SLAVE_8259_PORT+1);   // ICW3_SLAVE: Tell Slave PIC its a slave on the Master PIC IRQ2_PIC.
     
     /* ICW4:
      *  Special fully nested mode or non special fully nested mod
@@ -49,7 +49,7 @@ void i8259_init(void) {
 
 /* Enable (unmask) the specified IRQ */
 void enable_irq(uint32_t irq_num) {
-    if(irq_num < IRQ0 || irq_num > IRQ15){
+    if(irq_num < IRQ0_PIC || irq_num > IRQ15_PIC){
         return;
     }
     /* bit "x" is set to 0 if pin "x" (master or slave PIC) is enabled*/
@@ -68,7 +68,7 @@ void enable_irq(uint32_t irq_num) {
 
 /* Disable (mask) the specified IRQ */
 void disable_irq(uint32_t irq_num) {
-    if(irq_num < IRQ0 || irq_num > IRQ15){
+    if(irq_num < IRQ0_PIC || irq_num > IRQ15_PIC){
         return;
     }
     /* bit "x" is set to 1 if pin "x" (master or slave PIC) is enabled*/
@@ -87,14 +87,14 @@ void disable_irq(uint32_t irq_num) {
 
 /* Send end-of-interrupt signal for the specified IRQ */
 void send_eoi(uint32_t irq_num) {
-    if(irq_num < IRQ0 || irq_num > IRQ15){
+    if(irq_num < IRQ0_PIC || irq_num > IRQ15_PIC){
         return;
     }
     /*if IRQ came from slave, then send EOI signal to both master and slave.
       else only send EOI to master.*/
     if(irq_num >= 8){ // if IRQ came from slave, then send EOI signal to slave.
         outb((irq_num - 8) | EOI, SLAVE_8259_PORT);
-        outb(IRQ2 | EOI, MASTER_8259_PORT);
+        outb(IRQ2_PIC | EOI, MASTER_8259_PORT);
     }
     else{
         outb(irq_num | EOI, MASTER_8259_PORT); // Send EOI to master.
