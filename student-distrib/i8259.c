@@ -58,7 +58,7 @@ void enable_irq(uint32_t irq_num) {
     /* bit "x" is set to 0 if pin "x" (master or slave PIC) is enabled*/
     uint8_t x;
     if(irq_num>=8){ //irq is 8~15, which is a slave mask.
-        x = irq_num-8;
+        x = irq_num-8;  //irq_num -8 = slave irq number
         slave_mask = slave_mask & ~(0x1<<x);
         //outb()          // to do
         outb(slave_mask, SLAVE_8259_PORT+1);
@@ -82,7 +82,7 @@ void disable_irq(uint32_t irq_num) {
     /* bit "x" is set to 1 if pin "x" (master or slave PIC) is enabled*/
     uint8_t x;
     if(irq_num>=8){ //irq is 8~15, which is a slave mask.
-        x = irq_num-8;
+        x = irq_num-8;  //irq_num -8 = slave irq number 
         slave_mask = slave_mask | (0x1<<x);
         outb(slave_mask, SLAVE_8259_PORT+1);
         // here too
