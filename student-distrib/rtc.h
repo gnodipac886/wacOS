@@ -8,6 +8,6 @@
 #define RTC_STATUS_REG  0x80
 #define RTC_IRQ         0x08
 /* rtc_init: Initializes RTC */
-extern void rtc_init();
-extern void handle_rtc_interrupt();
+void rtc_init();
+void handle_rtc_interrupt();
 #endif /* _RTC_H */
