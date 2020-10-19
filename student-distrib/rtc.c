@@ -8,7 +8,7 @@
  * 		Function: Initializes rtc and writes to the correct ports
  *		Side Effects: enables interrupt on PIC
  */
-void rtc_init(){
+void __rtc_init__(){
     cli();
     /*set IRQ8 */
     outb(RTC_STATUS_REG+0xB, RTC_IO_PORT);  // Select RTC status register B (offset = 0xB)

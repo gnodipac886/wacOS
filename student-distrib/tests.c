@@ -59,7 +59,7 @@ int divide_error_test(){
 	int y;
 
 	i = 0;
-	y = 2 / i;
+	y = 2 / i;						// divide random 2 by 0
 	return 0;
 }
 
@@ -73,7 +73,7 @@ int invalid_opcode_test() {
 	TEST_HEADER;
 
 	asm volatile(
-		"ud2;"
+		"ud2;"									// run the invalid opcode
 		:
 		:
 		: "eax"
@@ -91,9 +91,9 @@ int overflow_test() {
 	TEST_HEADER;
 
 	asm volatile(
-		"movb 	$127, 	%%al;"
-		"addb 	$127, 	%%al;"
-		"into;"
+		"movb 	$127, 	%%al;"				// try to add 127 in 8 bit al register to get OF flag
+		"addb 	$127, 	%%al;"				// try to add 127 in 8 bit al register to get OF flag
+		"into;"												// test for OF flag
 		:
 		:
 		: "eax"
@@ -109,7 +109,7 @@ int overflow_test() {
  */
 int bound_range_test() {
 	// random
-	int arr[2] = {1, 2};
+	int arr[2] = {1, 2};						// random array
 	// checking for out of bound
 	asm(
 		"movl %0, %%eax;"	// move upper bound address of the array into eax
@@ -139,8 +139,8 @@ int vid_mem_paging_test() {
 	int * VM_addr;
 
 	for (i = 0; i < 9; i++){
-		VM_addr = (int *)(0x000B8000 + i);
-		VM_data = *VM_addr;
+		VM_addr = (int *)(0x000B8000 + i);					// 0x000B8000 for video memory location
+		VM_data = *VM_addr;													// dereference the pointer
 	}
 
 	return PASS;
@@ -161,9 +161,9 @@ int kernel_paging_test() {
 	int i, kernel_data;
 	int * kernel_addr;
 
-	for (i = 0; i < 9; i++){
-		kernel_addr = (int *)(0x00400000 + i);
-		kernel_data = *kernel_addr;
+	for (i = 0; i < 9; i++){									// loop through 9 different memory locations to be sure
+		kernel_addr = (int *)(0x00400000 + i);	// 0x00400000 for kernel memory location
+		kernel_data = *kernel_addr;							// dereference it
 	}
 
 	return PASS;
@@ -182,8 +182,8 @@ int unused_paging_test() {
 
 	int * ptr;			//not in Video Memory nor Kernel page range
 	int x;
-	ptr = (int *)(0x080000B);
-	x = *ptr;
+	ptr = (int *)(0x080000B); // saving random pointer
+	x = *ptr;				// dereferences the random pointer
 
 	return 1;
 
@@ -199,21 +199,14 @@ int unused_paging_test() {
  *		Side Effects: none
  */
 /*
-<<<<<<< HEAD
-int system_call_test()
-=======
+
 int system_call_test() {
->>>>>>> 9c6682e623d7506bee170819340d835f2e3478cd
 	asm volatile(
 		"movl $0x80, %%eax;"
 		"call (%%eax);"
 		: 								//no output operands yet
 		:								//no input operands yet
-<<<<<<< HEAD
 		: "memory", "%eax", "%eip"		//clobbered registers
-=======
-		: "memory", "%eax", "%eip"		//clobbered registers	
->>>>>>> 9c6682e623d7506bee170819340d835f2e3478cd
 	);
 
 	or something like.... asm volatile("int $0x80");
@@ -232,8 +225,8 @@ int deref_NULL_ptr_test(){
 	TEST_HEADER;
 	int * ptr;
 	int x;
-	ptr = NULL;
-	x = *ptr;
+	ptr = NULL; 		// saving NULL into pointer
+	x = *ptr;				// trying to deference the NULL pointer
 
 	return 1;
 }
@@ -254,7 +247,7 @@ void launch_tests(){
 	// TEST_OUTPUT("bound range test", bound_range_test());
 	// TEST_OUTPUT("video memory paging test", vid_mem_paging_test());
 	// TEST_OUTPUT("kernel paging test", kernel_paging_test());
-	
+
 	// TEST_OUTPUT("unused page page fault test", unused_paging_test());
 
 	// launch your tests here

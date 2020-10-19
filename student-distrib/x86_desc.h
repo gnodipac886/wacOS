@@ -128,7 +128,7 @@ typedef struct page_desc{
 			uint32_t size 				: 1; 		// 0 for 4kB, 1 for 4MB
 			uint32_t global 			: 1;		// set for kernel pages only, "think shared memory for all"
 			uint32_t available 			: 3; 		// not used in out case
-			uint32_t addr 				: 20;
+			uint32_t addr 				: 20;			// 20 bit address may include reserved and PAT, set to 0 anyway
 		} __attribute__ ((packed));
 	};
 } page_desc_t;

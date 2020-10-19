@@ -311,7 +311,7 @@ void __init_idt__(){
 
 	// sets the interrupt descriptors, skips over 9, 15, and anything less than 31 - intel reserved
 	for(i = 0; i < NUM_VEC; i++){
-		if (i == 9 || i == 15 || (i >= 20 && i <= 31)) {
+		if (i == 9 || i == 15 || (i >= 20 && i <= 31)) { 			// 9, 15, 20, 31 are intel reserved trap vectors
 			continue;
 		}
 		idt[i].seg_selector = KERNEL_CS;
