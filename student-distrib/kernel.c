@@ -154,7 +154,7 @@ void entry(unsigned long magic, unsigned long addr) {
 
 	/* Initialize devices, memory, filesystem, enable device interrupts on the
 	 * PIC, any other initialization stuff... */
-	rtc_init();			 	// Initialize rtc
+	__rtc_init__();			 	// Initialize rtc
 
 	__keyboard_init__();	// enable keyboard interrupt
 	__init_paging__();		// enable paging
