@@ -1,5 +1,5 @@
-#ifndef _ASSEMBLY_LINKAGE_H_
-#define _ASSEMBLY_LINKAGE_H_
+extern keyboard_interrupt_stub
+extern rtc_interrupt_stub
 
 #ifndef ASM
   // void keyboard_interrupt_stub();
