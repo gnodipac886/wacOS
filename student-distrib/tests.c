@@ -59,34 +59,17 @@ int divide_error_test(){
 }
 
 
-
+/*
 int invalid_opcode_test() {
-	TEST_HEADER;
 
-	asm volatile(
-		"ud2;"
-		:
-		:
-		: "eax"
-		);
 	return 0;
 }
-
-
+*/
+/*
 int overflow_test() {
-	TEST_HEADER;
-
-	asm volatile(
-		"movb 	$127, 	%%al;"
-		"addb 	$127, 	%%al;"
-		"into;"
-		:
-		:
-		: "eax"
-		);
 	return 0;
 }
-
+*/
 /*
 int bound_range_test() {
 	return 0;
@@ -99,8 +82,8 @@ int system_call_test() {
 }
 */
 
+/*
 int deref_NULL_ptr_test(){
-	TEST_HEADER;
 	int * ptr;
 	int x;
 	ptr = NULL;
@@ -108,6 +91,7 @@ int deref_NULL_ptr_test(){
 
 	return 1;
 }
+*/
 
 /* Checkpoint 2 tests */
 /* Checkpoint 3 tests */
@@ -119,8 +103,7 @@ int deref_NULL_ptr_test(){
 void launch_tests(){
 	//TEST_OUTPUT("idt_test", idt_test());
 	//TEST_OUTPUT("divide by 0 test", divide_error_test());
-	// TEST_OUTPUT("invalid_opcode_test", invalid_opcode_test());
-	TEST_OUTPUT("overflow_test", overflow_test());
+	// test_interrupts();
 
 	// launch your tests here
 }
