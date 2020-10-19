@@ -70,11 +70,25 @@ int overflow_test() {
 	return 0;
 }
 */
-/*
+
 int bound_range_test() {
+	// random
+	int arr[2] = {1, 2};
+	// checking for out of bound
+	asm(
+		"movl %0, %%eax;"	// move upper bound address of the array into eax
+		"movl $3, %%ebx;"			// move out of bound index into ebx
+
+		"bound %%ebx, (%%eax)"		// checking for bounds
+
+		:							// no outputs
+		:"r"(&arr) 		// input is array
+		:"%eax", "%ebx"				// clobbered register
+		);
+
 	return 0;
 }
-*/
+
 
 /*
 int system_call_test() {
@@ -104,7 +118,7 @@ void launch_tests(){
 	//TEST_OUTPUT("idt_test", idt_test());
 	//TEST_OUTPUT("divide by 0 test", divide_error_test());
 	// test_interrupts();
+	//TEST_OUTPUT("bound range test", bound_range_test());
 
 	// launch your tests here
 }
-
