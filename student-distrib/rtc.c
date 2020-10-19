@@ -20,11 +20,12 @@ void __rtc_init__(){
     sti();
 }
 
-/* handle_rtc_interrupt
- * 		Inputs: none
- * 		Return Value: none
- * 		Function: handles rtc interrupt and writes to the ports
- *		Side Effects: Tests the interrupts
+/* handle_rtc_interrupt 
+ *      Inputs: None
+ *      Return Value: None
+ *      Function: Cleans up interrupt after its been processed, then 
+ *          readies the RTC register for another interrupt.
+ *      Side Effects: none     
  */
 void handle_rtc_interrupt(){
     cli();
@@ -39,6 +40,4 @@ void handle_rtc_interrupt(){
 	sti();
 }
 
-/* void rtc_freq_set(uint32_t){
 
-} */
