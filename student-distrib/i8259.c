@@ -9,12 +9,13 @@
 uint8_t master_mask; /* IRQs 0-7  */
 uint8_t slave_mask;  /* IRQs 8-15 */
 
-/* Initialize the 8259 PIC */
+/* i8259_init 
+ *      Inputs: None
+ *      Return Value: None
+ *      Function: Initialize the i8259 PIC. Load ICW, setup master/slave pic.s
+ *      Side Effects: none     
+ */
 void i8259_init(void) {
-    /* call spin lock (uncomment in the future)
-    unsigned long flags;
-    spin_lock_irqsave(&i8259_lock, flags);
-    */
 
     // save mask
     // uint32_t _master_mask_save, _slave_mask_save;
@@ -44,12 +45,14 @@ void i8259_init(void) {
     outb(master_mask, MASTER_DATA);
     outb(slave_mask, SLAVE_DATA);
 
-    /* release spin lock (uncomment later)
-    spin_unlock_irqrestore(&i8259_lock, flags);
-     */
 }
 
-/* Enable (unmask) the specified IRQ */
+/* enable_irq 
+ *      Inputs: IRQ number
+ *      Return Value: None
+ *      Function: Enable (unmask) the specified IRQ
+ *      Side Effects: none     
+ */
 void enable_irq(uint32_t irq_num) {
     if(irq_num < IRQ0_PIC || irq_num > IRQ15_PIC){
         return;
@@ -70,7 +73,12 @@ void enable_irq(uint32_t irq_num) {
     }
 }
 
-/* Disable (mask) the specified IRQ */
+/* disable_irq 
+ *      Inputs: IRQ number
+ *      Return Value: None
+ *      Function: Disable (mask) the specified IRQ
+ *      Side Effects: none     
+ */
 void disable_irq(uint32_t irq_num) {
     if(irq_num < IRQ0_PIC || irq_num > IRQ15_PIC){
         return;
@@ -91,7 +99,12 @@ void disable_irq(uint32_t irq_num) {
     }
 }
 
-/* Send end-of-interrupt signal for the specified IRQ */
+/* send_eoi 
+ *      Inputs: IRQ number
+ *      Return Value: None
+ *      Function: Send end-of-interrupt signal for the specified IRQ
+ *      Side Effects: none     
+ */
 void send_eoi(uint32_t irq_num) {
     if(irq_num < IRQ0_PIC || irq_num > IRQ15_PIC){
         return;
