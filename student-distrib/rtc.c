@@ -16,10 +16,7 @@ void rtc_init(){
 
 /* handle_rtc_interrupt */
 void handle_rtc_interrupt(){
-    sti();
-	clear();
-	printf("RTC Interrupt\n");
-
+    cli();
 	send_eoi(RTC_IRQ);
 
     /* Clear register C to allow another interrupt.*/
