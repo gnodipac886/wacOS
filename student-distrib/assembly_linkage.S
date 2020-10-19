@@ -1,22 +1,19 @@
 #include "assembly_linkage.h"
-#include "keyboard.h"
 .globl keyboard_interrupt_stub, rtc_interrupt_stub
-;.extern handle_rtc_interrupt, handle_keyboard_interrupt
+
 keyboard_interrupt_stub:
-    pushl -2                                    /*Negative num for keyboard IRQ1*/
+    pushl $-2                                    /*Negative num for keyboard IRQ1*/
     jmp common_interrupt
 
 rtc_interrupt_stub:
-    pushl -9                                    /*Negative num for rtc IRQ8*/
+    pushl $-9                                    /*Negative num for rtc IRQ8*/
     jmp common_interrupt
 
 common_interrupt:
     pushal
     movl 32(%esp), %eax                        /*Get neg IRQ num on Kernel stack*/
     notl %eax                                   /*Negate for offset from IRQ0 Vector #*/
-    cli
     call interrupt_handler_jump(,%eax,4)
-    sti
     popal
     addl $4, %esp
     iret                                       /*return from interrupt*/
