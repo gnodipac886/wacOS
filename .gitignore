@@ -112,3 +112,7 @@ dkms.conf
 *.qcow
 source/
 
+# Others
+*.dep
+*.
+/bootimg
