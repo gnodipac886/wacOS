@@ -181,10 +181,10 @@ void __init_idt__(){
 		}
 		idt[i].seg_selector = KERNEL_CS;
 		idt[i].reserved4 = 0;
-		idt[i].reserved3 = i == SYS_CALL ? 1 : 0;
-		idt[i].reserved2 = i == SYS_CALL ? 0 : 1;
+		idt[i].reserved3 = i = 0; 	// == SYS_CALL ? 1 : 0;
+		idt[i].reserved2 = i = 1; 	//== SYS_CALL ? 0 : 1;
 		idt[i].reserved1 = 1;
-		idt[i].size = i == SYS_CALL ? 0 : 1;
+		idt[i].size = i = 1; 		//== SYS_CALL ? 0 : 1;
 		idt[i].reserved0 = 0;
 		idt[i].dpl = i == SYS_CALL ? 0x3 : 0x0;
 		idt[i].present = 1;
