@@ -45,7 +45,7 @@ int idt_test(){
 	return result;
 }
 
-// add more tests here
+
 
 int divide_error_test(){
 	TEST_HEADER;
@@ -58,7 +58,32 @@ int divide_error_test(){
 	return 0;
 }
 
-int deref_NULL_ptr(){
+
+/*
+int invalid_opcode_test() {
+
+	return 0;
+}
+*/
+/*
+int overflow_test() {
+	return 0;
+}
+*/
+/*
+int bound_range_test() {
+	return 0;
+}
+*/
+
+/*
+int system_call_test() {
+	return 0;
+}
+*/
+
+/*
+int deref_NULL_ptr_test(){
 	int * ptr;
 	int x;
 	ptr = NULL;
@@ -66,13 +91,7 @@ int deref_NULL_ptr(){
 
 	return 1;
 }
-
-// idt test
-// divide error
-// invalid opcode
-// overflow test
-// bound range test
-// system call test
+*/
 
 /* Checkpoint 2 tests */
 /* Checkpoint 3 tests */
@@ -82,9 +101,8 @@ int deref_NULL_ptr(){
 
 /* Test suite entry point */
 void launch_tests(){
-	// TEST_OUTPUT("idt_test", idt_test());
+	//TEST_OUTPUT("idt_test", idt_test());
 	TEST_OUTPUT("divide by 0 test", divide_error_test());
-	// TEST_OUTPUT("Deref NULL ptr test", deref_NULL_ptr());
 
 
 	// launch your tests here
