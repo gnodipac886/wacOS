@@ -4,8 +4,16 @@
 #include "lib.h"
 #include "keyboard.h"
 #include "rtc.h"
+// functions from assembly_linkage
 extern void keyboard_interrupt_stub();
 extern void rtc_interrupt_stub();
+
+/* exception
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: Once reached an exception, kills everything else
+ *		Side Effects: none
+ */
 void exception() {
 	//disable interrupts
 	//squash(?) user-level program
@@ -14,163 +22,312 @@ void exception() {
 	while (1);
 }
 
+/* divide_error
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: Clears screen and prints out the exception eror
+ *		Side Effects: Halts everything
+ */
 void divide_error(){
-	cli();
+	//cli();
 	clear();
 	printf("Exception: Divides 0 error\n");
 	exception();
+	sti();
 }
 
+/* reserv
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: Clears screen and prints out the exception eror
+ *		Side Effects: Halts everything
+ */
 void reserv(){
-	cli();
+	//cli();
 	clear();
 	printf("Exception: Reserved\n");
 	exception();
+	sti();
 }
 
+/* nmi_interrupt
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: Clears screen and prints out the exception eror
+ *		Side Effects: Halts everything
+ */
 void nmi_interrupt(){
-	cli();
+	//cli();
 	clear();
 	printf("Exception: NMI Interrupt\n");
 	exception();
+	sti();
 }
 
+/* breakp
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: Clears screen and prints out the exception eror
+ *		Side Effects: Halts everything
+ */
 void breakp(){
-	cli();
+	//cli();
 	clear();
 	printf("Exception: Breakpoint\n");
 	exception();
+	sti();
 }
 
+/* overflow
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: Clears screen and prints out the exception eror
+ *		Side Effects: Halts everything
+ */
 void overflow(){
-	cli();
+	//cli();
 	clear();
 	printf("Exception: Overflow\n");
 	exception();
+	sti();
 }
 
+/* bounds_range_ex
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: Clears screen and prints out the exception eror
+ *		Side Effects: Halts everything
+ */
 void bounds_range_ex(){
-	cli();
+	//cli();
 	clear();
 	printf("Exception: Bounds range exceeded\n");
 	exception();
+	sti();
 }
 
+/* invalid_op
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: Clears screen and prints out the exception eror
+ *		Side Effects: Halts everything
+ */
 void invalid_op(){
-	cli();
+	//cli();
 	clear();
 	printf("Exception: Invalid opcode\n");
 	exception();
+	sti();
 }
 
+/* dev_not_avail
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: Clears screen and prints out the exception eror
+ *		Side Effects: Halts everything
+ */
 void dev_not_avail(){
-	cli();
+	//cli();
 	clear();
 	printf("Exception: Device not available\n");
 	exception();
+	sti();
 }
 
+/* double_fault
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: Clears screen and prints out the exception eror
+ *		Side Effects: Halts everything
+ */
 void double_fault(){
-	cli();
+	//cli();
 	clear();
 	printf("Exception: Double fault\n");
 	exception();
+	sti();
 }
 
+/* invalid_tss
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: Clears screen and prints out the exception eror
+ *		Side Effects: Halts everything
+ */
 void invalid_tss(){
-	cli();
+	//cli();
 	clear();
 	printf("Exception: Invalid TSS\n");
 	exception();
+	sti();
 }
 
+/* seg_not_pres
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: Clears screen and prints out the exception eror
+ *		Side Effects: Halts everything
+ */
 void seg_not_pres(){
-	cli();
+	//cli();
 	clear();
 	printf("Exception: Segment not present\n");
 	exception();
+	sti();
 }
 
+/* stack_seg_fault
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: Clears screen and prints out the exception eror
+ *		Side Effects: Halts everything
+ */
 void stack_seg_fault(){
-	cli();
+	//cli();
 	clear();
 	printf("Exception: Stack-segment fault\n");
 	exception();
+	sti();
 }
 
+/* gen_prot_fault
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: Clears screen and prints out the exception eror
+ *		Side Effects: Halts everything
+ */
 void gen_prot_fault(){
-	cli();
+	//cli();
 	clear();
 	printf("Exception: General protection fault\n");
 	exception();
+	sti();
 }
 
+/* page_fault
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: Clears screen and prints out the exception eror
+ *		Side Effects: Halts everything
+ */
 void page_fault(){
-	cli();
+	//cli();
 	clear();
 	printf("Exception: Page fault\n");
 	exception();
+	sti();
 }
 
+/* x87_fpu_fault
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: Clears screen and prints out the exception eror
+ *		Side Effects: Halts everything
+ */
 void x87_fpu_fault(){
-	cli();
+	//cli();
 	clear();
 	printf("Exception: x87 FPU error\n");
 	exception();
+	sti();
 }
 
+/* align_check
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: Clears screen and prints out the exception eror
+ *		Side Effects: Halts everything
+ */
 void align_check(){
-	cli();
+	//cli();
 	clear();
 	printf("Exception: Alignment check\n");
 	exception();
+	sti();
 }
 
+/* mach_check
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: Clears screen and prints out the exception eror
+ *		Side Effects: Halts everything
+ */
 void mach_check(){
-	cli();
+	//cli();
 	clear();
 	printf("Exception: Machine check\n");
 	exception();
+	sti();
 }
 
+/* simd_float_exc
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: Clears screen and prints out the exception eror
+ *		Side Effects: Halts everything
+ */
 void simd_float_exc(){
-	cli();
+	//cli();
 	clear();
 	printf("Exception: SIMD Floating-Point Exception\n");
 	exception();
+	sti();
 }
 
+/* system_call_handler
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: Clears screen and prints out the exception eror
+ *		Side Effects: Halts everything
+ */
 void system_call_handler() {
 	//hard interrupts have higher priority
+	sti();
 	clear();
 	printf("System call was called");
 }
 
+/* interrupt_dummy
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: Clears screen and prints out the exception eror
+ *		Side Effects: Halts everything
+ */
 void interrupt_dummy(){
-	cli();
+	//cli();
 	clear();
 	printf("You haven't set up this interrupt yet\n");
 	sti();
 }
 
+/* __init_idt__
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: initializing all IDT interrupt descriptors
+ *		Side Effects: mapping the first 20 interrupts to the IDT
+ */
 void __init_idt__(){
 	int i;
 
+	// sets the interrupt descriptors, skips over 9, 15, and anything less than 31 - intel reserved
 	for(i = 0; i < NUM_VEC; i++){
+		if (i == 9 || i == 15 || (i >= 20 && i <= 31)) { 			// 9, 15, 20, 31 are intel reserved trap vectors
+			continue;
+		}
 		idt[i].seg_selector = KERNEL_CS;
-		idt[i].reserved4 = 0;
-		idt[i].reserved3 = (i == 2 || (i >= IRQ0_IDT && i <= IRQ15_IDT)) ? 0 : 1; 	// #2 is an interrupt
-		idt[i].reserved2 = 1;
-		idt[i].reserved1 = 1;
-		idt[i].size = 1;
-		idt[i].reserved0 = 0;
-		idt[i].dpl = i == SYS_CALL ? 0x3 : 0x0;
-		idt[i].present = 1;
+		idt[i].reserved4 = 0;		// reserved to 0
+		idt[i].reserved3 = 0; 	// i == SYS_CALL ? 1 : 0;
+		idt[i].reserved2 = 1; 	// i == SYS_CALL ? 0 : 1;
+		idt[i].reserved1 = 1;		// reserved to 1
+		idt[i].size = 1; 		// i == SYS_CALL ? 0 : 1;
+		idt[i].reserved0 = 0; // reserved to 0
+		idt[i].dpl = i == SYS_CALL ? 0x3 : 0x0; // SYS_CALL = 0x03, interrupts = 0x0
+		idt[i].present = 1; // valid interrupt descriptor
 	}
 
 	SET_IDT_ENTRY(idt[DE], divide_error); 			// divide by zero error
 	SET_IDT_ENTRY(idt[DB], reserv); 				// reserved
-	SET_IDT_ENTRY(idt[MI], nmi_interrupt); 			// NMI Interrupt
+	SET_IDT_ENTRY(idt[MI], nmi_interrupt); 			// NMI Interrupt........................
 	SET_IDT_ENTRY(idt[BP], breakp); 				// Breakpoint
 	SET_IDT_ENTRY(idt[OF], overflow); 				// Overflow
 	SET_IDT_ENTRY(idt[BR], bounds_range_ex); 		// Bounds range exceeded
@@ -188,4 +345,5 @@ void __init_idt__(){
 	SET_IDT_ENTRY(idt[XF], simd_float_exc); 		// SIMD Floating-Point Exception
 	SET_IDT_ENTRY(idt[IRQ1_IDT], keyboard_interrupt_stub); 		// handle keyboard interrupt
 	SET_IDT_ENTRY(idt[IRQ8_IDT], rtc_interrupt_stub); 		// handle rtc interrupt
+	SET_IDT_ENTRY(idt[SYS_CALL], system_call_handler);	//handle system call
 }

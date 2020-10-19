@@ -1,14 +1,17 @@
 #include "assembly_linkage.h"
 .globl keyboard_interrupt_stub, rtc_interrupt_stub
 
+/* linkage for keyboard interupts*/
 keyboard_interrupt_stub:
     pushl $-2                                    /*Negative num for keyboard IRQ1*/
     jmp common_interrupt
 
+/* linkage for rtc interupts*/
 rtc_interrupt_stub:
     pushl $-9                                    /*Negative num for rtc IRQ8*/
     jmp common_interrupt
 
+/* all interrupts */
 common_interrupt:
     pushal
     movl 32(%esp), %eax                        /*Get neg IRQ num on Kernel stack*/
@@ -18,6 +21,7 @@ common_interrupt:
     addl $4, %esp
     iret                                       /*return from interrupt*/
 
+/* handles the interrupt pointers for Master/Slave PIC */
 interrupt_handler_jump:
     .long 0                                    /*handler ptrs for IR lines of Master PIC*/
     .long handle_keyboard_interrupt
@@ -28,7 +32,7 @@ interrupt_handler_jump:
     .long 0
     .long 0
 
-    .long handle_rtc_interrupt               /*handler ptrs for IR lines of Slave PIC*/
+    .long handle_rtc_interrupt                  /*handler ptrs for IR lines of Slave PIC*/
     .long 0
     .long 0
     .long 0
@@ -36,4 +40,3 @@ interrupt_handler_jump:
     .long 0
     .long 0
     .long 0
-
