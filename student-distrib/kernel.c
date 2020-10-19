@@ -142,7 +142,7 @@ void entry(unsigned long magic, unsigned long addr) {
 	}
 
 
-	//cli();
+	cli();
 
 	/* Mask all interrupts on PIC */
 	uint32_t mask_i;
@@ -156,7 +156,6 @@ void entry(unsigned long magic, unsigned long addr) {
 	/* Initialize devices, memory, filesystem, enable device interrupts on the
 	 * PIC, any other initialization stuff... */
 	rtc_init();			 	// Initialize rtc
-	enable_irq(RTC_IRQ);	// Enable device on PIC 
 
 	__keyboard_init__();	// enable keyboard interrupt
 	__init_paging__();		// enable paging
