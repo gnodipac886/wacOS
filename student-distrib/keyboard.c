@@ -1,6 +1,7 @@
 #include "keyboard.h"
 #include "lib.h"
 #include "i8259.h"
+
 // 0x02 - 0x0D from 1 to =
 char kb_sc_row0_nums[] = {'1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '='};
 // 0x10 - 0x1B from q to ]
@@ -27,7 +28,7 @@ void __keyboard_init__(){
  *		Side Effects: none
  */
 void handle_keyboard_interrupt(){
-	cli();
+	sti();
 
 	char kb_char;
 	char keyboard_input = inb(KB_PORT);
@@ -35,7 +36,7 @@ void handle_keyboard_interrupt(){
 	// space pressed = 0x39
 	if(keyboard_input == 0x39){
 		kb_char = ' ';
-	} else if(keyboard_input <= 0x35 & keyboard_input > 0x01){
+	} else if((keyboard_input <= 0x35) && (keyboard_input > 0x01)){
 		// between 0x35 = /, 0x01 = esc on keyboard
 
 				// between 0x02 = 1 and 0x0D = "="
@@ -52,16 +53,16 @@ void handle_keyboard_interrupt(){
 					kb_char = kb_sc_row3_let[keyboard_input - 0x2B]; // 0x2C for the offset mapping in the array
 				} else{
 					send_eoi(KB_IRQ);
-					sti();
+					cli();
 					return;
 				}
 	} else{
 		send_eoi(KB_IRQ);
-		sti();
+		cli();
 		return;
 		}
 	printf("%c", kb_char);
 	send_eoi(KB_IRQ);
-	sti();
+	cli();
 	return;
 }

@@ -24,7 +24,7 @@
 
 #define SYS_CALL 	0x80
 #define IRQ0 		0x20
-#define IRQ1 		0x21    /*keyboard IR line*/  
+#define IRQ1 		0x21    /*keyboard IR line*/
 #define IRQ8        0x28    /*rtc IR line*/
 #define IRQ15 		0x2F
 

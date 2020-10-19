@@ -6,9 +6,11 @@
 
 #define BUFFER_RS 0xFF // keyboard buffer overrun
 
+#ifndef ASM
 // initialization of the keyboard for interrupt
-extern void __keyboard_init__();
+//void __keyboard_init__();
 // takes in the input and display to screen
-extern void handle_keyboard_interrupt();
+//void handle_keyboard_interrupt();
+#endif /* ASM */
 
 #endif /* _KEYBOARD_H */

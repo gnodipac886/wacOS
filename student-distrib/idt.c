@@ -4,7 +4,8 @@
 #include "lib.h"
 #include "keyboard.h"
 #include "rtc.h"
-
+extern void keyboard_interrupt_stub();
+extern void rtc_interrupt_stub();
 void exception() {
 	//disable interrupts
 	//squash(?) user-level program
@@ -15,7 +16,8 @@ void exception() {
 
 void divide_error(){
 	cli();
-	printf("Hello Exception: dividess error\n");
+	clear();
+	printf("Exception: Divides 0 error\n");
 	exception();
 }
 
