@@ -25,7 +25,7 @@
 #define SYS_CALL 	0x80
 #define IRQ0_IDT	0x20
 #define IRQ1_IDT	0x21
-#define IRQ8        0x28    /*rtc IR line*/
+#define IRQ8_IDT  0x28    /*rtc IR line*/
 #define IRQ15_IDT 	0x2F
 
 #ifndef ASM
