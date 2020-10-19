@@ -22,13 +22,37 @@
 #define MC 0x12     /*Machine Check*/
 #define XF 0x13     /*SIMD Floating-Point Exception*/
 
-#define SYS_CALL 	0x80
-#define IRQ0_IDT	0x20
-#define IRQ1_IDT	0x21
+#define SYS_CALL 	0x80  /*system call interrupt*/
+#define IRQ0_IDT	0x20   /*IRQ0 port for IDT*/
+#define IRQ1_IDT	0x21   /* IRQ1 port for IDT*/
 #define IRQ8_IDT  0x28    /*rtc IR line*/
-#define IRQ15_IDT 	0x2F
+#define IRQ15_IDT 	0x2F /*IRQ15 port for IDT*/
+
+/*
+void divide_error();
+void reserv();
+void nmi_interrupt();
+void breakp();
+void overflow();
+void bounds_range_ex();
+void invalid_op();
+void dev_not_avail();
+void double_fault();
+void invalid_tss();
+void seg_not_pres();
+void stack_seg_fault();
+void gen_prot_fault();
+void page_fault();
+void x87_fpu_fault();
+void align_check();
+void mach_check();
+void simd_float_exc();
+void system_call_handler();
+void interrupt_dummy();
+*/
 
 #ifndef ASM
+/* initialization for IDT */
 extern void __init_idt__();
 #endif /* ASM */
 

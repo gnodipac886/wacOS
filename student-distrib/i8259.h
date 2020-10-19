@@ -31,6 +31,9 @@
 #define IRQ2_PIC			0x02
 #define IRQ15_PIC 			0x0F
 
+#define INIT_MASK_ALL 		0xFF
+#define UNMASK_IRQ2			0xFB
+
 /* Externally-visible functions */
 
 /* Initialize both PICs */
@@ -41,5 +44,7 @@ void enable_irq(uint32_t irq_num);
 void disable_irq(uint32_t irq_num);
 /* Send end-of-interrupt signal for the specified IRQ */
 void send_eoi(uint32_t irq_num);
+
+extern void test_interrupts(void);
 
 #endif /* _I8259_H */

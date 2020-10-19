@@ -46,7 +46,12 @@ int idt_test(){
 }
 
 
-
+/* divide_error_test
+ * 		Inputs: none
+ * 		Return Value: 0
+ * 		Function: Tests for the divide by 0 error interrupt
+ *		Side Effects: none
+ */
 int divide_error_test(){
 	TEST_HEADER;
 
@@ -58,7 +63,12 @@ int divide_error_test(){
 	return 0;
 }
 
-
+/* invalid_opcode_test
+ * 		Inputs: none
+ * 		Return Value: 0
+ * 		Function: Tests for invalid opcode interrupt
+ *		Side Effects: none
+ */
 int invalid_opcode_test() {
 	TEST_HEADER;
 
@@ -71,6 +81,12 @@ int invalid_opcode_test() {
 	return 0;
 }
 
+/* overflow_test
+ * 		Inputs: none
+ * 		Return Value: 0
+ * 		Function: Test for overflow interrupt
+ *		Side Effects: none
+ */
 int overflow_test() {
 	TEST_HEADER;
 
@@ -85,6 +101,12 @@ int overflow_test() {
 	return 0;
 }
 
+/* bound_range_test
+ * 		Inputs: none
+ * 		Return Value: 0
+ * 		Function: Test for bound out of range interrupt using bound opcode
+ *		Side Effects: none
+ */
 int bound_range_test() {
 	// random
 	int arr[2] = {1, 2};
@@ -103,14 +125,34 @@ int bound_range_test() {
 	return 0;
 }
 
+// info mem
 
+/* system_call_test
+ * 		Inputs: none
+ * 		Return Value: 0
+ * 		Function: Test for system call functionality
+ *		Side Effects: none
+ */
 /*
-int system_call_test() {
+int system_call_test()
+	asm volatile(
+		"movl $0x80, %%eax;"
+		"call (%%eax);"
+		: 								//no output operands yet
+		:								//no input operands yet
+		: "memory", "%eax", "%eip"		//clobbered registers
+	);
+
 	return 0;
 }
 */
 
-
+/* deref_NULL_ptr_test
+ * 		Inputs: none
+ * 		Return Value: 1
+ * 		Function: Tests paging, by deferencing a null pointer
+ *		Side Effects: none
+ */
 int deref_NULL_ptr_test(){
 	TEST_HEADER;
 	int * ptr;
