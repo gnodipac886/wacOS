@@ -1,2 +1,3 @@
-extern void keyboard_interrupt_stub();
-extern void rtc_interrupt_stub();
+extern keyboard_interrupt_stub
+extern rtc_interrupt_stub
+

@@ -1,5 +1,8 @@
 #include "assembly_linkage.h"
 
+.global keyboard_interrupt_stub
+.global rtc_interrupt_stub
+
 keyboard_interrupt_stub:
     pushl -2                                    /*Negative num for keyboard IRQ1*/
     jmp common_interrupt
@@ -37,3 +40,4 @@ interrupt_handler_jump:
     .long 0
     .long 0
     .long 0
+
