@@ -23,7 +23,7 @@ void handle_rtc_interrupt(){
     outb(0x0C, RTC_IO_PORT);                // Select RTC status register C
     inb(CMOS_IO_PORT);                      // Dump the content
 
-	sti();
+	cli();
 }
 
 /* void rtc_freq_set(uint32_t){
