@@ -1,7 +1,9 @@
 #include "idt.h"
-#include "keyboard.h"
+#include "assembly_linkage.h"
 #include "x86_desc.h"
 #include "lib.h"
+#include "keyboard.h"
+#include "rtc.h"
 
 void exception() {
 	//disable interrupts
@@ -13,8 +15,7 @@ void exception() {
 
 void divide_error(){
 	cli();
-	clear();
-	printf("Exception: divide error\n");
+	printf("Hello Exception: dividess error\n");
 	exception();
 }
 
@@ -183,6 +184,6 @@ void __init_idt__(){
 	SET_IDT_ENTRY(idt[AC], align_check); 			// Alignment check
 	SET_IDT_ENTRY(idt[MC], mach_check); 			// Machine check
 	SET_IDT_ENTRY(idt[XF], simd_float_exc); 		// SIMD Floating-Point Exception
-
-	SET_IDT_ENTRY(idt[IRQ1_IDT], handle_keyboard_interrupt); 		// handle keyboard interrupt
+	SET_IDT_ENTRY(idt[IRQ1], keyboard_interrupt_stub); 		// handle keyboard interrupt
+	SET_IDT_ENTRY(idt[IRQ8], rtc_interrupt_stub); 		// handle rtc interrupt
 }
