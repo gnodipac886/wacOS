@@ -160,7 +160,7 @@ int unused_paging_test() {
 
 	int * ptr;			//not in Video Memory nor Kernel page range
 	int x;
-	ptr = (int *)(0x0800005);
+	ptr = (int *)(0x080000B);
 	x = *ptr;
 
 	return 1;
@@ -214,7 +214,7 @@ void launch_tests(){
 	// TEST_OUTPUT("video memory paging test", vid_mem_paging_test());
 	// TEST_OUTPUT("kernel paging test", kernel_paging_test());
 	
-	TEST_OUTPUT("unused page page fault test", unused_paging_test());
+	// TEST_OUTPUT("unused page page fault test", unused_paging_test());
 
 	// launch your tests here
 }
