@@ -2,7 +2,12 @@
 #include "lib.h"
 #include "i8259.h"
 
-/* Initialize RTC */
+/* rtc_init 
+ *      Inputs: None
+ *      Return Value: None
+ *      Function: Initiallizes RTC and enables PIC on port 8.
+ *      Side Effects: none 
+ */
 void rtc_init(){
 
     /*set IRQ8 */
@@ -14,7 +19,13 @@ void rtc_init(){
     enable_irq(RTC_IRQ);                    // Enable interrupt for RTC on PIC
 }
 
-/* handle_rtc_interrupt */
+/* handle_rtc_interrupt 
+ *      Inputs: None
+ *      Return Value: None
+ *      Function: Cleans up interrupt after its been processed, then 
+ *          readies the RTC register for another interrupt.
+ *      Side Effects: none     
+ */
 void handle_rtc_interrupt(){
     cli();
 	clear();
@@ -29,6 +40,4 @@ void handle_rtc_interrupt(){
 	sti();
 }
 
-/* void rtc_freq_set(uint32_t){
 
-} */
