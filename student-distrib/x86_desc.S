@@ -11,6 +11,7 @@
 .globl tss, tss_desc_ptr, ldt, ldt_desc_ptr
 .globl gdt_ptr
 .globl idt_desc_ptr, idt
+.globl page_table, page_directory
 
 .align 4
 
@@ -109,3 +110,18 @@ _idt:
 	.endr
 
 idt_bottom:
+
+.align  ALIGN4KB
+page_table:
+	.rept PTE
+	.long 0
+	.endr
+page_table_bottom:
+
+
+.align  ALIGN4KB
+page_directory:
+	.rept PDE
+	.long 0
+	.endr
+page_directory_bottom:

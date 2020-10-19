@@ -157,7 +157,7 @@ void __init_idt__(){
 	for(i = 0; i < NUM_VEC; i++){
 		idt[i].seg_selector = KERNEL_CS;
 		idt[i].reserved4 = 0;
-		idt[i].reserved3 = (i == 2 || (i >= IRQ0 && i <= IRQ15)) ? 0 : 1; 	// #2 is an interrupt
+		idt[i].reserved3 = (i == 2 || (i >= IRQ0_IDT && i <= IRQ15_IDT)) ? 0 : 1; 	// #2 is an interrupt
 		idt[i].reserved2 = 1;
 		idt[i].reserved1 = 1;
 		idt[i].size = 1;
@@ -184,7 +184,6 @@ void __init_idt__(){
 	SET_IDT_ENTRY(idt[AC], align_check); 			// Alignment check
 	SET_IDT_ENTRY(idt[MC], mach_check); 			// Machine check
 	SET_IDT_ENTRY(idt[XF], simd_float_exc); 		// SIMD Floating-Point Exception
-
 	SET_IDT_ENTRY(idt[IRQ1], keyboard_interrupt_stub); 		// handle keyboard interrupt
 	SET_IDT_ENTRY(idt[IRQ8], rtc_interrupt_stub); 		// handle rtc interrupt
 }
