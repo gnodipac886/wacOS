@@ -186,6 +186,6 @@ void __init_idt__(){
 	SET_IDT_ENTRY(idt[AC], align_check); 			// Alignment check
 	SET_IDT_ENTRY(idt[MC], mach_check); 			// Machine check
 	SET_IDT_ENTRY(idt[XF], simd_float_exc); 		// SIMD Floating-Point Exception
-	SET_IDT_ENTRY(idt[IRQ1], keyboard_interrupt_stub); 		// handle keyboard interrupt
-	SET_IDT_ENTRY(idt[IRQ8], rtc_interrupt_stub); 		// handle rtc interrupt
+	SET_IDT_ENTRY(idt[IRQ1_IDT], keyboard_interrupt_stub); 		// handle keyboard interrupt
+	SET_IDT_ENTRY(idt[IRQ8_IDT], rtc_interrupt_stub); 		// handle rtc interrupt
 }
