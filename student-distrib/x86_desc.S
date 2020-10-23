@@ -111,6 +111,7 @@ _idt:
 
 idt_bottom:
 
+# allocate memory for page table
 .align  ALIGN4KB
 page_table:
 	.rept PTE
@@ -118,7 +119,7 @@ page_table:
 	.endr
 page_table_bottom:
 
-
+# aloocate memory for the page directory
 .align  ALIGN4KB
 page_directory:
 	.rept PDE
