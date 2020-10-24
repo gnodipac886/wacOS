@@ -2,8 +2,23 @@
 #include "lib.h"
 #include "i8259.h"
 
-// 0x02 - 0x0D from 1 to =
-char kb_sc_row0_nums[] = {'1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '='};
+/*Scan Code Set 1*/
+#define ENTER_PRESSED		0x1C
+#define LCTRL_PRESSED		0x1D		//also RCTRL's second byte
+#define LSHIFT_PRESSED		0x2A
+#define RSHIFT_PRESSED		0x36
+#define LALT_PRESSED		0x38		//also RALT's second byte
+#define CAPSLOCK_PRESSED	0x3A
+
+#define RELEASED_OFFSET		0x80
+
+int shift_flag = 0;
+int capslock_flag = 0;
+int ctrl_flag = 0;
+int alt_flag = 0;
+
+// 0x02 - 0x0F from 1 to horizontal tab
+char kb_sc_row0_nums[] = {'1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '\b', '\t'};
 // 0x10 - 0x1B from q to ]
 char kb_sc_row1_let[] = {'q', 'w', 'e', 'r', 't', 'y', 'u','i', 'o', 'p', '[', ']'};
 // 0x1E - 0x29 from a to (backtick)
@@ -40,7 +55,7 @@ void handle_keyboard_interrupt(){
 		// between 0x35 = /, 0x01 = esc on keyboard
 
 				// between 0x02 = 1 and 0x0D = "="
-				if(keyboard_input <= 0x0D && keyboard_input >= 0x02){
+				if(keyboard_input <= 0x0F && keyboard_input >= 0x02){
 					kb_char = kb_sc_row0_nums[keyboard_input - 2]; // -2 for the offset mapping in the array
 				} else if(keyboard_input <= 0x1B && keyboard_input >= 0x10){
 					// between 0x10 = q and 0x1B = ]
