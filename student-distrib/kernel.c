@@ -12,6 +12,7 @@
 #include "rtc.h"
 #include "keyboard.h"
 #include "paging.h"
+#include "filesystem.h"
 
 #define RUN_TESTS
 
@@ -154,10 +155,10 @@ void entry(unsigned long magic, unsigned long addr) {
 
 	/* Initialize devices, memory, filesystem, enable device interrupts on the
 	 * PIC, any other initialization stuff... */
-	__rtc_init__();			 	// Initialize rtc
-
-	__keyboard_init__();	// enable keyboard interrupt
-	__init_paging__();		// enable paging
+	__rtc_init__();			 						// Initialize rtc
+	__keyboard_init__();							// enable keyboard interrupt
+	__init_paging__();								// enable paging
+	__init_filesystem__((void*)mod->mod_start); 	// enable filesystem
 
 	/* Enable interrupts */
 	/* Do not enable the following until after you have set up your
