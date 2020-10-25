@@ -1,6 +1,7 @@
 #include "tests.h"
 #include "x86_desc.h"
 #include "lib.h"
+#include "filesystem.h"
 
 #define PASS 1
 #define FAIL 0
@@ -234,6 +235,51 @@ int deref_NULL_ptr_test(){
 
 /* Checkpoint 2 tests */
 
+int read_dir(){
+	TEST_HEADER;
+
+	int fd;
+	char curr_name[MAX_NAME_LEN + 1];
+
+	clear();
+
+	fd = _open((uint8_t*)".");
+	while(dir_read(fd, (void*)curr_name, 1024)){
+		printf("%s\n", curr_name);
+	}
+	return 1;
+}
+
+int read_file(char * fname){
+	TEST_HEADER;
+
+	int i = 0;
+	int fd;
+	int len = 100000;
+	char contents[len];
+
+	clear();
+
+	fd = _open((uint8_t*)fname);
+	if(file_read(fd, contents, len) == -1){
+		return FAIL;
+	}
+
+	len = _get_file_length(fd);
+
+	while(i < len){
+		if(i % 80 == 0){
+			printf("\n");
+		}
+
+		printf("%c", contents[i]);
+		i++;
+	}
+
+	return PASS;
+}
+
+
 void test_rtc_freq(){
 	int i;
 	for(i=1; i<10000; i++){
@@ -259,6 +305,9 @@ void launch_tests(){
 	// TEST_OUTPUT("kernel paging test", kernel_paging_test());
 	// TEST_OUTPUT("unused page page fault test", unused_paging_test());
 	// TEST_OUTPUT("deref_NULL_ptr_test", deref_NULL_ptr_test());
+
+	// TEST_OUTPUT("read_dir", read_dir());
+	TEST_OUTPUT("reading a file", read_file("frame0.txt"));
 	// launch your tests here
 	//test_rtc_freq();
 }

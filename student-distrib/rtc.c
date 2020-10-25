@@ -21,6 +21,7 @@ void __rtc_init__(){
     outb(reg_value | 0x40, CMOS_IO_PORT);   // Turn on Register B bit 6
 
     enable_irq(RTC_IRQ);                    // Enable interrupt for RTC on PIC
+    _rtc_write(2);                           // RTC interrupt default value = 2 Hz.
     sti();
     _rtc_write(2);                           // RTC interrupt default value = 2 Hz
 }
@@ -40,8 +41,7 @@ void handle_rtc_interrupt(){
     outb(RTC_STATUS_REG+0x0C, RTC_IO_PORT);                 // Select RTC status register C
     inb(CMOS_IO_PORT);                                      // Dump the content
 
-    //test_interrupts();
-    test_rtc_freq();
+    // test_interrupts();
 
     rtc_interrupt_occurred =1;      //flag for rtc_read
 	sti();
