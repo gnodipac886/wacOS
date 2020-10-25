@@ -11,4 +11,5 @@ keyboard.o: keyboard.c keyboard.h lib.h types.h i8259.h
 lib.o: lib.c lib.h types.h
 paging.o: paging.c paging.h x86_desc.h types.h
 rtc.o: rtc.c rtc.h lib.h types.h i8259.h tests.h
-tests.o: tests.c tests.h x86_desc.h types.h lib.h filesystem.h
+terminal.o: terminal.c terminal.h types.h keyboard.h lib.h
+tests.o: tests.c tests.h x86_desc.h types.h lib.h filesystem.h terminal.h

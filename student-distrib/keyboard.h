@@ -11,6 +11,12 @@
 void __keyboard_init__();
 // takes in the input and display to screen
 void handle_keyboard_interrupt();
+// returns ptr to keyboard buffer
+int get_kb_buf(char* buf);
+void clear_kb_buf();
+
+void handle_backspace();
+void handle_enter();
 // #endif /* ASM */
 
 #endif /* _KEYBOARD_H */
