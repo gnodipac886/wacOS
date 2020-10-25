@@ -234,6 +234,7 @@ int deref_NULL_ptr_test(){
 
 
 /* Checkpoint 2 tests */
+
 int read_dir(){
 	TEST_HEADER;
 
@@ -275,8 +276,46 @@ int read_file(char * fname){
 		i++;
 	}
 
+	_close(fd);
+
 	return PASS;
 }
+
+
+int test_rtc_freq(){
+	TEST_HEADER;
+
+	int i, ticks;
+	int fd, buf;
+	int word = 0;
+
+	clear();
+
+	fd = _open((uint8_t*)"rtc");
+	if(fd == -1){
+		return FAIL;
+	}
+
+	for(i = 2; i < 1025; i++){
+		buf = i;
+		if(_write(fd, (void*)(&buf), 100) != -1){
+			for(ticks = 0; ticks < (i * 2); ticks++){
+				rtc_read(fd, NULL, 1000);
+				printf("%d", i);
+				word++;
+				if(word % 80 == 0){
+					printf("\n");
+				}
+			}
+		}
+	}
+
+	_close(fd);
+
+	clear();
+	return PASS;
+}
+
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
 /* Checkpoint 5 tests */
@@ -295,6 +334,8 @@ void launch_tests(){
 	// TEST_OUTPUT("deref_NULL_ptr_test", deref_NULL_ptr_test());
 
 	// TEST_OUTPUT("read_dir", read_dir());
-	TEST_OUTPUT("reading a file", read_file("frame0.txt"));
+	// TEST_OUTPUT("reading a file", read_file("frame0.txt"));
+	TEST_OUTPUT("Testing RTC", test_rtc_freq());
 	// launch your tests here
+	// test_rtc_freq();
 }

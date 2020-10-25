@@ -14,11 +14,11 @@ void __rtc_init__();
 /* handle_rtc_interrupt: processes rtc interrupt.*/
 void handle_rtc_interrupt();
 /* rtc_open: Opens rtc file */
-void rtc_open();
+int _rtc_open();
 /* rtc_close: Closes rtc file */
-void rtc_close();
+int _rtc_close();
 /* rtc_read: returns after an interrupt occurs */
-int rtc_read();
+int _rtc_read();
 /* rtc_write: sets rtc frequency*/
-int rtc_write(int freq);
+int _rtc_write(void* buf);
 #endif /* _RTC_H */
