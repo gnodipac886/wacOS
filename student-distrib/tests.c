@@ -2,6 +2,7 @@
 #include "x86_desc.h"
 #include "lib.h"
 #include "filesystem.h"
+#include "terminal.h"
 
 #define PASS 1
 #define FAIL 0
@@ -235,6 +236,7 @@ int deref_NULL_ptr_test(){
 
 /* Checkpoint 2 tests */
 
+<<<<<<< HEAD
 int read_dir(){
 	TEST_HEADER;
 
@@ -316,6 +318,33 @@ int test_rtc_freq(){
 	return PASS;
 }
 
+=======
+/* vert_scroll_test
+ * 		Inputs: none
+ * 		Return Value: 1
+ * 		Function: Test for vertical scroll by printing over 25 lines
+ *		Side Effects: none
+ */
+int vert_scroll_test(){
+	int i; 			// counter
+
+	// print lines to see scrolling work
+	for(i = 0; i < 392; i++){
+		printf("Testing Vertical Scroll: Line %d \n", i);
+	}
+
+	return 1;
+}
+
+int term_read_write_test(){
+	 while(1){
+		char buf[128];
+		terminal_read(0, buf, 128);
+		terminal_write(1, buf, 128);
+ 	}
+	return 1;
+}
+>>>>>>> phoebec2
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
 /* Checkpoint 5 tests */
@@ -332,10 +361,15 @@ void launch_tests(){
 	// TEST_OUTPUT("kernel paging test", kernel_paging_test());
 	// TEST_OUTPUT("unused page page fault test", unused_paging_test());
 	// TEST_OUTPUT("deref_NULL_ptr_test", deref_NULL_ptr_test());
+<<<<<<< HEAD
 
 	// TEST_OUTPUT("read_dir", read_dir());
 	// TEST_OUTPUT("reading a file", read_file("frame0.txt"));
 	TEST_OUTPUT("Testing RTC", test_rtc_freq());
+=======
+	// TEST_OUTPUT("vertical scroll test", vert_scroll_test());
+	 TEST_OUTPUT("terminal read/write from keyboard test", term_read_write_test());
+>>>>>>> phoebec2
 	// launch your tests here
 	// test_rtc_freq();
 }
