@@ -241,7 +241,7 @@ int deref_NULL_ptr_test(){
  *		Side Effects: none
  */
 int vert_scroll_test(){
-	int i, j; 			// counter
+	int i; 			// counter
 
 	// print 50 lines to see scrolling work
 	for(i = 0; i < 50; i++){

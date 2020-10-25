@@ -35,17 +35,15 @@ int32_t terminal_read(int32_t fd, const void* buf, int32_t nbytes){
     // reads each char in keyboard buffer and checks for \n or reached nbytes
     while(counter != nbytes){
         if(counter == (nbytes - 1)){
-            buf[nbytes - 1] = '\0';  // end of the buffer
+            ((char*)buf)[nbytes - 1] = '\0';  // end of the buffer
         } else if((kb_buf[counter] == '\n') | (counter == 127)){
-            buf[counter] = '\0';     // signals the end of the buffer
-            clear_terminal_buf(buf); // clears the terminal buf
+            ((char*)buf)[counter] = '\0';     // signals the end of the buffer
             return counter + 1;      // total bytes read
         } else{
-            buf[counter] = kb_buf[counter];
+            ((char*)buf)[counter] = kb_buf[counter];
         }
         counter++;
     }
-    clear_terminal_buf(buf);        // clears the terminal buf
     return nbytes;
 }
 
