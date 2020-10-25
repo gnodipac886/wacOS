@@ -38,7 +38,7 @@ void handle_rtc_interrupt(){
     outb(RTC_STATUS_REG+0x0C, RTC_IO_PORT);                 // Select RTC status register C
     inb(CMOS_IO_PORT);                                      // Dump the content
 
-    test_interrupts();
+    // test_interrupts();
 
     rtc_interrupt_occurred =1;      //flag for rtc_read
 	sti();
@@ -58,7 +58,7 @@ void rtc_close(){
  *      Function: Read RTC, and after interrupt occurs, return 0. 
  *      Side Effects: none     
  */
-int rtc_read(){
+int _rtc_read(){
     /* Wait until next rtc interrupt occurs */
     while(rtc_interrupt_occurred == 0){
     

@@ -12,8 +12,6 @@ uint32_t rtc_file_ops[4] = {(uint32_t)_open, (uint32_t)rtc_read, (uint32_t)_writ
 uint32_t dir_file_ops[4] = {(uint32_t)_open, (uint32_t)dir_read, (uint32_t)_write, (uint32_t)_close};
 uint32_t file_file_ops[4] = {(uint32_t)_open, (uint32_t)file_read, (uint32_t)_write, (uint32_t)_close};
 
-// helper functions
-// char* _get_file_name(char* fname);
 
 void __init_filesystem__(void * filesystem_ptr){
 	int i;
@@ -236,9 +234,9 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
 	data_block_t* curr_data_block;
 	inode_t curr_inode;
 
-	int data_block_idx;										// index to which data block we need to use
+	int data_block_num;										// index to which data block we need to use
 	// int num_spill_over; 									// number of spill over data blocks (how many data blocks do we need to look at in total)
-	int num_bytes_left = length; 							// the amount of bytes left to get in case of spillover
+	int num_bytes_left; 									// the amount of bytes left to get in case of spillover
 	int num_mem2_cpy; 										// how many bytes to copy over
 	int num_copied = 0; 									// number of copied bytes
 	uint8_t* data_loc;										// pointer to start data location
@@ -252,13 +250,14 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
 	curr_inode = inodes[inode + 1];
 
 	// more sanity checks, see if offset and length are valid
-	if(offset >= curr_inode.length || length >= curr_inode.length){
+	if(offset >= curr_inode.length){
 		return -1;
 	}
 
 	// actually getting the contents with some sanity checks
-	data_block_idx = offset / BLOCK_SIZE;
-	curr_data_block = &(data_ptr[1 + boot_block->num_inode + data_block_idx]);
+	num_bytes_left = offset + length >= curr_inode.length ? curr_inode.length - offset : length;
+	data_block_num = curr_inode.data_block[offset / BLOCK_SIZE];
+	curr_data_block = &(data_ptr[1 + boot_block->num_inode + data_block_num]);
 	data_loc = (uint8_t*)curr_data_block + (offset % BLOCK_SIZE);
 
 	// perform memcpy with percautions of spillage
@@ -276,24 +275,19 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
 		// update trackers
 		num_copied += num_mem2_cpy; 			// realized could just use one tracker instead... too late
 		num_bytes_left -= num_mem2_cpy;
-		data_block_idx++;
-		curr_data_block = &(data_ptr[1 + boot_block->num_inode + data_block_idx]);
-		data_loc = 0;
+		data_block_num = curr_inode.data_block[(offset + num_copied) / BLOCK_SIZE];
+		curr_data_block = &(data_ptr[1 + boot_block->num_inode + data_block_num]);
+		data_loc = (uint8_t*)curr_data_block;
 	} while(num_bytes_left > 0);
 
 	// figure out what to return
 	return offset + num_copied == curr_inode.length ? 0 : num_copied;
 }
 
-// char* _get_file_name(char* fname){
-// 	char name[33];
+int32_t _get_file_length(int32_t fd){
+	if(fd >= 8 || fd < 2 || fd_arr[fd].flags == FILE_NOT_USE || fd_arr[fd].jmp_table != file_file_ops){
+		return -1;
+	}
 
-// 	// check if the name is 32 characters long by checking the last character
-// 	if(fname[MAX_NAME_LEN - 1] != '\0'){ 							// -1 for 0 indexing
-// 		strncpy((int8_t*)name, (int8_t*)fname, MAX_NAME_LEN); 		// copy over the original string
-// 		name[32] = '\0';
-// 		return name;
-// 	}
-
-// 	return fname;
-// }
+	return inodes[fd_arr[fd].inode + 1].length;
+}
