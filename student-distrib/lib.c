@@ -171,13 +171,9 @@ int32_t puts(int8_t* s) {
  *      Return Value: none
  */
 void update_cursor(int x, int y) {
-    if (x == NULL) {
-        x = screen_x;
-    }
-    if (y == NULL) {
-        y = screen_y;
-    }
 
+    screen_x = x;
+    screen_y = y;
     uint16_t pos = y*NUM_COLS + x;
 
     *(uint8_t *)(video_mem + (pos << 1)) = ' ';
@@ -195,23 +191,9 @@ void update_cursor(int x, int y) {
  * Return Value: void
  *  Function: Output a character to the console */
 void putc(uint8_t c) {
-    if (screen_y >= NUM_ROWS) {
-        unsigned black = 0x2000;
-        memcpy((uint8_t *)(video_mem), (uint8_t *)(video_mem + NUM_COLS*2), (NUM_ROWS - 1) * NUM_COLS * 2); // shift video memory up, 2 bytes for each char
-        memset((uint8_t *)(video_mem + (NUM_ROWS - 1) * NUM_COLS * 2), black, NUM_COLS * 2);                           // clears the last line, fill with spaces
-        screen_y = NUM_ROWS - 1; // set to last row of screen
-    }
-
     if(c == '\n' || c == '\r') {
         screen_y++;
         screen_x = 0;
-
-        if (screen_y >= NUM_ROWS) {
-            unsigned black = 0x2000;
-            memcpy((uint8_t *)(video_mem), (uint8_t *)(video_mem + NUM_COLS*2), (NUM_ROWS - 1) * NUM_COLS * 2); // shift video memory up, 2 bytes for each char
-            memset((uint8_t *)(video_mem + (NUM_ROWS - 1) * NUM_COLS * 2), black, NUM_COLS * 2);                           // clears the last line, fill with spaces
-            screen_y = NUM_ROWS - 1; // set to last row of screen
-        }
     } else {
         *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = c;
         *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
@@ -219,9 +201,13 @@ void putc(uint8_t c) {
         screen_y += (screen_x / NUM_COLS);
         screen_x %= NUM_COLS;
     }
-    if (screen_y < NUM_ROWS) {
-        update_cursor(NULL,NULL);
+    if (screen_y >= NUM_ROWS) {
+        unsigned black = 0x2000;
+        memcpy((uint8_t *)(video_mem), (uint8_t *)(video_mem + NUM_COLS*2), (NUM_ROWS - 1) * NUM_COLS * 2); // shift video memory up, 2 bytes for each char
+        memset((uint8_t *)(video_mem + (NUM_ROWS - 1) * NUM_COLS * 2), black, NUM_COLS * 2);                           // clears the last line, fill with spaces
+        screen_y = NUM_ROWS - 1; // set to last row of screen
     }
+    update_cursor(screen_x,screen_y);
 }
 
 /* void vid_backspace();
@@ -240,7 +226,7 @@ void vid_backspace() {
         screen_x--;
     }
     *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = ' ';   
-    update_cursor(NULL, NULL);  
+    update_cursor(screen_x, screen_y);  
 }
 
 /* void vid_enter();
@@ -251,7 +237,6 @@ void vid_backspace() {
  */
 void vid_enter() {
     putc('\n');
-    //update_cursor(NULL, NULL);
 }
 
 

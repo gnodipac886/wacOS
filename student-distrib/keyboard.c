@@ -147,10 +147,16 @@ void handle_keyboard_interrupt(){
 
 
 	if (kb_char != NULL) {
-		//printf("%c", kb_char);
-		putc(kb_char);
-		buffer[buffer_cur_idx] = kb_char;
-		buffer_cur_idx++;				//.........................account for buffer overflow later
+		if ((kb_char == 'L' || kb_char == 'l') && ctrl_flag == 1) {		//check ctrl+l or ctrl+L
+			clear();
+			update_cursor(0,0);
+			memset(buffer, NULL, buffer_cur_idx);
+			buffer_cur_idx = 0;
+		} else {
+			putc(kb_char);												//prints char to screen and updates cursor
+			buffer[buffer_cur_idx] = kb_char;
+			buffer_cur_idx++;				//.........................account for buffer overflow later
+		}
 	}
 
 	send_eoi(KB_IRQ);
