@@ -51,17 +51,6 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes){
     while(1){
         kb_buf_idx = get_kb_buf(kb_buf);    // idx of last added char in keyboard buffer (copy keyboard buffer)
 
-        /*
-        if(kb_buf_idx == nbytes - 1 || kb_buf_idx == 126){
-            kb_buf[++kb_buf_idx] = '\0';
-            break;
-        }
-        if(kb_buf[kb_buf_idx] == '\n'){
-            kb_buf[kb_buf_idx] = '\0';
-            break;
-        }
-        */
-
         if(kb_buf[kb_buf_idx] == '\n') {
             break;
         }
@@ -70,20 +59,6 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes){
     clear_kb_buf();                                 //clear keyboard handler buffer
     memcpy(buf, (void*)kb_buf, kb_buf_idx + 1);     //kb_buf_idx + 1 = number of bytes written to user space buffer
     return kb_buf_idx + 1;
-
-    // // reads each char in keyboard buffer and checks for \n or reached nbytes
-    // while(counter != nbytes){
-    //     if(counter == (nbytes - 1)){
-    //         ((char*)buf)[nbytes - 1] = '\0';  // end of the buffer
-    //     } else if((kb_buf[counter] == '\n') || (counter == 127)){
-    //         ((char*)buf)[counter] = '\0';     // signals the end of the buffer
-    //         return counter + 1;      // total bytes read
-    //     } else{
-    //         ((char*)buf)[counter] = kb_buf[counter];
-    //     }
-    //     counter++;
-    // }
-    // return nbytes;
 }
 
 /* terminal_write
