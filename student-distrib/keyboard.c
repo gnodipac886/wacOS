@@ -2,14 +2,41 @@
 #include "lib.h"
 #include "i8259.h"
 
+#define BUF_SIZE 			128			//buffer can contain 128 chars
+/*Scan Code Set 1*/
+#define TAB_PRESSED			0x0F
+#define BACKSPACE_PRESSED	0x0E
+#define ENTER_PRESSED		0x1C
+#define CTRL_PRESSED		0x1D		//also RCTRL's second byte
+#define LSHIFT_PRESSED		0x2A
+#define RSHIFT_PRESSED		0x36
+#define ALT_PRESSED			0x38		//also RALT's second byte
+#define CAPSLOCK_PRESSED	0x3A
+#define RIGHT_KEY_BYTE		0xE0		//RCTRL, RALT first byte
+
+#define RELEASED_OFFSET		0x80
+
+int shift_flag = 0;
+int capslock_flag = 0;
+int ctrl_flag = 0;
+int alt_flag = 0;
+
 // 0x02 - 0x0D from 1 to =
 char kb_sc_row0_nums[] = {'1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '='};
+char kb_sc_row0_shift_chars[] = {'!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+'};
 // 0x10 - 0x1B from q to ]
 char kb_sc_row1_let[] = {'q', 'w', 'e', 'r', 't', 'y', 'u','i', 'o', 'p', '[', ']'};
+char kb_sc_row1_shift_chars[] = {'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '{', '}'};
 // 0x1E - 0x29 from a to (backtick)
 char kb_sc_row2_let[] = {'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', '`'};
+char kb_sc_row2_shift_chars[] = {'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ':', '\"', '~'};
 // 0x2B - 0x35 from \ (row 2) z(row 3) to /
 char kb_sc_row3_let[] = {'\\', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/'};
+char kb_sc_row3_shift_chars[] = {'|', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', '<', '>', '?'};
+
+
+char buffer[BUF_SIZE];
+int buffer_cur_idx = 0;
 
 /* __keyboard_init__
  * 		Inputs: none
@@ -30,39 +57,126 @@ void __keyboard_init__(){
 void handle_keyboard_interrupt(){
 	//cli();
 
-	char kb_char;
-	char keyboard_input = inb(KB_PORT);
+	char kb_char = NULL;
+	unsigned char keyboard_input = inb(KB_PORT);
 
-	// space pressed = 0x39
-	if(keyboard_input == 0x39){
+	if (keyboard_input == TAB_PRESSED) {
+		kb_char = ' ';
+	} else if (keyboard_input == BACKSPACE_PRESSED) {
+		handle_backspace();
+	} else if (keyboard_input == ENTER_PRESSED) {
+		handle_enter();
+	} else if (keyboard_input == CTRL_PRESSED) {		//update control flag
+		ctrl_flag = 1;
+	} else if (keyboard_input == (CTRL_PRESSED + RELEASED_OFFSET)) {
+		ctrl_flag = 0;
+	} else if (keyboard_input == LSHIFT_PRESSED) {		//update shift flag
+		shift_flag = 1;
+	} else if (keyboard_input == LSHIFT_PRESSED + RELEASED_OFFSET) {
+		shift_flag = 0;
+	} else if (keyboard_input == RSHIFT_PRESSED) {
+		shift_flag = 1;
+	} else if (keyboard_input == RSHIFT_PRESSED + RELEASED_OFFSET) {
+		shift_flag = 0;
+	} else if (keyboard_input == ALT_PRESSED) {			//update alt flag
+		alt_flag = 1;
+	} else if (keyboard_input == ALT_PRESSED + RELEASED_OFFSET) {
+		alt_flag = 0;
+	} else if (keyboard_input == CAPSLOCK_PRESSED) {	//update capslock flag
+		capslock_flag = capslock_flag ^ 1;
+	} else if (keyboard_input == RIGHT_KEY_BYTE) {
+		switch(inb(KB_PORT)) {							//read secondbyte
+			case CTRL_PRESSED:
+				ctrl_flag = 1;
+				break;
+			case ALT_PRESSED:
+				alt_flag = 1;
+				break;
+			case CTRL_PRESSED + RELEASED_OFFSET:
+				ctrl_flag = 0;
+				break;
+			case ALT_PRESSED + RELEASED_OFFSET:
+				alt_flag = 0;
+				break;
+			default:
+				break;
+		}
+	} else if(keyboard_input == 0x39){					// space pressed = 0x39
 		kb_char = ' ';
 	} else if((keyboard_input <= 0x35) && (keyboard_input > 0x01)){
-		// between 0x35 = /, 0x01 = esc on keyboard
+	// between 0x35 = /, 0x01 = esc on keyboard
 
-				// between 0x02 = 1 and 0x0D = "="
-				if(keyboard_input <= 0x0D && keyboard_input >= 0x02){
-					kb_char = kb_sc_row0_nums[keyboard_input - 2]; // -2 for the offset mapping in the array
-				} else if(keyboard_input <= 0x1B && keyboard_input >= 0x10){
-					// between 0x10 = q and 0x1B = ]
-					kb_char = kb_sc_row1_let[keyboard_input - 0x10]; // 0x10 for the offset mapping in the array
-				} else if(keyboard_input <= 0x29 && keyboard_input >= 0x1E){
-					// between 0x1E = a and 0x29 =  `
-					kb_char = kb_sc_row2_let[keyboard_input - 0x1E]; // 0x1E for the offset mapping in the array
-				} else if(keyboard_input <= 0x35 && keyboard_input >= 0x2B){
-					// between 0x2B = \ and 0x35 = /
-					kb_char = kb_sc_row3_let[keyboard_input - 0x2B]; // 0x2C for the offset mapping in the array
-				} else{
-					send_eoi(KB_IRQ);
-					//sti();
-					return;
-				}
-	} else{
+			// between 0x02 = 1 and 0x0D = "="
+		if(keyboard_input <= 0x0D && keyboard_input >= 0x02){
+			if (shift_flag ^ capslock_flag) {								//deal with shift-related chars
+				kb_char = kb_sc_row0_shift_chars[keyboard_input - 2]; 		// -2 for the offset mapping in the array
+			} else {
+				kb_char = kb_sc_row0_nums[keyboard_input - 2]; 
+			}
+		} else if(keyboard_input <= 0x1B && keyboard_input >= 0x10){
+			// between 0x10 = q and 0x1B = ]
+			if (shift_flag ^ capslock_flag) {								//deal with shift-related chars
+				kb_char = kb_sc_row1_shift_chars[keyboard_input - 0x10]; 	// 0x10 for the offset mapping in the array
+			} else {
+				kb_char = kb_sc_row1_let[keyboard_input - 0x10];  
+			}
+		} else if(keyboard_input <= 0x29 && keyboard_input >= 0x1E){
+			// between 0x1E = a and 0x29 =  `
+			if (shift_flag ^ capslock_flag) {								//deal with shift-related chars
+				kb_char = kb_sc_row2_shift_chars[keyboard_input - 0x1E]; 	// 0x1E for the offset mapping in the array
+			} else {
+				kb_char = kb_sc_row2_let[keyboard_input - 0x1E];  
+			}
+		} else if(keyboard_input <= 0x35 && keyboard_input >= 0x2B){
+			// between 0x2B = \ and 0x35 = /
+			if (shift_flag ^ capslock_flag) {								//deal with shift-related chars
+				kb_char = kb_sc_row3_shift_chars[keyboard_input - 0x2B]; 	// 0x2B for the offset mapping in the array
+			} else {
+				kb_char = kb_sc_row3_let[keyboard_input - 0x2B];  
+			}
+		} else{
+			send_eoi(KB_IRQ);
+			//sti();
+			return;
+		}
+	} else {
 		send_eoi(KB_IRQ);
 		//sti();
 		return;
-		}
-	printf("%c", kb_char);
+	}
+
+
+	if (kb_char != NULL) {
+		printf("%c", kb_char);
+		buffer[buffer_cur_idx] = kb_char;
+		buffer_cur_idx++;				//.........................account for buffer overflow later
+	}
+
 	send_eoi(KB_IRQ);
 	//sti();
 	return;
+}
+
+/* get_kb_buf
+ *		Description: returns keyboard buffer ptr to be used by 
+ * 		Inputs: none
+ * 		Return Value: keyboard buffer ptr
+ *		Side Effects: none
+ */
+char * get_kb_buf() {
+	return buffer;
+}
+
+void handle_backspace() {
+	if (buffer_cur_idx > 0) {
+		buffer_cur_idx--;
+		buffer[buffer_cur_idx] = NULL;
+		vid_backspace();
+	}
+}
+
+void handle_enter() {
+	buffer[buffer_cur_idx] = '\n';
+	buffer_cur_idx++;
+	vid_enter();
 }
