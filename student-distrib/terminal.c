@@ -1,5 +1,7 @@
+#include "terminal.h"
 #include "keyboard.h"
 #include "lib.h"
+
 
 int32_t terminal_open(){
     //  initializes terminal stuff (or nothing)
@@ -25,7 +27,7 @@ int32_t terminal_close(){
  */
 int32_t terminal_read(int32_t fd, const void* buf, int32_t nbytes){
     // check for valid buf and correct fd for reading
-    if(buf == NULL | fd != 0){
+    if((buf == NULL) | (fd != 0)){
         return 0;
     }
     int32_t counter = 0;             // counter for iterating keyboard buffer
@@ -34,7 +36,7 @@ int32_t terminal_read(int32_t fd, const void* buf, int32_t nbytes){
     while(counter != nbytes){
         if(counter == (nbytes - 1)){
             buf[nbytes - 1] = '\0';  // end of the buffer
-        } else if(kb_buf[counter] == '\n' | counter == 127){
+        } else if((kb_buf[counter] == '\n') | (counter == 127)){
             buf[counter] = '\0';     // signals the end of the buffer
             clear_terminal_buf(buf); // clears the terminal buf
             return counter + 1;      // total bytes read
@@ -59,7 +61,7 @@ int32_t terminal_read(int32_t fd, const void* buf, int32_t nbytes){
  */
 int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes){
     // check for valid buf and correct fd for writing
-    if(buf == NULL | fd != 1){
+    if((buf == NULL) | (fd != 1)){
         return -1;
     }
     int32_t i;                      // counter
@@ -69,8 +71,8 @@ int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes){
             printf("\n");           // newline reached max of the screen width
         }
 
-        if(buf[i] != '\0'){
-            printf("%c", buf[i]);   // prints each char in buf, ignores null bytess
+        if(((char*)buf)[i] != '\0'){
+            printf("%c", ((char*)buf)[i]);   // prints each char in buf, ignores null bytess
         }
 
     }

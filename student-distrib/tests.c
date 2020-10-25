@@ -233,6 +233,23 @@ int deref_NULL_ptr_test(){
 
 
 /* Checkpoint 2 tests */
+
+/* vert_scroll_test
+ * 		Inputs: none
+ * 		Return Value: 1
+ * 		Function: Test for vertical scroll by printing over 25 lines
+ *		Side Effects: none
+ */
+int vert_scroll_test(){
+	int i, j; 			// counter
+
+	// print 50 lines to see scrolling work
+	for(i = 0; i < 50; i++){
+		printf("Testing Vertical Scroll: Line %d \n", i);
+	}
+
+	return 1;
+}
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
 /* Checkpoint 5 tests */
@@ -249,5 +266,6 @@ void launch_tests(){
 	// TEST_OUTPUT("kernel paging test", kernel_paging_test());
 	// TEST_OUTPUT("unused page page fault test", unused_paging_test());
 	// TEST_OUTPUT("deref_NULL_ptr_test", deref_NULL_ptr_test());
+	TEST_OUTPUT("vertical scroll test", vert_scroll_test());
 	// launch your tests here
 }
