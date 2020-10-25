@@ -163,31 +163,6 @@ int32_t puts(int8_t* s) {
     return index;
 }
 
-/* void putc(uint8_t c);
- * Inputs: uint_8* c = character to print
- * Return Value: void
- *  Function: Output a character to the console */
-void putc(uint8_t c) {
-    if(screen_y >= NUM_ROWS){
-        int temp = (screen_y - NUM_ROWS) + 1; // Calculate offset from screen rows
-        unsigned black = 0x2000;              // black space on screen or just an empty space
-
-        memcpy((uint8_t *)(video_mem), (uint8_t *)(video_mem + (temp * NUM_COLS) * 2), (NUM_ROWS - temp) * NUM_COLS * 2); // shift video memory up, 2 bytes for each char
-        memset((uint8_t *)(video_mem + (NUM_ROWS - temp) * NUM_COLS * 2), black, NUM_COLS * 2);                           // clears the last line, fill with spaces
-        screen_y = NUM_ROWS - 1; // set to last row of screen
-    }
-    if(c == '\n' || c == '\r') {
-        screen_y++;
-        screen_x = 0;
-    } else {
-        *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = c;
-        *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
-        screen_x++;
-        screen_y += (screen_x / NUM_COLS);
-        screen_x %= NUM_COLS;
-    }
-}
-
 /* void update_cursor();
  *      Description: updates cursor position in text mode
  *      Inputs: x = cursor's new x position
@@ -196,12 +171,57 @@ void putc(uint8_t c) {
  *      Return Value: none
  */
 void update_cursor(int x, int y) {
+    if (x == NULL) {
+        x = screen_x;
+    }
+    if (y == NULL) {
+        y = screen_y;
+    }
+
     uint16_t pos = y*NUM_COLS + x;
 
-    outb(0x3D4, 0x0F);
-    outb(0x3D5, (uint8_t) (pos & 0xFF));
-	outb(0x3D4, 0x0E);
-	outb(0x3D5, (uint8_t) ((pos >> 8) & 0xFF));
+    *(uint8_t *)(video_mem + (pos << 1)) = ' ';
+    *(uint8_t *)(video_mem + (pos << 1) + 1) = ATTRIB;
+
+    outb(0x0F, 0x3D4);
+    outb((uint8_t) (pos & 0xFF), 0x3D5);
+    outb(0x0E, 0x3D4);
+    outb((uint8_t) ((pos >> 8) & 0xFF), 0x3D5);
+}
+
+
+/* void putc(uint8_t c);
+ * Inputs: uint_8* c = character to print
+ * Return Value: void
+ *  Function: Output a character to the console */
+void putc(uint8_t c) {
+    if (screen_y >= NUM_ROWS) {
+        unsigned black = 0x2000;
+        memcpy((uint8_t *)(video_mem), (uint8_t *)(video_mem + NUM_COLS*2), (NUM_ROWS - 1) * NUM_COLS * 2); // shift video memory up, 2 bytes for each char
+        memset((uint8_t *)(video_mem + (NUM_ROWS - 1) * NUM_COLS * 2), black, NUM_COLS * 2);                           // clears the last line, fill with spaces
+        screen_y = NUM_ROWS - 1; // set to last row of screen
+    }
+
+    if(c == '\n' || c == '\r') {
+        screen_y++;
+        screen_x = 0;
+
+        if (screen_y >= NUM_ROWS) {
+            unsigned black = 0x2000;
+            memcpy((uint8_t *)(video_mem), (uint8_t *)(video_mem + NUM_COLS*2), (NUM_ROWS - 1) * NUM_COLS * 2); // shift video memory up, 2 bytes for each char
+            memset((uint8_t *)(video_mem + (NUM_ROWS - 1) * NUM_COLS * 2), black, NUM_COLS * 2);                           // clears the last line, fill with spaces
+            screen_y = NUM_ROWS - 1; // set to last row of screen
+        }
+    } else {
+        *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = c;
+        *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
+        screen_x++;
+        screen_y += (screen_x / NUM_COLS);
+        screen_x %= NUM_COLS;
+    }
+    if (screen_y < NUM_ROWS) {
+        update_cursor(NULL,NULL);
+    }
 }
 
 /* void vid_backspace();
@@ -220,7 +240,7 @@ void vid_backspace() {
         screen_x--;
     }
     *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = ' ';   
-    update_cursor(screen_x, screen_y);  
+    update_cursor(NULL, NULL);  
 }
 
 /* void vid_enter();
@@ -231,7 +251,7 @@ void vid_backspace() {
  */
 void vid_enter() {
     putc('\n');
-    update_cursor(screen_x, screen_y);
+    //update_cursor(NULL, NULL);
 }
 
 

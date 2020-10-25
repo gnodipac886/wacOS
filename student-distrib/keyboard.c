@@ -147,7 +147,8 @@ void handle_keyboard_interrupt(){
 
 
 	if (kb_char != NULL) {
-		printf("%c", kb_char);
+		//printf("%c", kb_char);
+		putc(kb_char);
 		buffer[buffer_cur_idx] = kb_char;
 		buffer_cur_idx++;				//.........................account for buffer overflow later
 	}
