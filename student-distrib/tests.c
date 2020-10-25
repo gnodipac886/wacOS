@@ -233,6 +233,16 @@ int deref_NULL_ptr_test(){
 
 
 /* Checkpoint 2 tests */
+
+void test_rtc_freq(){
+	int i;
+	for(i=1; i<10000; i++){
+		if(_rtc_write(i)==0)
+			printf("%d",i);
+	}
+
+}
+
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
 /* Checkpoint 5 tests */
@@ -250,4 +260,5 @@ void launch_tests(){
 	// TEST_OUTPUT("unused page page fault test", unused_paging_test());
 	// TEST_OUTPUT("deref_NULL_ptr_test", deref_NULL_ptr_test());
 	// launch your tests here
+	//test_rtc_freq();
 }

@@ -1,10 +1,12 @@
 #include "rtc.h"
 #include "lib.h"
 #include "i8259.h"
+#include "tests.h"
+
 /* Flag to for rtc_read to determine if the next interrupt has occured */
 volatile int rtc_interrupt_occurred = 0;
 
-/* rtc_init
+/* _rtc_init
  * 		Inputs: none
  * 		Return Value: none
  * 		Function: Initializes rtc and writes to the correct ports
@@ -19,8 +21,8 @@ void __rtc_init__(){
     outb(reg_value | 0x40, CMOS_IO_PORT);   // Turn on Register B bit 6
 
     enable_irq(RTC_IRQ);                    // Enable interrupt for RTC on PIC
-    rtc_write(2);                           // RTC interrupt default value = 2 Hz.
     sti();
+    _rtc_write(2);                           // RTC interrupt default value = 2 Hz
 }
 
 /* handle_rtc_interrupt 
@@ -38,18 +40,31 @@ void handle_rtc_interrupt(){
     outb(RTC_STATUS_REG+0x0C, RTC_IO_PORT);                 // Select RTC status register C
     inb(CMOS_IO_PORT);                                      // Dump the content
 
-    test_interrupts();
+    //test_interrupts();
+    test_rtc_freq();
 
     rtc_interrupt_occurred =1;      //flag for rtc_read
 	sti();
 }
-
-void rtc_open(){
-
+/* _rtc_open
+ *      Inputs: None
+ *      Return Value: 1
+ *      Function: Reset rtc frequency to 2. 
+ *      Side Effects: none     
+ */
+int _rtc_open(){
+    _rtc_write(2);
+    return 1;
 }
 
-void rtc_close(){
-
+/* _rtc_close
+ *      Inputs: None
+ *      Return Value: 1
+ *      Function: returns constant 1. 
+ *      Side Effects: none     
+ */
+int _rtc_close(){
+    return 1;
 }
 
 /* rtc_read
@@ -58,7 +73,7 @@ void rtc_close(){
  *      Function: Read RTC, and after interrupt occurs, return 0. 
  *      Side Effects: none     
  */
-int rtc_read(){
+int _rtc_read(){
     /* Wait until next rtc interrupt occurs */
     while(rtc_interrupt_occurred == 0){
     
@@ -74,8 +89,9 @@ int rtc_read(){
  *      Function: Set rtc frequency. Range: 1-1024 Hz 
  *      Side Effects: none     
  */
-int rtc_write(int freq){
+int _rtc_write(void* buf){
     cli();
+    int freq = *((int*)buf);
     /* if frequency is out of range 1-1024 Hz, fail */
     if(freq>1024 || freq<1){
         return -1;
