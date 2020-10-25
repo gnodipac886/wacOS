@@ -111,28 +111,28 @@ void handle_keyboard_interrupt(){
 			if (shift_flag ^ capslock_flag) {								//deal with shift-related chars
 				kb_char = kb_sc_row0_shift_chars[keyboard_input - 2]; 		// -2 for the offset mapping in the array
 			} else {
-				kb_char = kb_sc_row0_nums[keyboard_input - 2]; 
+				kb_char = kb_sc_row0_nums[keyboard_input - 2];
 			}
 		} else if(keyboard_input <= 0x1B && keyboard_input >= 0x10){
 			// between 0x10 = q and 0x1B = ]
 			if (shift_flag ^ capslock_flag) {								//deal with shift-related chars
 				kb_char = kb_sc_row1_shift_chars[keyboard_input - 0x10]; 	// 0x10 for the offset mapping in the array
 			} else {
-				kb_char = kb_sc_row1_let[keyboard_input - 0x10];  
+				kb_char = kb_sc_row1_let[keyboard_input - 0x10];
 			}
 		} else if(keyboard_input <= 0x29 && keyboard_input >= 0x1E){
 			// between 0x1E = a and 0x29 =  `
 			if (shift_flag ^ capslock_flag) {								//deal with shift-related chars
 				kb_char = kb_sc_row2_shift_chars[keyboard_input - 0x1E]; 	// 0x1E for the offset mapping in the array
 			} else {
-				kb_char = kb_sc_row2_let[keyboard_input - 0x1E];  
+				kb_char = kb_sc_row2_let[keyboard_input - 0x1E];
 			}
 		} else if(keyboard_input <= 0x35 && keyboard_input >= 0x2B){
 			// between 0x2B = \ and 0x35 = /
 			if (shift_flag ^ capslock_flag) {								//deal with shift-related chars
 				kb_char = kb_sc_row3_shift_chars[keyboard_input - 0x2B]; 	// 0x2B for the offset mapping in the array
 			} else {
-				kb_char = kb_sc_row3_let[keyboard_input - 0x2B];  
+				kb_char = kb_sc_row3_let[keyboard_input - 0x2B];
 			}
 		} else{
 			send_eoi(KB_IRQ);
@@ -165,13 +165,14 @@ void handle_keyboard_interrupt(){
 }
 
 /* get_kb_buf
- *		Description: returns keyboard buffer ptr to be used by 
+ *		Description: returns keyboard buffer ptr to be used by
  * 		Inputs: none
  * 		Return Value: keyboard buffer ptr
  *		Side Effects: none
  */
-char * get_kb_buf() {
-	return buffer;
+int get_kb_buf(char* buf) {
+	memcpy((void*)buf, (void*)buffer, buffer_cur_idx);
+	return buffer_cur_idx - 1;
 }
 
 void handle_backspace() {
