@@ -38,27 +38,45 @@ int32_t terminal_close(){
  *                the end of the buf.
  *		Side Effects: none
  */
-int32_t terminal_read(int32_t fd, const void* buf, int32_t nbytes){
+int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes){
     // check for valid buf and correct fd for reading
     if((buf == NULL) | (fd != 0)){
         return 0;
     }
-    clear_terminal_buf(buf);         // clear buf
-    int32_t counter = 0;             // counter for iterating keyboard buffer
-    char* kb_buf = get_kb_buf();     // pointer to the keyboard buffer
-    // reads each char in keyboard buffer and checks for \n or reached nbytes
-    while(counter != nbytes){
-        if(counter == (nbytes - 1)){
-            ((char*)buf)[nbytes - 1] = '\0';  // end of the buffer
-        } else if((kb_buf[counter] == '\n') | (counter == 127)){
-            ((char*)buf)[counter] = '\0';     // signals the end of the buffer
-            return counter + 1;      // total bytes read
-        } else{
-            ((char*)buf)[counter] = kb_buf[counter];
+    // clear_terminal_buf(buf);         // clear buf
+    memset(buf, '\0', 128);
+    char kb_buf[128];
+    int kb_buf_idx;
+
+    while(1){
+        kb_buf_idx = get_kb_buf(kb_buf);     // pointer to the keyboard buffer
+
+        if(kb_buf_idx == nbytes - 1 || kb_buf_idx == 126){
+            kb_buf[++kb_buf_idx] = '\0';
+            break;
         }
-        counter++;
+        if(kb_buf[kb_buf_idx] == '\n'){
+            kb_buf[kb_buf_idx] = '\0';
+            break;
+        }
     }
-    return nbytes;
+
+    memcpy(buf, (void*)kb_buf, kb_buf_idx + 1);
+    return kb_buf_idx + 1;
+
+    // // reads each char in keyboard buffer and checks for \n or reached nbytes
+    // while(counter != nbytes){
+    //     if(counter == (nbytes - 1)){
+    //         ((char*)buf)[nbytes - 1] = '\0';  // end of the buffer
+    //     } else if((kb_buf[counter] == '\n') || (counter == 127)){
+    //         ((char*)buf)[counter] = '\0';     // signals the end of the buffer
+    //         return counter + 1;      // total bytes read
+    //     } else{
+    //         ((char*)buf)[counter] = kb_buf[counter];
+    //     }
+    //     counter++;
+    // }
+    // return nbytes;
 }
 
 /* terminal_write

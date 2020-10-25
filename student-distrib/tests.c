@@ -1,6 +1,7 @@
 #include "tests.h"
 #include "x86_desc.h"
 #include "lib.h"
+#include "terminal.h"
 
 #define PASS 1
 #define FAIL 0
@@ -250,6 +251,15 @@ int vert_scroll_test(){
 
 	return 1;
 }
+
+int term_read_write_test(){
+	 while(1){
+		char buf[128];
+		terminal_read(0, buf, 128);
+		terminal_write(1, buf, 128);
+ 	}
+	return 1;
+}
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
 /* Checkpoint 5 tests */
@@ -266,6 +276,7 @@ void launch_tests(){
 	// TEST_OUTPUT("kernel paging test", kernel_paging_test());
 	// TEST_OUTPUT("unused page page fault test", unused_paging_test());
 	// TEST_OUTPUT("deref_NULL_ptr_test", deref_NULL_ptr_test());
-	//TEST_OUTPUT("vertical scroll test", vert_scroll_test());
+	// TEST_OUTPUT("vertical scroll test", vert_scroll_test());
+	 TEST_OUTPUT("terminal read/write from keyboard test", term_read_write_test());
 	// launch your tests here
 }
