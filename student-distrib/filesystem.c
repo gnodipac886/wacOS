@@ -1,5 +1,6 @@
 #include "filesystem.h"
 #include "lib.h"
+#include "rtc.h"
 
 static void * filesystem;
 boot_block_t* boot_block;
@@ -120,8 +121,7 @@ int32_t _write(int32_t fd, void* buf, int32_t nbytes){
 	}
 
 	if(fd_arr[fd].jmp_table == rtc_file_ops){
-		// call rtc write here
-
+		_rtc_write(buf);
 		return 0;
 	}
 
@@ -130,7 +130,7 @@ int32_t _write(int32_t fd, void* buf, int32_t nbytes){
 
 // needs to complete
 int32_t rtc_read(int32_t fd, void* buf, int32_t nbytes){
-	// add some black magic here to wait for an interrupt to happen
+	_rtc_read();
 	return 0;
 }
 

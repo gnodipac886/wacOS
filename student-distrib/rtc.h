@@ -18,7 +18,7 @@ void rtc_open();
 /* rtc_close: Closes rtc file */
 void rtc_close();
 /* rtc_read: returns after an interrupt occurs */
-int rtc_read();
+int _rtc_read();
 /* rtc_write: sets rtc frequency*/
-int rtc_write(int freq);
+int _rtc_write(int freq);
 #endif /* _RTC_H */

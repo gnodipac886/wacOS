@@ -19,7 +19,7 @@ void __rtc_init__(){
     outb(reg_value | 0x40, CMOS_IO_PORT);   // Turn on Register B bit 6
 
     enable_irq(RTC_IRQ);                    // Enable interrupt for RTC on PIC
-    rtc_write(2);                           // RTC interrupt default value = 2 Hz.
+    _rtc_write(2);                           // RTC interrupt default value = 2 Hz.
     sti();
 }
 
@@ -74,7 +74,7 @@ int _rtc_read(){
  *      Function: Set rtc frequency. Range: 1-1024 Hz 
  *      Side Effects: none     
  */
-int rtc_write(int freq){
+int _rtc_write(int freq){
     cli();
     /* if frequency is out of range 1-1024 Hz, fail */
     if(freq>1024 || freq<1){
