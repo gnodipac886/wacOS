@@ -2,12 +2,25 @@
 #include "keyboard.h"
 #include "lib.h"
 
-
+/* terminal_open
+ *      Description: initializes terminal
+ * 		Inputs: none
+ * 		Return Value: 0
+ * 		Function: Initializes anything that terminal needs or do nothing
+ *		Side Effects: none
+ */
 int32_t terminal_open(){
     //  initializes terminal stuff (or nothing)
     return 0;
 }
 
+/* terminal_close
+ *      Description: clears any terminal specific variable
+ * 		Inputs: none
+ * 		Return Value: 0
+ * 		Function: Clears anything terminal initialized or do nothing
+ *		Side Effects: none
+ */
 int32_t terminal_close(){
     // clears any terminal specific variables or do nothing
     return 0;
@@ -30,6 +43,7 @@ int32_t terminal_read(int32_t fd, const void* buf, int32_t nbytes){
     if((buf == NULL) | (fd != 0)){
         return 0;
     }
+    clear_terminal_buf(buf);         // clear buf
     int32_t counter = 0;             // counter for iterating keyboard buffer
     char* kb_buf = get_kb_buf();     // pointer to the keyboard buffer
     // reads each char in keyboard buffer and checks for \n or reached nbytes
