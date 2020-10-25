@@ -66,8 +66,11 @@ int32_t _open(const uint8_t* fname){
 	// set the jump table for the file operations
 	switch(dentry.type){
 		case RTC_TYPE:
+		{
 			fd_arr[fd].jmp_table = rtc_file_ops;
+			_rtc_open();
 			break;
+		}
 
 		case DIR_TYPE:
 			fd_arr[fd].jmp_table = dir_file_ops;
@@ -116,13 +119,13 @@ int32_t _close(int32_t fd){
 
 // needs to complete
 int32_t _write(int32_t fd, void* buf, int32_t nbytes){
+	// sanity checks
 	if(fd >= 8 || fd < 2 || fd_arr[fd].flags == FILE_NOT_USE){
 		return -1;
 	}
 
 	if(fd_arr[fd].jmp_table == rtc_file_ops){
-		_rtc_write(buf);
-		return 0;
+		return _rtc_write(buf);
 	}
 
 	return -1;
@@ -130,6 +133,11 @@ int32_t _write(int32_t fd, void* buf, int32_t nbytes){
 
 // needs to complete
 int32_t rtc_read(int32_t fd, void* buf, int32_t nbytes){
+	// sanity checks
+	if(fd >= 8 || fd < 2 || fd_arr[fd].flags == FILE_NOT_USE || fd_arr[fd].jmp_table != rtc_file_ops){
+		return -1;
+	}
+
 	_rtc_read();
 	return 0;
 }
