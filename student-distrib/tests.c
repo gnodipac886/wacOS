@@ -234,6 +234,7 @@ int deref_NULL_ptr_test(){
 
 
 /* Checkpoint 2 tests */
+
 int read_dir(){
 	TEST_HEADER;
 
@@ -277,6 +278,17 @@ int read_file(char * fname){
 
 	return PASS;
 }
+
+
+void test_rtc_freq(){
+	int i;
+	for(i=1; i<10000; i++){
+		if(_rtc_write(i)==0)
+			printf("%d",i);
+	}
+
+}
+
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
 /* Checkpoint 5 tests */
@@ -297,4 +309,5 @@ void launch_tests(){
 	// TEST_OUTPUT("read_dir", read_dir());
 	TEST_OUTPUT("reading a file", read_file("frame0.txt"));
 	// launch your tests here
+	//test_rtc_freq();
 }
