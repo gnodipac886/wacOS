@@ -93,14 +93,14 @@ int _rtc_read(){
 int _rtc_write(void* buf){
 	cli();
 	int freq = *((int*)buf);
-	/* if frequency is out of range 1-1024 Hz, fail */
-	if(freq>1024 || freq<1){
+	/* if frequency is out of range 2-1024 Hz, fail */
+	if(freq>1024 || freq<2){
 		return -1;
 	}
 
 	/* if frequency is not a power of 2, fail.*/
-	uint32_t exponent = -1;
-	uint32_t pow_of_2 = 1;
+	uint32_t exponent = 0;
+	uint32_t pow_of_2 = 2;
 	while(freq>=pow_of_2){
 		/* freq is not a power of 2, fail.*/
 		if(freq%pow_of_2 !=0){
