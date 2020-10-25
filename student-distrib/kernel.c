@@ -148,7 +148,7 @@ void entry(unsigned long magic, unsigned long addr) {
 	for(mask_i=0; mask_i< 16; mask_i++){
 		disable_irq(mask_i);
 	}
-	
+
 	/* Init the PIC */
 	i8259_init();
 
