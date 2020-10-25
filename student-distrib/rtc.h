@@ -14,9 +14,9 @@ void __rtc_init__();
 /* handle_rtc_interrupt: processes rtc interrupt.*/
 void handle_rtc_interrupt();
 /* rtc_open: Opens rtc file */
-void _rtc_open();
+int _rtc_open();
 /* rtc_close: Closes rtc file */
-void _rtc_close();
+int _rtc_close();
 /* rtc_read: returns after an interrupt occurs */
 int _rtc_read();
 /* rtc_write: sets rtc frequency*/
