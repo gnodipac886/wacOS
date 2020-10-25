@@ -335,8 +335,8 @@ int vert_scroll_test(){
 }
 
 int term_read_write_test(){
+	char buf[128];
 	 while(1){
-		char buf[128];
 		terminal_read(0, buf, 128);
 		terminal_write(1, buf, 128);
  	}
