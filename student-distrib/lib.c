@@ -180,6 +180,53 @@ void putc(uint8_t c) {
     }
 }
 
+/* void update_cursor();
+ *      Description: updates cursor position in text mode
+ *      Inputs: x = cursor's new x position
+ *              y = cursor's new y position
+ *      Outputs: none
+ *      Return Value: none
+ */
+void update_cursor(int x, int y) {
+    uint16_t pos = y*NUM_COLS + x;
+
+    outb(0x3D4, 0x0F);
+    outb(0x3D5, (uint8_t) (pos & 0xFF));
+	outb(0x3D4, 0x0E);
+	outb(0x3D5, (uint8_t) ((pos >> 8) & 0xFF));
+}
+
+/* void vid_backspace();
+ *  Description: backspace effect in video memory
+ *  Inputs: none
+ *  Return Value: none
+ *  Function: moves back to previous horizontal line or clears last non-empty space, updates cursor position
+ */
+void vid_backspace() {
+    if (screen_x == 0) {                                                        //calculate new cursor position
+        if (screen_y > 0) {             //deletes the '\n'
+            screen_y--;
+            screen_x = NUM_COLS-1;
+        }
+    } else {
+        screen_x--;
+    }
+    *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = ' ';   
+    update_cursor(screen_x, screen_y);  
+}
+
+/* void vid_enter();
+ *  Description: enter effect in video memory
+ *  Inputs: none
+ *  Return Value: none
+ *  Function: moves back to previous horizontal line or clears last non-empty space, updates cursor position
+ */
+void vid_enter() {
+    putc('\n');
+    update_cursor(screen_x, screen_y);
+}
+
+
 /* int8_t* itoa(uint32_t value, int8_t* buf, int32_t radix);
  * Inputs: uint32_t value = number to convert
  *            int8_t* buf = allocated buffer to place string in
