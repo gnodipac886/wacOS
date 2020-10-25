@@ -1,12 +1,12 @@
 #include "keyboard.h"
 #include "lib.h"
 
-int terminal_open(){
+int32_t terminal_open(){
     //  initializes terminal stuff (or nothing)
     return 0;
 }
 
-int terminal_close(){
+int32_t terminal_close(){
     // clears any terminal specific variables or do nothing
     return 0;
 }
@@ -24,31 +24,32 @@ int terminal_close(){
  *		Side Effects: none
  */
 int32_t terminal_read(int32_t fd, const void* buf, int32_t nbytes){
-    // check for valid buf
-    if(buf == NULL){
+    // check for valid buf and correct fd for reading
+    if(buf == NULL | fd != 0){
         return 0;
     }
-    int32_t counter = 0;            // counter for iterating keyboard buffer
-    char* kb_buf = get_kb_buf();    // pointer to the keyboard buffer
+    int32_t counter = 0;             // counter for iterating keyboard buffer
+    char* kb_buf = get_kb_buf();     // pointer to the keyboard buffer
     // reads each char in keyboard buffer and checks for \n or reached nbytes
     while(counter != nbytes){
         if(counter == (nbytes - 1)){
-            buf[nbytes - 1] = '\0'; // end of the buffer
-        } else if(kb_buf[counter] == '\n'){
-            buf[counter] = '\0';    // signals the end of the buffer
-            return counter + 1;     // total bytes read
+            buf[nbytes - 1] = '\0';  // end of the buffer
+        } else if(kb_buf[counter] == '\n' | counter == 127){
+            buf[counter] = '\0';     // signals the end of the buffer
+            clear_terminal_buf(buf); // clears the terminal buf
+            return counter + 1;      // total bytes read
         } else{
             buf[counter] = kb_buf[counter];
         }
         counter++;
     }
-
+    clear_terminal_buf(buf);        // clears the terminal buf
     return nbytes;
 }
 
 /* terminal_write
  *      Description: Writes data in buf to the screen
- * 		Inputs: fd - file descriptor, should be 0 for reading
+ * 		Inputs: fd - file descriptor, should be 1 for writing
  *              buf - buffer that stores the data
  *              nbytes - number of bytes to write
  * 		Return Value: -1 - error, invalid pointer, or empty
@@ -57,14 +58,14 @@ int32_t terminal_read(int32_t fd, const void* buf, int32_t nbytes){
  *		Side Effects: none
  */
 int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes){
-    // check for valid buf
-    if(buf == NULL){
+    // check for valid buf and correct fd for writing
+    if(buf == NULL | fd != 1){
         return -1;
     }
     int32_t i;                      // counter
     // loop through buf until all nbytes are written to the screen
     for(i = 0; i < nbytes; i++){
-        if(i == 80){
+        if(i == NUM_COLS){
             printf("\n");           // newline reached max of the screen width
         }
 
@@ -74,4 +75,19 @@ int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes){
 
     }
     return nbytes;
+}
+
+/* clear_terminal_buf
+ *      Description: Clears the buffer
+ * 		Inputs: buf - buffer that stores the terminal data
+ * 		Return Value: none
+ * 		Function: Clears the buf by putting in \0
+ *		Side Effects: none
+ */
+void clear_terminal_buf(void* buf){
+    int i = sizeof(buf)/sizeof(buf[0]); // size of the buf array
+
+    memset(buf, '\0', i);               // clears buf, putting in null
+
+    return;
 }

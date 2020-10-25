@@ -6,12 +6,15 @@
 #define NUM_ROWS    25 // video rows
 
 /* initializes terminal */
-extern int terminal_open();
+extern int32_t terminal_open();
 /* clears the terminal */
-extern int terminal_close();
+extern int32_t terminal_close();
 /* reads from keyboard or input */
-extern int32_t terminal_read(int32_t fd, const void* buf, int32_t nbytes);
+extern int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes);
 /* writes to the screen */
 extern int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes);
+
+/* clears the terminal's buffer */
+extern void clear_terminal_buf(void* buf);
 
 #endif /*_TERMINAL_H */
