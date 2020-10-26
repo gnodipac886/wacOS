@@ -25,7 +25,7 @@ void __init_filesystem__(void * filesystem_ptr){
 	for(i = 0; i < MAX_FILES_OPEN; i++){
 		fd_arr[i].jmp_table = NULL;
 		fd_arr[i].inode = -1;
-		fd_arr[i].file_position = -1;
+		fd_arr[i].file_position = 0;
 		fd_arr[i].flags = FILE_NOT_USE;
 	}
 }
@@ -173,13 +173,15 @@ int32_t dir_read(int32_t fd, void* buf, int32_t nbytes){
 }
 
 int32_t file_read(int32_t fd, void* buf, int32_t nbytes){
-	int offset = 0;
+	int offset = fd_arr[fd].file_position;
 
 	if(fd >= 8 || fd < 2 || fd_arr[fd].flags == FILE_NOT_USE || fd_arr[fd].jmp_table != file_file_ops){
 		return -1;
 	}
 
-	return read_data(fd_arr[fd].inode, offset, (uint8_t*)buf, nbytes);
+	fd_arr[fd].file_position = read_data(fd_arr[fd].inode, offset, (uint8_t*)buf, nbytes);
+
+	return 
 }
 
 int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry){
@@ -243,7 +245,6 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
 	inode_t curr_inode;
 
 	int data_block_num;										// index to which data block we need to use
-	// int num_spill_over; 									// number of spill over data blocks (how many data blocks do we need to look at in total)
 	int num_bytes_left; 									// the amount of bytes left to get in case of spillover
 	int num_mem2_cpy; 										// how many bytes to copy over
 	int num_copied = 0; 									// number of copied bytes
