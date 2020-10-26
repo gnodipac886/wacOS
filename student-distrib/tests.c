@@ -377,11 +377,11 @@ void launch_tests(){
 
 	/*CHECKPOINT 2*/
 	// TEST_OUTPUT("read_dir", read_dir());
-	TEST_OUTPUT("reading a file", read_file("shell"));
+	// TEST_OUTPUT("reading a file", read_file("shell"));
 	// TEST_OUTPUT("reading file with name too long", read_long_name_file());
 	// TEST_OUTPUT("Testing RTC", test_rtc_freq());
 	// TEST_OUTPUT("vertical scroll test", vert_scroll_test());
-	// TEST_OUTPUT("terminal read/write from keyboard test", term_read_write_test());
+	 TEST_OUTPUT("terminal read/write from keyboard test", term_read_write_test());
 
 	// launch your tests here
 }
