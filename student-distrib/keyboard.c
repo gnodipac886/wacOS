@@ -28,15 +28,17 @@ char kb_sc_row0_shift_chars[] = {'!', '@', '#', '$', '%', '^', '&', '*', '(', ')
 char kb_sc_row1_let[] = {'q', 'w', 'e', 'r', 't', 'y', 'u','i', 'o', 'p', '[', ']'};
 char kb_sc_row1_shift_chars[] = {'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '{', '}'};
 char kb_sc_row1_caps_chars[] = {'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '[', ']'};
+char kb_sc_row1_caps_shift[] = {'q', 'w', 'e', 'r', 't', 'y', 'u','i', 'o', 'p', '{', '}'};
 // 0x1E - 0x29 from a to (backtick)
 char kb_sc_row2_let[] = {'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', '`'};
 char kb_sc_row2_shift_chars[] = {'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ':', '\"', '~'};
 char kb_sc_row2_caps_chars[] = {'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ';', '\'', '`'};
+char kb_sc_row2_caps_shift[] = {'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ':', '\"', '~'};
 // 0x2B - 0x35 from \ (row 2) z(row 3) to /
 char kb_sc_row3_let[] = {'\\', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/'};
 char kb_sc_row3_shift_chars[] = {'|', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', '<', '>', '?'};
 char kb_sc_row3_caps_chars[] = {'\\', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', ',', '.', '/'};
-
+char kb_sc_row3_caps_shift[] = {'|', 'z', 'x', 'c', 'v', 'b', 'n', 'm', '<', '>', '?'};
 
 char buffer[BUF_SIZE];
 char terminal_buf[BUF_SIZE];
@@ -122,24 +124,33 @@ void handle_keyboard_interrupt(){
 			} else {
 				kb_char = kb_sc_row0_nums[keyboard_input - 2];				// -2 for the offset mapping in the array
 			}
-		} else if(keyboard_input <= 0x1B && keyboard_input >= 0x10){		// between 0x10 = q and 0x1B = ]
-			if (shift_flag) {												//deal with shift-related chars
-				kb_char = kb_sc_row1_shift_chars[keyboard_input - 0x10]; 	// 0x10 for the offset mapping in the array
+		} else if(keyboard_input <= 0x1B && keyboard_input >= 0x10){
+			// between 0x10 = q and 0x1B = ]
+			if (shift_flag && capslock_flag) {
+				kb_char = kb_sc_row1_caps_shift[keyboard_input - 0x10]; 	// 0x10 for the offset mapping in the array
+			} else if(shift_flag){											//deal with shift-related chars
+				kb_char = kb_sc_row1_shift_chars[keyboard_input - 0x10];	// 0x10 for the offset mapping in the array
 			} else if(capslock_flag){
-				kb_char = kb_sc_row1_caps_chars[keyboard_input - 0x10]; 	// 0x10 for the offset mapping in the array
+				kb_char = kb_sc_row1_caps_chars[keyboard_input - 0x10];		// 0x10 for the offset mapping in the array
 			} else {
 				kb_char = kb_sc_row1_let[keyboard_input - 0x10];			// 0x10 for the offset mapping in the array
 			}
-		} else if(keyboard_input <= 0x29 && keyboard_input >= 0x1E){		// between 0x1E = a and 0x29 =  `
-			if (shift_flag) {												//deal with shift-related chars
+		} else if(keyboard_input <= 0x29 && keyboard_input >= 0x1E){
+			// between 0x1E = a and 0x29 =  `
+			if (shift_flag && capslock_flag) {								//deal with shift-related chars
+				kb_char = kb_sc_row2_caps_shift[keyboard_input - 0x1E]; 	// 0x1E for the offset mapping in the array
+			} else if (shift_flag) {										//deal with shift-related chars
 				kb_char = kb_sc_row2_shift_chars[keyboard_input - 0x1E]; 	// 0x1E for the offset mapping in the array
 			} else if(capslock_flag){
 				kb_char = kb_sc_row2_caps_chars[keyboard_input - 0x1E];		// 0x1E for the offset mapping in the array
 			} else {
 				kb_char = kb_sc_row2_let[keyboard_input - 0x1E];			// 0x1E for the offset mapping in the array
 			}
-		} else if(keyboard_input <= 0x35 && keyboard_input >= 0x2B){		// between 0x2B = \ and 0x35 = /
-			if (shift_flag) {												//deal with shift-related chars
+		} else if(keyboard_input <= 0x35 && keyboard_input >= 0x2B){
+			// between 0x2B = \ and 0x35 = /
+			if (shift_flag && capslock_flag) {
+				kb_char = kb_sc_row3_caps_shift[keyboard_input - 0x2B]; 	// 0x2B for the offset mapping in the array
+			} else if (shift_flag) {										//deal with shift-related chars
 				kb_char = kb_sc_row3_shift_chars[keyboard_input - 0x2B]; 	// 0x2B for the offset mapping in the array
 			} else if(capslock_flag){
 				kb_char = kb_sc_row3_caps_chars[keyboard_input - 0x2B];		// 0x2B for the offset mapping in the array
@@ -245,8 +256,8 @@ void handle_backspace() {
  * 		Return Value: none
  */
 void handle_enter() {
-	if (buffer_accessed_flag == 0) {						//ignore enters when handling enters
-		buffer_accessed_flag = 1;
+	if (buffer_accessed_flag == 0) {			//ignore enters when handling enters
+		buffer_accessed_flag = 1;				// enable flag
 
 		buffer[buffer_cur_idx] = '\n';						//which may cause chars to be added while buffer_cur_idx = 0
 		buffer_cur_idx++;
@@ -256,6 +267,6 @@ void handle_enter() {
 
 		vid_enter();
 		clear_kb_buf();
-		buffer_accessed_flag = 0;							// reset the flag to a 1
+		buffer_accessed_flag = 0;				// reset flag
 	}
 }

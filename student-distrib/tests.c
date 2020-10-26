@@ -236,11 +236,11 @@ int deref_NULL_ptr_test(){
 
 /* Checkpoint 2 tests */
 
-/* read_dir 
+/* read_dir
  *      Inputs: none
  *      Return Value: pass or fail
  *      Function: attempts to read out all the files in the filesystem
- *      Side Effects: none     
+ *      Side Effects: none
  */
 int read_dir(){
 	// print out the header
@@ -274,11 +274,11 @@ int read_dir(){
 	return PASS;
 }
 
-/* read_dir 
+/* read_dir
  *      Inputs: fname 		- the name fo the file we want to read
  *      Return Value: pass or fail
  *      Function: attempts to read out a whole file
- *      Side Effects: none     
+ *      Side Effects: none
  */
 int read_file(char * fname){
 	// print test header
@@ -330,11 +330,11 @@ int read_file(char * fname){
 	return PASS;
 }
 
-/* read_long_name_file 
+/* read_long_name_file
  *      Inputs: none
  *      Return Value: pass or fail
  *      Function: checks if a long name file will pass or not when attempting to read
- *      Side Effects: none     
+ *      Side Effects: none
  */
 int read_long_name_file(){
 	TEST_HEADER;													// print headder
@@ -353,11 +353,11 @@ int read_long_name_file(){
 	return FAIL;
 }
 
-/* filesystem_sanity_check 
+/* filesystem_sanity_check
  *      Inputs: none
  *      Return Value: pass or fail
  *      Function: performs a series of sanity checks on various filesystem functions
- *      Side Effects: none     
+ *      Side Effects: none
  */
 int filesystem_sanity_check(){
 	TEST_HEADER;													// print headder
@@ -419,11 +419,11 @@ int filesystem_sanity_check(){
 	return failed_flag;
 }
 
-/* test_rtc_freq 
+/* test_rtc_freq
  *      Inputs: none
  *      Return Value: pass or fail
  *      Function: sets the rtc to different values and prints values at that rate
- *      Side Effects: none     
+ *      Side Effects: none
  */
 int test_rtc_freq(){
 	TEST_HEADER;													// print headder
@@ -511,7 +511,7 @@ void launch_tests(){
 	// TEST_OUTPUT("read_dir", read_dir());
 	// TEST_OUTPUT("reading a file", read_file("verylargetextwithverylongname.tx"));
 	// TEST_OUTPUT("reading file with name too long", read_long_name_file());
-	TEST_OUTPUT("Sanity checks for filesystem", filesystem_sanity_check());
+	// TEST_OUTPUT("Sanity checks for filesystem", filesystem_sanity_check());
 	// TEST_OUTPUT("Testing RTC", test_rtc_freq());
 	// TEST_OUTPUT("vertical scroll test", vert_scroll_test());
 	// TEST_OUTPUT("terminal read/write from keyboard test", term_read_write_test());
