@@ -340,7 +340,7 @@ int term_read_write_test(){
 		terminal_read(0, buf, 128);
 		terminal_write(1, buf, 128);
  	}
-	return 1;
+	return PASS;
 }
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
@@ -349,6 +349,7 @@ int term_read_write_test(){
 
 /* Test suite entry point */
 void launch_tests(){
+	/*CHECKPOINT 1*/
 	// TEST_OUTPUT("idt_test", idt_test());
 	// TEST_OUTPUT("divide by 0 test", divide_error_test());
 	// TEST_OUTPUT("invalid_opcode_test", invalid_opcode_test());
@@ -358,11 +359,13 @@ void launch_tests(){
 	// TEST_OUTPUT("kernel paging test", kernel_paging_test());
 	// TEST_OUTPUT("unused page page fault test", unused_paging_test());
 	// TEST_OUTPUT("deref_NULL_ptr_test", deref_NULL_ptr_test());
+
+	/*CHECKPOINT 2*/
 	// TEST_OUTPUT("read_dir", read_dir());
-	// TEST_OUTPUT("reading a file", read_file("frame0.txt"));
-	TEST_OUTPUT("Testing RTC", test_rtc_freq());
+	TEST_OUTPUT("reading a file", read_file("frame0.txt"));
+	// TEST_OUTPUT("Testing RTC", test_rtc_freq());
 	// TEST_OUTPUT("vertical scroll test", vert_scroll_test());
-	 TEST_OUTPUT("terminal read/write from keyboard test", term_read_write_test());
+	// TEST_OUTPUT("terminal read/write from keyboard test", term_read_write_test());
+
 	// launch your tests here
-	// test_rtc_freq();
 }
