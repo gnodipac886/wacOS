@@ -150,8 +150,8 @@ void entry(unsigned long magic, unsigned long addr) {
 	for(mask_i=0; mask_i< 16; mask_i++){
 		disable_irq(mask_i);
 	}
-	
-	mod = (module_t*)mbi->mods_addr;
+
+	mod = (module_t*)mbi->mods_addr;										// initializing file system memory
 	/* Init the PIC */
 	i8259_init();
 
