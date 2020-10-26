@@ -71,6 +71,7 @@ void handle_keyboard_interrupt(){
 	char kb_char = NULL;
 	unsigned char keyboard_input = inb(KB_PORT);
 
+	// conditions for different key presses
 	if (keyboard_input == TAB_PRESSED) {
 		kb_char = ' ';
 	} else if (keyboard_input == BACKSPACE_PRESSED) {
@@ -117,8 +118,7 @@ void handle_keyboard_interrupt(){
 	} else if((keyboard_input <= 0x35) && (keyboard_input > 0x01)){
 	// between 0x35 = /, 0x01 = esc on keyboard
 
-			// between 0x02 = 1 and 0x0D = "="
-		if(keyboard_input <= 0x0D && keyboard_input >= 0x02){
+		if(keyboard_input <= 0x0D && keyboard_input >= 0x02){				// between 0x02 = 1 and 0x0D = "="
 			if (shift_flag) {												//deal with shift-related chars
 				kb_char = kb_sc_row0_shift_chars[keyboard_input - 2]; 		// -2 for the offset mapping in the array
 			} else {
@@ -172,7 +172,7 @@ void handle_keyboard_interrupt(){
 	if (kb_char != '\0') {
 		if ((kb_char == 'L' || kb_char == 'l') && ctrl_flag == 1) {		//check ctrl+l or ctrl+L
 			clear();
-			update_cursor(0,0);
+			update_cursor(0,0);											// move cursor to the top left
 			int i;
 			for (i = 0; i < buffer_cur_idx; i++) {						//print keyboard buffer to keep/maintain state before ctrl+l
 				putc(buffer[i]);
@@ -183,6 +183,7 @@ void handle_keyboard_interrupt(){
 			buffer[buffer_cur_idx] = kb_char;									//add char to keyboard buffer
 			buffer_cur_idx++;
 
+			// update the terminal buffer
 			terminal_buf[terminal_cur_idx] = kb_char;
 			terminal_cur_idx++;
 		}
@@ -201,7 +202,9 @@ void handle_keyboard_interrupt(){
 int get_kb_buf(char* buf) {
 	if(terminal_cur_idx >= 0 && terminal_cur_idx <= BUF_SIZE){
 		memcpy((void*)buf, (void*)terminal_buf, terminal_cur_idx);
-		return terminal_cur_idx - 1 < 0 ? 0 : terminal_cur_idx - 1;				// check if index is greather than 0
+
+		// return 0 when its empty
+		return terminal_cur_idx - 1 < 0 ? 0 : terminal_cur_idx - 1;
 	} else{
 		clear_terminal_buf();
 		memcpy((void*)buf, (void*)terminal_buf, terminal_cur_idx);
@@ -215,7 +218,7 @@ int get_kb_buf(char* buf) {
  * 		Return Value: none
  */
 void clear_terminal_buf() {
-	terminal_cur_idx = 0;							// reset index
+	terminal_cur_idx = 0;									// reset the terminal index
 	memset(terminal_buf, '\0', BUF_SIZE);
 }
 
@@ -225,7 +228,7 @@ void clear_terminal_buf() {
  * 		Return Value: none
  */
 void clear_kb_buf() {
-	buffer_cur_idx = 0;							// reset index
+	buffer_cur_idx = 0;										// reset the terminal index
 	memset(buffer, '\0', BUF_SIZE);
 }
 
@@ -238,10 +241,10 @@ void handle_backspace() {
 	// check to see if buffer is not empty
 	if (buffer_cur_idx > 0 && terminal_cur_idx > 0) {
 		buffer_cur_idx--;
-		buffer[buffer_cur_idx] = '\0';				// backspace or null
+		buffer[buffer_cur_idx] = '\0';						// backspace or null
 
 		terminal_cur_idx--;
-		terminal_buf[terminal_cur_idx] = '\0';		// backspace or null
+		terminal_buf[terminal_cur_idx] = '\0';				// backspace or null
 
 		vid_backspace();
 	}
@@ -256,10 +259,10 @@ void handle_enter() {
 	if (buffer_accessed_flag == 0) {			//ignore enters when handling enters
 		buffer_accessed_flag = 1;				// enable flag
 
-		buffer[buffer_cur_idx] = '\n';			//which may cause chars to be added while buffer_cur_idx = 0
+		buffer[buffer_cur_idx] = '\n';						//which may cause chars to be added while buffer_cur_idx = 0
 		buffer_cur_idx++;
 
-		terminal_buf[terminal_cur_idx] = '\n';			//which may cause chars to be added while buffer_cur_idx = 0
+		terminal_buf[terminal_cur_idx] = '\n';				//which may cause chars to be added while buffer_cur_idx = 0
 		terminal_cur_idx++;
 
 		vid_enter();

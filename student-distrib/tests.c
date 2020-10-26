@@ -442,11 +442,11 @@ int test_rtc_freq(){
 	}
 
 	// loop through possible frequencies and print values
-	for(i = 2; i <= 1024; i++){										// 1024 that's the max rtc freq
+	for(i = 2; i <= 1024; i++){										// 1024 that's the max rtc freq, 2 for lowest freq
 		buf = i;
 		if(_write(fd, (void*)(&buf), 100) != -1){ 					// attempts to set the rtc
 			for(ticks = 0; ticks < (i * 2); ticks++){				// set up ticks for how long we want to print, 2 just random value for time
-				rtc_read(fd, NULL, 1000);							// wait for rtc to interrupt and 1000 is random
+				rtc_read(fd, (void*)(&buf), 1000);					// wait for rtc to interrupt and 1000 is random
 				printf("%d", i);									// we print the current frequency value
 			}
 		}
@@ -468,7 +468,7 @@ int vert_scroll_test(){
 	int i; 			// counter
 
 	// print lines to see scrolling work
-	for(i = 0; i < 392; i++){								// 392 random
+	for(i = 0; i < 392; i++){										// 392 random
 		printf("Testing Vertical Scroll: Line %d \n", i);
 	}
 
@@ -482,6 +482,7 @@ int vert_scroll_test(){
  *		Side Effects: none
  */
 int term_read_write_test(){
+	// 128 in here for 128 characters possible in the buffer
 	char buf[128];													// set up the buffer for the typing
 	 while(1){														// keep echoing
 		terminal_read(0, buf, 128);									// read from the keyboard
