@@ -201,28 +201,49 @@ int get_kb_buf(char* buf) {
 	}
 }
 
+/* clear_terminal_buf
+ *		Description: clears the terminal buf
+ * 		Inputs: none
+ * 		Return Value: none
+ */
 void clear_terminal_buf() {
 	terminal_cur_idx = 0;
 	memset(terminal_buf, '\0', BUF_SIZE);
 }
 
+/* clear_kb_buf
+ *		Description: clears the keyboard buffer
+ * 		Inputs: none
+ * 		Return Value: none
+ */
 void clear_kb_buf() {
 	buffer_cur_idx = 0;
 	memset(buffer, '\0', BUF_SIZE);
 }
 
+/* handle_backspace
+ *		Description: Updates kb buffer when backspace is pressed and change the display
+ * 		Inputs: none
+ * 		Return Value: none
+ */
 void handle_backspace() {
+	// check to see if buffer is not empty
 	if (buffer_cur_idx > 0 && terminal_cur_idx > 0) {
 		buffer_cur_idx--;
-		buffer[buffer_cur_idx] = '\0';
+		buffer[buffer_cur_idx] = '\0';				// backspace or null
 
 		terminal_cur_idx--;
-		terminal_buf[terminal_cur_idx] = '\0';
+		terminal_buf[terminal_cur_idx] = '\0';		// backspace or null
 
 		vid_backspace();
 	}
 }
 
+/* handle_enter
+ *		Description: Updates the buffers and change what is displayed when enter is pressed
+ * 		Inputs: none
+ * 		Return Value: none
+ */
 void handle_enter() {
 	if (buffer_accessed_flag == 0) {			//ignore enters when handling enters
 		buffer_accessed_flag = 1;
