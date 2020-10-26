@@ -120,7 +120,7 @@ int32_t _open(const uint8_t* fname){
 		fd_arr[fd].inode = 0;
 	}
 
-	fd_arr[fd].file_position = 0;
+	fd_arr[fd].file_position = 0;			// 0 since we want the beginning of the file
 	fd_arr[fd].flags = FILE_IN_USE;
 
 	return fd;
@@ -146,7 +146,7 @@ int32_t _close(int32_t fd){
 	// reset the file
 	fd_arr[fd].jmp_table = NULL;
 	fd_arr[fd].inode = -1;
-	fd_arr[fd].file_position = 0;
+	fd_arr[fd].file_position = 0;			// 0 since we want the beginning of the file			
 	fd_arr[fd].flags = FILE_NOT_USE;
 
 	// success
@@ -208,7 +208,7 @@ int32_t rtc_read(int32_t fd, void* buf, int32_t nbytes){
  */
 int32_t dir_read(int32_t fd, void* buf, int32_t nbytes){
 	// create buffer to hold the file name
-	char dir_name[MAX_NAME_LEN + 1];
+	char dir_name[MAX_NAME_LEN + 1]; 		// length +1 since we want to fir 33 characters here
 
 	// sanity checks
 	if(fd >= MAX_FILES_OPEN || fd < FIRST_FILE_IDX || fd_arr[fd].flags == FILE_NOT_USE || fd_arr[fd].jmp_table != dir_file_ops || buf == NULL){
@@ -281,7 +281,7 @@ int32_t file_read(int32_t fd, void* buf, int32_t nbytes){
 int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry){
 	// initialize counter
 	int i;
-	char curr_file_name[MAX_NAME_LEN + 1];
+	char curr_file_name[MAX_NAME_LEN + 1];			// length +1 since we want to fir 33 characters here
 	char* file_name = (char*)fname;
 	dentry_t curr_dentry;
 

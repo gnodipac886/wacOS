@@ -69,6 +69,7 @@ void handle_keyboard_interrupt(){
 	char kb_char = NULL;
 	unsigned char keyboard_input = inb(KB_PORT);
 
+	// conditions for different key presses
 	if (keyboard_input == TAB_PRESSED) {
 		kb_char = ' ';
 	} else if (keyboard_input == BACKSPACE_PRESSED) {
@@ -115,39 +116,35 @@ void handle_keyboard_interrupt(){
 	} else if((keyboard_input <= 0x35) && (keyboard_input > 0x01)){
 	// between 0x35 = /, 0x01 = esc on keyboard
 
-			// between 0x02 = 1 and 0x0D = "="
-		if(keyboard_input <= 0x0D && keyboard_input >= 0x02){
+		if(keyboard_input <= 0x0D && keyboard_input >= 0x02){				// between 0x02 = 1 and 0x0D = "="
 			if (shift_flag) {												//deal with shift-related chars
 				kb_char = kb_sc_row0_shift_chars[keyboard_input - 2]; 		// -2 for the offset mapping in the array
 			} else {
-				kb_char = kb_sc_row0_nums[keyboard_input - 2];
+				kb_char = kb_sc_row0_nums[keyboard_input - 2];				// -2 for the offset mapping in the array
 			}
-		} else if(keyboard_input <= 0x1B && keyboard_input >= 0x10){
-			// between 0x10 = q and 0x1B = ]
+		} else if(keyboard_input <= 0x1B && keyboard_input >= 0x10){		// between 0x10 = q and 0x1B = ]
 			if (shift_flag) {												//deal with shift-related chars
 				kb_char = kb_sc_row1_shift_chars[keyboard_input - 0x10]; 	// 0x10 for the offset mapping in the array
 			} else if(capslock_flag){
-				kb_char = kb_sc_row1_caps_chars[keyboard_input - 0x10];
+				kb_char = kb_sc_row1_caps_chars[keyboard_input - 0x10]; 	// 0x10 for the offset mapping in the array
 			} else {
-				kb_char = kb_sc_row1_let[keyboard_input - 0x10];
+				kb_char = kb_sc_row1_let[keyboard_input - 0x10];			// 0x10 for the offset mapping in the array
 			}
-		} else if(keyboard_input <= 0x29 && keyboard_input >= 0x1E){
-			// between 0x1E = a and 0x29 =  `
+		} else if(keyboard_input <= 0x29 && keyboard_input >= 0x1E){		// between 0x1E = a and 0x29 =  `
 			if (shift_flag) {												//deal with shift-related chars
 				kb_char = kb_sc_row2_shift_chars[keyboard_input - 0x1E]; 	// 0x1E for the offset mapping in the array
 			} else if(capslock_flag){
-				kb_char = kb_sc_row2_caps_chars[keyboard_input - 0x1E];
+				kb_char = kb_sc_row2_caps_chars[keyboard_input - 0x1E];		// 0x1E for the offset mapping in the array
 			} else {
-				kb_char = kb_sc_row2_let[keyboard_input - 0x1E];
+				kb_char = kb_sc_row2_let[keyboard_input - 0x1E];			// 0x1E for the offset mapping in the array
 			}
-		} else if(keyboard_input <= 0x35 && keyboard_input >= 0x2B){
-			// between 0x2B = \ and 0x35 = /
+		} else if(keyboard_input <= 0x35 && keyboard_input >= 0x2B){		// between 0x2B = \ and 0x35 = /
 			if (shift_flag) {												//deal with shift-related chars
 				kb_char = kb_sc_row3_shift_chars[keyboard_input - 0x2B]; 	// 0x2B for the offset mapping in the array
 			} else if(capslock_flag){
-				kb_char = kb_sc_row3_caps_chars[keyboard_input - 0x2B];
+				kb_char = kb_sc_row3_caps_chars[keyboard_input - 0x2B];		// 0x2B for the offset mapping in the array
 			} else {
-				kb_char = kb_sc_row3_let[keyboard_input - 0x2B];
+				kb_char = kb_sc_row3_let[keyboard_input - 0x2B];			// 0x2B for the offset mapping in the array
 			}
 		} else{
 			send_eoi(KB_IRQ);
@@ -164,7 +161,7 @@ void handle_keyboard_interrupt(){
 	if (kb_char != '\0') {
 		if ((kb_char == 'L' || kb_char == 'l') && ctrl_flag == 1) {		//check ctrl+l or ctrl+L
 			clear();
-			update_cursor(0,0);
+			update_cursor(0,0);											// move cursor to the top left
 			int i;
 			for (i = 0; i < buffer_cur_idx; i++) {						//print keyboard buffer to keep/maintain state before ctrl+l
 				putc(buffer[i]);
@@ -175,6 +172,7 @@ void handle_keyboard_interrupt(){
 			buffer[buffer_cur_idx] = kb_char;									//add char to keyboard buffer
 			buffer_cur_idx++;
 
+			// update the terminal buffer
 			terminal_buf[terminal_cur_idx] = kb_char;
 			terminal_cur_idx++;
 		}
@@ -193,6 +191,8 @@ void handle_keyboard_interrupt(){
 int get_kb_buf(char* buf) {
 	if(terminal_cur_idx >= 0 && terminal_cur_idx <= BUF_SIZE){
 		memcpy((void*)buf, (void*)terminal_buf, terminal_cur_idx);
+
+		// return 0 when its empty
 		return terminal_cur_idx - 1 < 0 ? 0 : terminal_cur_idx - 1;
 	} else{
 		clear_terminal_buf();
@@ -207,7 +207,7 @@ int get_kb_buf(char* buf) {
  * 		Return Value: none
  */
 void clear_terminal_buf() {
-	terminal_cur_idx = 0;
+	terminal_cur_idx = 0;									// reset the terminal index
 	memset(terminal_buf, '\0', BUF_SIZE);
 }
 
@@ -217,7 +217,7 @@ void clear_terminal_buf() {
  * 		Return Value: none
  */
 void clear_kb_buf() {
-	buffer_cur_idx = 0;
+	buffer_cur_idx = 0;										// reset the terminal index
 	memset(buffer, '\0', BUF_SIZE);
 }
 
@@ -230,10 +230,10 @@ void handle_backspace() {
 	// check to see if buffer is not empty
 	if (buffer_cur_idx > 0 && terminal_cur_idx > 0) {
 		buffer_cur_idx--;
-		buffer[buffer_cur_idx] = '\0';				// backspace or null
+		buffer[buffer_cur_idx] = '\0';						// backspace or null
 
 		terminal_cur_idx--;
-		terminal_buf[terminal_cur_idx] = '\0';		// backspace or null
+		terminal_buf[terminal_cur_idx] = '\0';				// backspace or null
 
 		vid_backspace();
 	}
@@ -245,17 +245,17 @@ void handle_backspace() {
  * 		Return Value: none
  */
 void handle_enter() {
-	if (buffer_accessed_flag == 0) {			//ignore enters when handling enters
+	if (buffer_accessed_flag == 0) {						//ignore enters when handling enters
 		buffer_accessed_flag = 1;
 
-		buffer[buffer_cur_idx] = '\n';			//which may cause chars to be added while buffer_cur_idx = 0
+		buffer[buffer_cur_idx] = '\n';						//which may cause chars to be added while buffer_cur_idx = 0
 		buffer_cur_idx++;
 
-		terminal_buf[terminal_cur_idx] = '\n';			//which may cause chars to be added while buffer_cur_idx = 0
+		terminal_buf[terminal_cur_idx] = '\n';				//which may cause chars to be added while buffer_cur_idx = 0
 		terminal_cur_idx++;
 
 		vid_enter();
 		clear_kb_buf();
-		buffer_accessed_flag = 0;
+		buffer_accessed_flag = 0;							// reset the flag to a 1
 	}
 }
