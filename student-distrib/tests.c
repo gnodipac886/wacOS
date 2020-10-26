@@ -269,17 +269,32 @@ int read_file(char * fname){
 	len = _get_file_length(fd);
 
 	while(i < len){
-		if(i % 80 == 0){
-			printf("\n");
+		if(contents[i] == '\0'){
+			i++;
+			continue;
 		}
-
-		printf("%c", contents[i]);
+		putc(contents[i]);
 		i++;
 	}
 
 	_close(fd);
 
 	return PASS;
+}
+
+int read_long_name_file(){
+	TEST_HEADER;
+
+	int fd;
+
+	clear();
+	fd = _open((uint8_t*)"verylargetextwithverylongname.txt");
+	if(fd == -1){
+		return PASS;
+	}
+	_close(fd);
+
+	return FAIL;
 }
 
 
@@ -362,10 +377,14 @@ void launch_tests(){
 
 	/*CHECKPOINT 2*/
 	// TEST_OUTPUT("read_dir", read_dir());
-	TEST_OUTPUT("reading a file", read_file("frame0.txt"));
+	// TEST_OUTPUT("reading a file", read_file("shell"));
+	// TEST_OUTPUT("reading file with name too long", read_long_name_file());
 	// TEST_OUTPUT("Testing RTC", test_rtc_freq());
 	// TEST_OUTPUT("vertical scroll test", vert_scroll_test());
-	// TEST_OUTPUT("terminal read/write from keyboard test", term_read_write_test());
+	 TEST_OUTPUT("terminal read/write from keyboard test", term_read_write_test());
 
 	// launch your tests here
 }
+
+// CAPS LOCK BROKEN
+// bug log
