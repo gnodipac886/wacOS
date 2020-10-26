@@ -16,7 +16,4 @@ extern int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes);
 /* writes to the screen */
 extern int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes);
 
-/* clears the terminal's buffer */
-void clear_terminal_buf(void* buf);
-
 #endif /*_TERMINAL_H */
