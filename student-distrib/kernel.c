@@ -12,6 +12,7 @@
 #include "rtc.h"
 #include "keyboard.h"
 #include "paging.h"
+#include "filesystem.h"
 
 #define RUN_TESTS
 
@@ -24,6 +25,7 @@
 void entry(unsigned long magic, unsigned long addr) {
 
 	multiboot_info_t *mbi;
+	module_t* mod;
 
 	/* Clear the screen. */
 	clear();
@@ -53,9 +55,9 @@ void entry(unsigned long magic, unsigned long addr) {
 		printf("cmdline = %s\n", (char *)mbi->cmdline);
 
 	if (CHECK_FLAG(mbi->flags, 3)) {
+		mod = (module_t*)mbi->mods_addr;
 		int mod_count = 0;
 		int i;
-		module_t* mod = (module_t*)mbi->mods_addr;
 		while (mod_count < mbi->mods_count) {
 			printf("Module %d loaded at address: 0x%#x\n", mod_count, (unsigned int)mod->mod_start);
 			printf("Module %d ends at address: 0x%#x\n", mod_count, (unsigned int)mod->mod_end);
@@ -148,16 +150,17 @@ void entry(unsigned long magic, unsigned long addr) {
 	for(mask_i=0; mask_i< 16; mask_i++){
 		disable_irq(mask_i);
 	}
-
+	
+	mod = (module_t*)mbi->mods_addr;
 	/* Init the PIC */
 	i8259_init();
 
 	/* Initialize devices, memory, filesystem, enable device interrupts on the
 	 * PIC, any other initialization stuff... */
-	__rtc_init__();			 	// Initialize rtc
-
-	__keyboard_init__();	// enable keyboard interrupt
-	__init_paging__();		// enable paging
+	__rtc_init__();			 												// Initialize rtc
+	__keyboard_init__();													// enable keyboard interrupt
+	__init_filesystem__((void*)(mod->mod_start)); 							// enable filesystem
+	__init_paging__();														// enable paging
 
 	/* Enable interrupts */
 	/* Do not enable the following until after you have set up your

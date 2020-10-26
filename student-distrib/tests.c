@@ -1,6 +1,7 @@
 #include "tests.h"
 #include "x86_desc.h"
 #include "lib.h"
+#include "filesystem.h"
 #include "terminal.h"
 
 #define PASS 1
@@ -235,6 +236,87 @@ int deref_NULL_ptr_test(){
 
 /* Checkpoint 2 tests */
 
+int read_dir(){
+	TEST_HEADER;
+
+	int fd;
+	char curr_name[MAX_NAME_LEN + 1];
+
+	clear();
+
+	fd = _open((uint8_t*)".");
+	while(dir_read(fd, (void*)curr_name, 1024)){
+		printf("%s\n", curr_name);
+	}
+	return 1;
+}
+
+int read_file(char * fname){
+	TEST_HEADER;
+
+	int i = 0;
+	int fd;
+	int len = 100000;
+	char contents[len];
+
+	clear();
+
+	fd = _open((uint8_t*)fname);
+	if(file_read(fd, contents, len) == -1){
+		return FAIL;
+	}
+
+	len = _get_file_length(fd);
+
+	while(i < len){
+		if(i % 80 == 0){
+			printf("\n");
+		}
+
+		printf("%c", contents[i]);
+		i++;
+	}
+
+	_close(fd);
+
+	return PASS;
+}
+
+
+int test_rtc_freq(){
+	TEST_HEADER;
+
+	int i, ticks;
+	int fd, buf;
+	int word = 0;
+
+	clear();
+
+	fd = _open((uint8_t*)"rtc");
+	if(fd == -1){
+		return FAIL;
+	}
+
+	for(i = 2; i < 1025; i++){
+		buf = i;
+		if(_write(fd, (void*)(&buf), 100) != -1){
+			for(ticks = 0; ticks < (i * 2); ticks++){
+				rtc_read(fd, NULL, 1000);
+				printf("%d", i);
+				word++;
+				if(word % 80 == 0){
+					printf("\n");
+				}
+			}
+		}
+	}
+
+	_close(fd);
+
+	clear();
+	return PASS;
+}
+
 /* vert_scroll_test
  * 		Inputs: none
  * 		Return Value: 1
@@ -253,8 +335,8 @@ int vert_scroll_test(){
 }
 
 int term_read_write_test(){
+	char buf[128];
 	 while(1){
-		char buf[128];
 		terminal_read(0, buf, 128);
 		terminal_write(1, buf, 128);
  	}
@@ -276,7 +358,11 @@ void launch_tests(){
 	// TEST_OUTPUT("kernel paging test", kernel_paging_test());
 	// TEST_OUTPUT("unused page page fault test", unused_paging_test());
 	// TEST_OUTPUT("deref_NULL_ptr_test", deref_NULL_ptr_test());
+	// TEST_OUTPUT("read_dir", read_dir());
+	// TEST_OUTPUT("reading a file", read_file("frame0.txt"));
+	TEST_OUTPUT("Testing RTC", test_rtc_freq());
 	// TEST_OUTPUT("vertical scroll test", vert_scroll_test());
 	 TEST_OUTPUT("terminal read/write from keyboard test", term_read_write_test());
 	// launch your tests here
+	// test_rtc_freq();
 }

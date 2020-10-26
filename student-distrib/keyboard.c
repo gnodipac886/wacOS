@@ -37,6 +37,7 @@ char kb_sc_row3_shift_chars[] = {'|', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', '<', '>
 
 char buffer[BUF_SIZE];
 int buffer_cur_idx = 0;
+int buffer_accessed_flag = 0;				// 1 - being read/written to; 0 - not used (needed since terminal and keyboard driver both access it)
 
 /* __keyboard_init__
  * 		Inputs: none
@@ -147,9 +148,19 @@ void handle_keyboard_interrupt(){
 
 
 	if (kb_char != NULL) {
-		printf("%c", kb_char);
-		buffer[buffer_cur_idx] = kb_char;
-		buffer_cur_idx++;				//.........................account for buffer overflow later
+		if ((kb_char == 'L' || kb_char == 'l') && ctrl_flag == 1) {		//check ctrl+l or ctrl+L
+			clear();
+			update_cursor(0,0);
+			int i;
+			for (i = 0; i < buffer_cur_idx; i++) {						//print keyboard buffer to keep/maintain state before ctrl+l
+				putc(buffer[i]);
+			}
+		} else if (buffer_cur_idx < BUF_SIZE -1) {						//if keyboard buffer not filled (127 chars, last char is '\n')	
+			putc(kb_char);												//prints char to screen and updates cursor
+			while (buffer_accessed_flag == 1);							//wait till terminal finishes clearing buffer
+			buffer[buffer_cur_idx] = kb_char;							//add char to keyboard buffer
+			buffer_cur_idx++;
+		}
 	}
 
 	send_eoi(KB_IRQ);
@@ -158,14 +169,18 @@ void handle_keyboard_interrupt(){
 }
 
 /* get_kb_buf
- *		Description: returns keyboard buffer ptr to be used by
- * 		Inputs: none
- * 		Return Value: keyboard buffer ptr
- *		Side Effects: none
+ *		Description: copies keyboard buffer into terminal buffer
+ * 		Inputs: buf = terminal buffer ptr
+ * 		Return Value: index of last char in buffer
  */
 int get_kb_buf(char* buf) {
 	memcpy((void*)buf, (void*)buffer, buffer_cur_idx);
 	return buffer_cur_idx - 1;
+}
+
+void clear_kb_buf() {
+	buffer_cur_idx = 0;
+	memset(buffer, '\0', BUF_SIZE);
 }
 
 void handle_backspace() {
@@ -177,7 +192,13 @@ void handle_backspace() {
 }
 
 void handle_enter() {
-	buffer[buffer_cur_idx] = '\n';
-	buffer_cur_idx++;
-	vid_enter();
+	if (buffer_accessed_flag == 0) {			//ignore enters when handling enters
+		buffer_accessed_flag = 1;
+
+		buffer[buffer_cur_idx] = '\n';			//which may cause chars to be added while buffer_cur_idx = 0
+		buffer_cur_idx++;
+		vid_enter();
+
+		buffer_accessed_flag = 0;
+	}
 }
