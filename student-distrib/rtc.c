@@ -98,16 +98,17 @@ int _rtc_write(void* buf){
 		return -1;
 	}
 
-	/* if frequency is not a power of 2, fail.*/
-	uint32_t exponent = 0;
-	uint32_t pow_of_2 = 2;
+	/* This loop checks which power of 2 the frequency is. 
+	 * If frequency is not a power of 2, fail.*/
+	uint32_t exponent = 0;	//Start from 2^0
+	uint32_t pow_of_2 = 2;	//first power of 2 is 2 (ignore 1)
 	while(freq>=pow_of_2){
 		/* freq is not a power of 2, fail.*/
 		if(freq%pow_of_2 !=0){
 			return -1;
 		}
-		pow_of_2*=2;
-		exponent++;	
+		pow_of_2*=2;		//next power of 2
+		exponent++;			//increment exponent
 	}
 
 	/* freq is a power of 2 and in range.*/
