@@ -3,23 +3,24 @@
 
 #include "types.h"
 
-#define 	BLOCK_SIZE 		4096
-#define 	SLOT_SIZE 		4
-#define 	MAX_NAME_LEN	32
-#define 	MAX_DIR_ENTRY 	(BLOCK_SIZE / DIR_ENTRY_SIZE) - 1
+#define 	BLOCK_SIZE 		4096									// size of each block in filesystem
+#define 	SLOT_SIZE 		4										// 4 bytes 
+#define 	MAX_NAME_LEN	32										// max name length for file 
+#define 	MAX_DIR_ENTRY 	(BLOCK_SIZE / DIR_ENTRY_SIZE) - 1 		// 63
 #define 	MAX_DATA_BLOCK 	(BLOCK_SIZE - SLOT_SIZE) / SLOT_SIZE 	// 1023
-#define 	DIR_ENTRY_SIZE	64
+#define 	DIR_ENTRY_SIZE	64										// size of each directory
 
-#define 	MAX_FILES_OPEN 	8
-#define 	FIRST_FILE_IDX 	2
+#define 	MAX_FILES_OPEN 	8										// maximum number of files open at the same time
+#define 	FIRST_FILE_IDX 	2										// first available file index 
 
-#define 	RTC_TYPE		0
-#define 	DIR_TYPE 		1
-#define 	FILE_TYPE 		2
+#define 	RTC_TYPE		0										// rtc type file number 
+#define 	DIR_TYPE 		1										// directory type file number
+#define 	FILE_TYPE 		2										// regular file type number
 
-#define 	FILE_IN_USE 	1
-#define 	FILE_NOT_USE 	0
+#define 	FILE_IN_USE 	1										// if file is in use 
+#define 	FILE_NOT_USE 	0										// if file is not in use 
 
+// data structure for dentry
 typedef struct dentry{
 	char 		name[MAX_NAME_LEN];
 	uint32_t 	type;
@@ -27,11 +28,13 @@ typedef struct dentry{
 	uint8_t 	reserved[24];
 } dentry_t;
 
+// data structure for inode
 typedef struct inode{
 	uint32_t 	length;
 	uint32_t 	data_block[MAX_DATA_BLOCK];
 } inode_t;
 
+// data structure for boot block
 typedef struct boot_block{
 	uint32_t 	num_entries;
 	uint32_t 	num_inode;
@@ -47,6 +50,7 @@ typedef struct file_descriptor{
 	uint32_t 	flags;					// 1 for in use, 0 for vacant
 } file_descriptor_t;
 
+// data structure for data block 
 typedef struct data_block{
 	uint8_t 	data[BLOCK_SIZE];
 } data_block_t;
