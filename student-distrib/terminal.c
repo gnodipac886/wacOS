@@ -43,22 +43,23 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes){
 	if((buf == NULL) | (fd != 0)){
 		return 0;
 	}
-	// clear_terminal_buf(buf);			 // clear buf
-	memset(buf, '\0', BUF_SZ);
+
+	memset(buf, '\0', BUF_SZ);                    // clear buf
 	char kb_buf[BUF_SZ];
 	int kb_buf_idx;
 
+    // keeps checking until keyboard enters \n or filled buffer
 	while(1){
 		memset(kb_buf, '\0', BUF_SZ);
-		kb_buf_idx = get_kb_buf(kb_buf);	// idx of last added char in keyboard buffer (copy keyboard buffer)
+		kb_buf_idx = get_kb_buf(kb_buf);	     // idx of last added char in keyboard buffer (copy keyboard buffer)
 
 		if(kb_buf[kb_buf_idx] == '\n') {
-			clear_terminal_buf();								 //clear keyboard handler buffer
+			clear_terminal_buf();			     //clear keyboard handler buffer
 			break;
 		}
 	}
 	memcpy(buf, (void*)kb_buf, kb_buf_idx + 1);	 //kb_buf_idx + 1 = number of bytes written to user space buffer
-	return kb_buf_idx + 1;
+	return kb_buf_idx + 1;                       // number of bytes read
 }
 
 /* terminal_write
@@ -80,10 +81,7 @@ int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes){
 	int32_t bytes_written = 0;
 	// loop through buf until all nbytes are written to the screen
 	for(i = 0; i < nbytes; i++){
-		/*if(i == NUM_COLS){
-			printf("\n");		   // newline reached max of the screen width
-		}*/
-
+        // check for null terminating char if not print it
 		if(((char*)buf)[i] != '\0'){
 			putc(((char*)buf)[i]);
 			bytes_written++;
