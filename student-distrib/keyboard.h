@@ -13,6 +13,7 @@ void __keyboard_init__();
 void handle_keyboard_interrupt();
 // returns ptr to keyboard buffer
 int get_kb_buf(char* buf);
+void clear_terminal_buf();
 void clear_kb_buf();
 
 void handle_backspace();
