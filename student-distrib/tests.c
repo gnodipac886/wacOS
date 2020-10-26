@@ -468,7 +468,7 @@ int vert_scroll_test(){
 	int i; 			// counter
 
 	// print lines to see scrolling work
-	for(i = 0; i < 392; i++){
+	for(i = 0; i < 392; i++){								// 392 random
 		printf("Testing Vertical Scroll: Line %d \n", i);
 	}
 
