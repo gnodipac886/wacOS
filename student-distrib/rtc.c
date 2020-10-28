@@ -65,7 +65,7 @@ int _rtc_open(){
  *	  Side Effects: none	 
  */
 int _rtc_close(){
-	return 1;
+	return 0;
 }
 
 /* rtc_read
@@ -93,7 +93,7 @@ int _rtc_read(){
 int _rtc_write(void* buf){
 	cli();
 	int freq = *((int*)buf);
-	/* if frequency is out of range 2-1024 Hz, fail */
+	/* if frequency is out of range 2-1024 (magic number)Hz, fail */
 	if(freq>1024 || freq<2){
 		return -1;
 	}
@@ -112,12 +112,12 @@ int _rtc_write(void* buf){
 	}
 
 	/* freq is a power of 2 and in range.*/
-	outb(RTC_STATUS_REG+0x0A, RTC_IO_PORT);	 //Index to RTC status register A
-	uint8_t reg_value = inb(CMOS_IO_PORT);	  //get initial register A value
-	outb(RTC_STATUS_REG+0x0A, RTC_IO_PORT);	 //Index to RTC status register A (again)
+	outb(RTC_STATUS_REG+0x0A, RTC_IO_PORT);	 						//Index to RTC status register A
+	uint8_t reg_value = inb(CMOS_IO_PORT);	  						//get initial register A value
+	outb(RTC_STATUS_REG+0x0A, RTC_IO_PORT);	 						//Index to RTC status register A (again)
 	/* We're going to pass in rate as the lower 4 bits of register A and restore the other bits. 
 	 * frequency = 32768 >> (rate-1), so rate  = 16 - exponent*/ 
-	outb((reg_value & 0xF0) | (16-exponent) , CMOS_IO_PORT);	// write register A.
+	outb((reg_value & 0xF0) | (16-exponent) , CMOS_IO_PORT);		// 0xF0 for upper 4 bits, write register A.
 	sti();
 	return 0;
 }
