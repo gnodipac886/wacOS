@@ -65,7 +65,7 @@ int _rtc_open(){
  *	  Side Effects: none	 
  */
 int _rtc_close(){
-	return 1;
+	return 0;
 }
 
 /* rtc_read
