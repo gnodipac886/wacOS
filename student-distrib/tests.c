@@ -254,7 +254,7 @@ int read_dir(){
 	clear();
 
 	// attempts to open the directory
-	fd = _open((uint8_t*)".");
+	fd = directory_open((uint8_t*)".");
 
 	// see if the fd is valid
 	if(fd == -1){
@@ -262,13 +262,13 @@ int read_dir(){
 	}
 
 	// keep read files until we hit the end and print out the name
-	while(dir_read(fd, (void*)curr_name, 1024)){	// 1024 is random number
+	while(directory_read(fd, (void*)curr_name, 1024)){	// 1024 is random number
 		// print out the name of the file
 		printf("%s\n", curr_name);
 	}
 
 	// close file when done
-	_close(fd);
+	directory_close(fd);
 
 	// return success if we pass
 	return PASS;
@@ -294,7 +294,7 @@ int read_file(char * fname){
 	clear();
 
 	// open the file
-	fd = _open((uint8_t*)fname);
+	fd = file_open((uint8_t*)fname);
 
 	// see if the fd is valid
 	if(fd == -1){
@@ -325,7 +325,7 @@ int read_file(char * fname){
 	}
 
 	// close the file when done
-	_close(fd);
+	file_close(fd);
 
 	return PASS;
 }
@@ -337,18 +337,18 @@ int read_file(char * fname){
  *      Side Effects: none
  */
 int read_long_name_file(){
-	TEST_HEADER;													// print headder
+	TEST_HEADER;														// print headder
 
-	int fd;															// init fd
+	int fd;																// init fd
 
-	clear(); 														// clear the screen
-	fd = _open((uint8_t*)"verylargetextwithverylongname.txt");		// attempts to read the file
+	clear(); 															// clear the screen
+	fd = file_open((uint8_t*)"verylargetextwithverylongname.txt");		// attempts to read the file
 
-	if(fd == -1){													// if fails to read then function performs right
+	if(fd == -1){														// if fails to read then function performs right
 		return PASS;
 	}
 
-	_close(fd);	 													// otherwise function failed close the file
+	file_close(fd);	 													// otherwise function failed close the file
 
 	return FAIL;
 }
@@ -360,30 +360,30 @@ int read_long_name_file(){
  *      Side Effects: none
  */
 int filesystem_sanity_check(){
-	TEST_HEADER;													// print headder
+	TEST_HEADER;														// print headder
 
 	// init variabes for function
-	int test_results[6];											// holds all the test results from checks, 6 for num of tests
+	int test_results[6];												// holds all the test results from checks, 6 for num of tests
 	int failed_flag = PASS;
 	int i;
 	char fake_name = 'a';
 
-	clear();														// clears the screen
+	clear();															// clears the screen
 
-	test_results[0] = _open((uint8_t*)"thisfiledoesntexist.txt"); 	// open a file that doesn't exist
+	test_results[0] = file_open((uint8_t*)"thisfiledoesntexist.txt"); 	// open a file that doesn't exist
 
-	test_results[1] = _open((uint8_t*)(&fake_name)); 				// open a file without a null terminating character
+	test_results[1] = file_open((uint8_t*)(&fake_name)); 				// open a file without a null terminating character
 
-	test_results[2] = _close(8); 									// close out of bounds
+	test_results[2] = file_close(8); 									// close out of bounds
 
-	test_results[3] = _close(2); 									// close file that hasn't been opened at all
+	test_results[3] = file_close(2); 									// close file that hasn't been opened at all
 
-	test_results[4] = file_read(2, NULL, 0); 						// read a fd that's not been opened at all
+	test_results[4] = file_read(2, NULL, 0); 							// read a fd that's not been opened at all
 
-	test_results[5] = _open(NULL); 									// test NULL pointer
+	test_results[5] = file_open(NULL); 									// test NULL pointer
 
 	// loops through the test results and see which ones failed
-	for(i = 0; i < 6; i ++){										// 6 for number of tests
+	for(i = 0; i < 6; i ++){											// 6 for number of tests
 		if(test_results[i] != -1){
 			switch(i){
 				case 0:
@@ -434,7 +434,7 @@ int test_rtc_freq(){
 
 	clear();														// clear the screen
 
-	fd = _open((uint8_t*)"rtc");									// attempts to open the rtc file
+	fd = rtc_open((uint8_t*)"rtc");									// attempts to open the rtc file
 
 	// check if the function is valid
 	if(fd == -1){
@@ -442,17 +442,17 @@ int test_rtc_freq(){
 	}
 
 	// loop through possible frequencies and print values
-	for(i = 2; i <= 1024; i++){										// 1024 that's the max rtc freq
+	for(i = 2; i <= 1024; i++){										// 1024 that's the max rtc freq, 2 for lowest freq
 		buf = i;
-		if(_write(fd, (void*)(&buf), 100) != -1){ 					// attempts to set the rtc
+		if(rtc_write(fd, (void*)(&buf), 100) != -1){ 				// attempts to set the rtc
 			for(ticks = 0; ticks < (i * 2); ticks++){				// set up ticks for how long we want to print, 2 just random value for time
-				rtc_read(fd, NULL, 1000);							// wait for rtc to interrupt and 1000 is random
+				rtc_read(fd, (void*)(&buf), 1000);					// wait for rtc to interrupt and 1000 is random
 				printf("%d", i);									// we print the current frequency value
 			}
 		}
 	}
 
-	_close(fd);														// close the rtc file
+	rtc_close(fd);													// close the rtc file
 
 	clear();														// clear the screen since its all clogged up
 	return PASS;
@@ -468,7 +468,7 @@ int vert_scroll_test(){
 	int i; 			// counter
 
 	// print lines to see scrolling work
-	for(i = 0; i < 392; i++){								// 392 random
+	for(i = 0; i < 392; i++){										// 392 random
 		printf("Testing Vertical Scroll: Line %d \n", i);
 	}
 
@@ -482,6 +482,7 @@ int vert_scroll_test(){
  *		Side Effects: none
  */
 int term_read_write_test(){
+	// 128 in here for 128 characters possible in the buffer
 	char buf[128];													// set up the buffer for the typing
 	 while(1){														// keep echoing
 		terminal_read(0, buf, 128);									// read from the keyboard

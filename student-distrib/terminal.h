@@ -3,9 +3,9 @@
 
 #include "types.h"
 
-#define BUF_SZ      128 //max size of buffer = 128 bytes
-#define NUM_COLS    80 // video cols
-#define NUM_ROWS    25 // video rows
+#define BUF_SZ      128 	//max size of buffer = 128 bytes
+#define NUM_COLS    80 		// video cols
+#define NUM_ROWS    25 		// video rows
 
 /* initializes terminal */
 extern int32_t terminal_open();
