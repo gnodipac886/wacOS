@@ -1,12 +1,18 @@
 #ifndef _SYSTEM_CALLS_H
 #define _SYSTEM_CALLS_H
 
+#include "types.h"
+#include "filesystem.h"
+
 #define STDIN	0
 #define STDOUT	1
 
+int32_t open(const uint8_t* fname);
 int32_t read(int32_t fd, void* buf, int32_t nbytes);
 int32_t write(int32_t fd, void* buf, int32_t nbytes);
+int32_t close(int32_t fd);
 
+int32_t invalid_func();
 file_descriptor_t* _get_fd_arr();
 
-#endif /* _FILESYSTEM_H */
+#endif /* _SYSTEM_CALLS_H */
