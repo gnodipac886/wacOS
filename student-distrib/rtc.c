@@ -16,9 +16,9 @@ int rtc_virtual_frequency = 2;				// default RTC interrupt frequency = 2 Hz
 void __rtc_init__(){
 	cli();
 	/*set IRQ8 */
-	outb(RTC_STATUS_REG+0xB, RTC_IO_PORT);  // Select RTC status register B (offset = 0xB)
+	outb(RTC_STATUS_REG + 0xB, RTC_IO_PORT);  // Select RTC status register B (offset = 0xB)
 	uint8_t reg_value = inb(CMOS_IO_PORT);  // Read register B value
-	outb(RTC_STATUS_REG+0xB, RTC_IO_PORT);  // Select RTC status register B
+	outb(RTC_STATUS_REG + 0xB, RTC_IO_PORT);  // Select RTC status register B
 	outb(reg_value | 0x40, CMOS_IO_PORT);   // Turn on Register B bit 6
 
 	enable_irq(RTC_IRQ);					// Enable interrupt for RTC on PIC
@@ -41,11 +41,11 @@ void handle_rtc_interrupt(){
 	send_eoi(RTC_IRQ);
 
 	/* Clear register C to allow another interrupt.*/
-	outb(RTC_STATUS_REG+0x0C, RTC_IO_PORT);				 // Select RTC status register C
+	outb(RTC_STATUS_REG + 0x0C, RTC_IO_PORT);				 // Select RTC status register C
 	inb(CMOS_IO_PORT);									 // Dump the content
 
 	// test_interrupts();
-	rtc_interrupt_occurred =1;	  //flag for rtc_read
+	rtc_interrupt_occurred = 1;	  //flag for rtc_read
 	sti();
 }
 /* _rtc_open
@@ -85,7 +85,7 @@ int _rtc_read(){
 	 * 		_rtc_read returns, generating a 512 Hz rate. 
 	 */
 	 int i;
-	for(i=0; i < (1024/rtc_virtual_frequency); i++){
+	for(i = 0; i < (1024 / rtc_virtual_frequency); i++){
 
 		while(rtc_interrupt_occurred == 0){
 		
@@ -106,11 +106,11 @@ int _rtc_write(void* buf){
 	cli();
 	int freq = *((int*)buf);
 	/* if frequency is out of range 2-1024 (magic number)Hz, fail */
-	if(freq>1024 || freq<2){
+	if(freq > 1024 || freq < 2){
 		return -1;
 	}
 	/* if freq is power of 2, set rtc to this frequency, else fail */
-	if( (freq&(freq-1)==0) ){
+	if((freq & (freq - 1)) == 0){
 		rtc_virtual_frequency = freq;
 	}
 	else{
