@@ -9,7 +9,7 @@ inode_t* inodes;
 data_block_t* data_ptr;
 
 // file descriptor array
-file_descriptor_t fd_arr[MAX_FILES_OPEN];
+file_descriptor_t* fd_arr;
 
 // 4 for number of functions
 uint32_t rtc_file_ops[4] = {(uint32_t)rtc_open, (uint32_t)rtc_read, (uint32_t)rtc_write, (uint32_t)rtc_close};
@@ -34,6 +34,8 @@ void __init_filesystem__(void * filesystem_ptr){
 	boot_block 	= (boot_block_t*)filesystem;
 	inodes 		= (inode_t*)filesystem;
 	data_ptr 	= (data_block_t*)filesystem;
+
+	fd_arr 		= _get_fd_arr();
 
 	// set up the file descriptor array and initialize to proper values
 	for(i = 0; i < MAX_FILES_OPEN; i++){
