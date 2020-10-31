@@ -118,7 +118,7 @@ int32_t open(const uint8_t* fname){
  */
 int32_t read(int32_t fd, void* buf, int32_t nbytes){
 	// sanity checks
-	if(fd >= MAX_FILES_OPEN || fd < STDIN || fd == STDOUT || fd_arr[fd].flags == FILE_NOT_USE || fd_arr[fd].jmp_table != rtc_file_ops ||buf == NULL){
+	if(fd >= MAX_FILES_OPEN || fd < STDIN || fd == STDOUT || fd_arr[fd].flags == FILE_NOT_USE ||buf == NULL){
 		return -1;
 	}
 
@@ -149,7 +149,7 @@ int32_t write(int32_t fd, void* buf, int32_t nbytes){
 	}
 
 	// call the corresponding write function
-	return (fd_arr[fd].jmp_table.write)(fd, buf, nbytes);
+	return (fd_arr[fd].jmp_table.f_ops_write)(fd, buf, nbytes);
 }
 
 /* close 
@@ -170,12 +170,11 @@ int32_t close(int32_t fd){
 	}
 
 	// reset the file
-	fd_arr[fd].jmp_table = NULL;
 	fd_arr[fd].inode = -1;
 	fd_arr[fd].file_position = 0;			// 0 since we want the beginning of the file			
 	fd_arr[fd].flags = FILE_NOT_USE;
 
-	return (fd_arr[fd].jmp_table.close)(fd);
+	return (fd_arr[fd].jmp_table.f_ops_close)(fd);
 }
 
 /* invalid_func 
