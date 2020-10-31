@@ -20,6 +20,14 @@
 #define 	FILE_IN_USE 	1										// if file is in use 
 #define 	FILE_NOT_USE 	0										// if file is not in use 
 
+// data structure for file operations jump table
+typedef struct f_ops_jmp_table{
+	void*	f_ops_open;
+	void*	f_ops_read;
+	void*	f_ops_write;
+	void*	f_ops_close;
+} f_ops_jmp_table_t;
+
 // data structure for dentry
 typedef struct dentry{
 	char 		name[MAX_NAME_LEN];
@@ -54,13 +62,6 @@ typedef struct file_descriptor{
 typedef struct data_block{
 	uint8_t 	data[BLOCK_SIZE];
 } data_block_t;
-
-typedef struct f_ops_jmp_table{
-	uint32_t*	f_ops_open;
-	uint32_t*	f_ops_read;
-	uint32_t*	f_ops_write;
-	uint32_t*	f_ops_close;
-} f_ops_jmp_table_t;
 
 void __init_filesystem__(void * filesystem_ptr);
 
