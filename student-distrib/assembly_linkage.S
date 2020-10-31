@@ -1,4 +1,5 @@
 #include "assembly_linkage.h"
+#include "system_calls.h"
 .globl keyboard_interrupt_stub, rtc_interrupt_stub
 
 /* Interrupt Assembly Linkage
@@ -46,3 +47,41 @@ interrupt_handler_jump:
     .long 0
     .long 0
 
+
+/* System Call Assembly Linkage
+ * Description: x86 wrapper function that calls interrupt handlers;
+                eax - holds system call number
+ *              system_call_interrupt - saves/restores general purpose register values before/after interrupt
+ * Input: None
+ * Output: None
+ * Side Effects: system call gets handled
+ */
+
+system_call_interrupt:
+    pushal
+    pushl %edx 
+    pushl %ecx 
+    pushl %ebx 
+    call *system_call_jmp(,%eax,4)
+    movl %eax, sys_call_ret_val
+    popl %ebx 
+    popl %ecx 
+    popl %edx
+    popal
+    movl sys_call_ret_val, %eax
+    iret
+
+system_call_jump:
+    .long 0                 //halt 
+    .long 0                 //execute 
+    .long read 
+    .long write 
+    .long open 
+    .long close 
+    .long 0                 //getargs 
+    .long 0                 //vidmap
+    .long 0                 //set_handler 
+    .long 0                 //sigreturn
+
+sys_call_ret_val:
+    .long 0 
