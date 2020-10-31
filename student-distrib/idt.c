@@ -345,5 +345,5 @@ void __init_idt__(){
 	SET_IDT_ENTRY(idt[XF], simd_float_exc); 		// SIMD Floating-Point Exception
 	SET_IDT_ENTRY(idt[IRQ1_IDT], keyboard_interrupt_stub); 		// handle keyboard interrupt
 	SET_IDT_ENTRY(idt[IRQ8_IDT], rtc_interrupt_stub); 		// handle rtc interrupt
-	SET_IDT_ENTRY(idt[SYS_CALL], system_call_handler);	//handle system call
+	SET_IDT_ENTRY(idt[SYS_CALL], system_call_interrupt);	//handle system call
 }
