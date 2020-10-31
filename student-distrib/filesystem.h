@@ -44,10 +44,10 @@ typedef struct boot_block{
 } boot_block_t;
 
 typedef struct file_descriptor{
-	uint32_t* 	jmp_table;
-	uint32_t 	inode;
-	uint32_t 	file_position;
-	uint32_t 	flags;					// 1 for in use, 0 for vacant
+	f_ops_jmp_table_t 	jmp_table;
+	uint32_t 			inode;
+	uint32_t 			file_position;
+	uint32_t 			flags;					// 1 for in use, 0 for vacant
 } file_descriptor_t;
 
 // data structure for data block 
