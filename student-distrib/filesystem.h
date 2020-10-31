@@ -22,10 +22,10 @@
 
 // data structure for file operations jump table
 typedef struct f_ops_jmp_table{
-	void*	f_ops_open;
-	void*	f_ops_read;
-	void*	f_ops_write;
-	void*	f_ops_close;
+	int32_t (*f_ops_open)(const uint8_t* fname);
+	int32_t (*f_ops_read)(int32_t fd, void* buf, int32_t nbytes);
+	int32_t (*f_ops_write)(int32_t fd, void* buf, int32_t nbytes);
+	int32_t (*f_ops_close)(int32_t fd);
 } f_ops_jmp_table_t;
 
 // data structure for dentry
