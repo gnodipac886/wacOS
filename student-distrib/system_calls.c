@@ -103,8 +103,23 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes){
 	return (fd_arr[fd].jmp_table.f_ops_read(fd, buf, nbytes));
 }
 
-int32_t write(){
+/* write 
+ *      Inputs: fd 		- file descriptor index value
+ 				buf 	- buffer that holds the data to write
+ 				nbytes 	- how many bytes to write
+ *      Return Value: -1 regardless unless rtc in which case, 0
+ *      Function: attempt to write to the file, but not implemented for now, 
+ 					write to rtc if file is of rtc type
+ *      Side Effects: none     
+ */
+int32_t write(int32_t fd, void* buf, int32_t nbytes){
+	// sanity checks
+	if(fd >= MAX_FILES_OPEN || fd < STDIN || fd == STDIN || fd_arr[fd].flags == FILE_NOT_USE || buf == NULL){
+		return -1;
+	}
 
+	// call the corresponding write function
+	return (fd_arr[fd].jmp_table.write)(fd, buf, nbytes);
 }
 
 int32_t close(){
@@ -113,4 +128,8 @@ int32_t close(){
 
 int32_t invalid_func(){
 	return -1;
+}
+
+file_descriptor_t* _get_fd_arr(){
+	return fd_arr;
 }
