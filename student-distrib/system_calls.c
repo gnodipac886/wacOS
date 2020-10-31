@@ -1,6 +1,7 @@
 #include "system_calls.h"
 #include "filesystem.h"
 #include "types.h"
+#include "terminal.h"
 
 /*
 user:
@@ -25,6 +26,13 @@ code
 
 
 */
+// file descriptor array
+file_descriptor_t fd_arr[MAX_FILES_OPEN];
+
+f_ops_jmp_table_t rtc_file_ops		= 	{(uint32_t*)rtc_open, (uint32_t*)rtc_read, (uint32_t*)rtc_write, (uint32_t*)rtc_close};
+f_ops_jmp_table_t dir_file_ops		= 	{(uint32_t*)directory_open, (uint32_t*)directory_read, (uint32_t*)directory_write, (uint32_t*)directory_close};
+f_ops_jmp_table_t file_file_ops		= 	{(uint32_t*)file_open, (uint32_t*)file_read, (uint32_t*)file_write, (uint32_t*)file_close};
+f_ops_jmp_table_t terminal_file_ops = 	{(uint32_t*)invalid_func, (uint32_t*)terminal_read, (uint32_t*)terminal_write, (uint32_t*)invalid_func};
 
 
 int32_t open(const uint8_t* fname){
@@ -88,5 +96,9 @@ int32_t write(){
 }
 
 int32_t close(){
-	
+
+}
+
+int32_t invalid_func(){
+	return -1;
 }
