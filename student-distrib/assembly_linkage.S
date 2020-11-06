@@ -59,6 +59,13 @@ interrupt_handler_jump:
 
 system_call_interrupt:
     pushal
+    cmpl $0, %eax
+    jg valid_call_number
+    cmpl %eax, $10
+    jle valid_call_number
+    movl $-1, sys_call_ret_val      //call number is not in 1-10 range
+    jmp system_call_ret
+valid_call_number:
     pushl %edx 
     pushl %ecx 
     pushl %ebx 
@@ -67,6 +74,7 @@ system_call_interrupt:
     popl %ebx 
     popl %ecx 
     popl %edx
+system_call_ret:
     popal
     movl sys_call_ret_val, %eax
     iret
