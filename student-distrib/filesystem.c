@@ -384,6 +384,24 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
 	return offset + num_copied == curr_inode.length ? 0 : num_copied;
 }
 
+/* _get_file_length_inode
+ *      Inputs: inode_num - inode number of the file we want the length of
+ *      Return Value: length of the file, -1 on failure
+ *      Function: finds the length of the file we are looking for
+ *      Side Effects: none
+ */
+int32_t _get_file_length_inode(uint32_t inode_num){
+
+	// check if the inode number is valid
+	if(inode_num >= boot_block->num_inode){
+		return -1;
+	}
+
+	// check the inode for the length of the file
+	return inodes[inode_num + 1].length;
+}
+
+
 /* _get_file_length 
  *      Inputs: fd 		- which file we are looking for the length in the fd_array
  *      Return Value: length fo the file, -1 on failure
