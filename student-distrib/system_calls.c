@@ -28,12 +28,12 @@ f_ops_jmp_table_t stdout_ops		= 	{(void*)invalid_func, 	(void*)invalid_func, 	(v
 int32_t execute(const uint8_t* command){
 	// Step 1: Parse, remember to sanity check command
 	int i = 0;
-	int fd;
 	char task_name[128];
 	char task_arg[128];
 	pcb_t* pcb;
 	char elf[] = "ELF";
 	char ELF_check_buf[3];
+	dentry_t cur_dentry;
 
 	// sanity checks
 	if(command == NULL){
@@ -89,24 +89,20 @@ int32_t execute(const uint8_t* command){
 
 	//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-	// Step 2: Check if executable
+	// Step 2: Check if task_name file is a valid executable
 
-	fd = open(task_name); 								// open the file
-
-	if(fd == -1){										// see if it failed (e.g. file not found in file system)
-		return -1;										// return -1 on failure
-	}	
-
-	// check if file is a valid executable (has starting bytes ELF) 
-	if ((fd_arr[fd].jmp_table.f_ops_read)(fd, ELF_check_buf, 3) != 3) {			// if cannot read three bytes
-		close(fd);
-		return -1;																
-	} else {																	// first three bytes of file read to ELF_check_buf
-		if(strncmp(ELF_check_buf, elf, 3) != 0) {								// compare three starting bytes with ELF
-			close(fd);
-			return -1;
-		}
+	if(read_dentry_by_name(task_name, &cur_dentry) == -1){			// Find file in file system and copy func info to cur_dentry
+		return -1;
 	}
+
+	if (read_data(cur_dentry.inode, 0, ELF_check_buf, 3) != 3) {	// Error if cannot read starting three bytes into ELF_check_buf
+		return -1;
+	}
+
+	if (strncmp(ELF_check_buf, elf, 3) != 0) {						// compare starting three bytes of file with ELF
+		return -1;
+	}
+
 
 	// Step 3: Setup paging
 	if(exe_paging(pcb->pid) != 0){					
@@ -114,9 +110,8 @@ int32_t execute(const uint8_t* command){
 	}
 
 	// Step 4: Load user program to user page
-	read_data(fd, (void*)USR_PTR, _get_file_length(fd)); 	// read out the memory to the pointer    //....what is USR ptr....(maybe use read_data in filesystem.c).....read is for terminal_read only!!!!?????????
-
-	close(fd); 											// close the file we opened
+	
+	read_data(cur_dentry.inode, 0, USR_PTR, _get_file_length_inode(cur_dentry.inode));		// read out the memory to the pointer    
 
 	// Step 5: PCB + Kernel Stack TSS
 
