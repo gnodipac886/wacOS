@@ -8,7 +8,8 @@
 #define STDOUT				1
 #define KER_BOTTOM			0x800000 			// 8MB
 #define KER_STACK_SIZE		0x2000				// 8KB
-#define USR_PTR 			0x8000000 			// 128 MB
+#define USR_PTR 			0x8048000 			// 128 MB
+#define MAX_TASKS           6
 
 typedef struct pcb{
 	char 	arg[128];
