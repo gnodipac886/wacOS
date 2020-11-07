@@ -131,14 +131,6 @@ int exe_paging(int pid){
 		"movl 	%0, 			%%eax;"		// move page directory into eax
 		"movl 	%%eax, 			%%cr3;"		// move page directory address into cr3
 
-		"movl 	%%cr4, 			%%eax;"		// dump out cr4
-		"orl 	$0x00000010, 	%%eax;"		// or the 4th bit of cr4
-		"movl 	%%eax, 			%%cr4;"		// put eax contents back into cr4
-
-		"movl 	%%cr0, 			%%eax;"		// dump out cr0
-		"orl 	$0x80000000,	%%eax;"		// make the first and last bits 1
-		"movl 	%%eax, 			%%cr0;"		// put it back into cr0
-
 		:							// not outputs yet
 		:"r"(page_directory) 		// input is page directory
 		:"%eax" 					// clobbered register
