@@ -14,6 +14,8 @@
 #define CAPSLOCK_PRESSED	0x3A		//scan code for capslock key
 #define RIGHT_KEY_BYTE		0xE0		//RCTRL, RALT first byte
 
+#define SPACE_PRESSED		0x39		//scan code for space key
+
 #define RELEASED_OFFSET		0x80		//'release' scan code offset from 'pressed'
 #define ROW0_OFFSET_MAP		0x2			//offset to map scan codes corresponding to row0 array
 #define ROW1_OFFSET_MAP		0x10		//offset to map scan codes corresponding to row1 array		
@@ -118,7 +120,7 @@ void handle_keyboard_interrupt(){
 			default:
 				break;
 		}
-	} else if(keyboard_input == 0x39){					// space pressed = 0x39
+	} else if(keyboard_input == SPACE_PRESSED){					// space pressed = 0x39
 		kb_char = ' ';
 	} else if((keyboard_input <= 0x35) && (keyboard_input > 0x01)){
 	// between 0x35 = /, 0x01 = esc on keyboard
