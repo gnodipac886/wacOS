@@ -22,9 +22,6 @@ switch statements for particular open (rtc, files, dir)
 
 say rtc_open:
 code
-
-
-
 */
 // file descriptor array
 file_descriptor_t fd_arr[MAX_FILES_OPEN];
@@ -33,6 +30,28 @@ f_ops_jmp_table_t rtc_file_ops		= 	{(void*)rtc_open, 		(void*)rtc_read, 		(void*
 f_ops_jmp_table_t dir_file_ops		= 	{(void*)directory_open, (void*)directory_read, 	(void*)directory_write, (void*)directory_close};
 f_ops_jmp_table_t file_file_ops		= 	{(void*)file_open, 		(void*)file_read, 		(void*)file_write, 		(void*)file_close};
 f_ops_jmp_table_t terminal_file_ops = 	{(void*)invalid_func, 	(void*)terminal_read, 	(void*)terminal_write, 	(void*)invalid_func};
+// REMINDER, SETUP STDIN, STDOUT FOPS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+/* execute 
+ *      Inputs: command - pointer to command
+ *      Return Value: status to pass into halt
+ *      Function: execute the executable
+ *      Side Effects: may print stuff to screen
+ */
+int32_t execute(const uint8_t* command){
+	// Step 1: Parse, remember to sanity check command
+	
+	// Step 2: Check if executable
+	
+	// Step 3: Setup paging
+	
+	// Step 4: Load user program to user page
+	
+	// Step 5: context switch
+	
+}
+
 
 /* open 
  *      Inputs: fname - name of file to open, should be "rtc"
