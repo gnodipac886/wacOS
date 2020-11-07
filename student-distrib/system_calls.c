@@ -6,7 +6,9 @@
 #include "x86_desc.h"
 #include "lib.h"
 
-int32_t curr_pid = 0;
+int32_t curr_avail_pid = 0;
+pcb_t pcb_arr[MAX_TASKS];
+int8_t pid_avail[MAX_TASKS] = {0, 0, 0, 0, 0, 0};					
 
 // file descriptor array
 file_descriptor_t fd_arr[MAX_FILES_OPEN];
@@ -14,9 +16,8 @@ file_descriptor_t fd_arr[MAX_FILES_OPEN];
 f_ops_jmp_table_t rtc_file_ops		= 	{(void*)rtc_open, 		(void*)rtc_read, 		(void*)rtc_write, 		(void*)rtc_close};
 f_ops_jmp_table_t dir_file_ops		= 	{(void*)directory_open, (void*)directory_read, 	(void*)directory_write, (void*)directory_close};
 f_ops_jmp_table_t file_file_ops		= 	{(void*)file_open, 		(void*)file_read, 		(void*)file_write, 		(void*)file_close};
-f_ops_jmp_table_t terminal_file_ops = 	{(void*)invalid_func, 	(void*)terminal_read, 	(void*)terminal_write, 	(void*)invalid_func};
-// REMINDER, SETUP STDIN, STDOUT FOPS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
+f_ops_jmp_table_t stdin_ops			= 	{(void*)invalid_func, 	(void*)terminal_read, 	(void*)invalid_func, 	(void*)invalid_func};
+f_ops_jmp_table_t stdout_ops		= 	{(void*)invalid_func, 	(void*)invalid_func, 	(void*)terminal_write, 	(void*)invalid_func};
 
 /* execute
  *      Inputs: command - pointer to command
@@ -29,9 +30,10 @@ int32_t execute(const uint8_t* command){
 	int i = 0;
 	int fd;
 	char task_name[128];
-	char task_args[128];
-	pcb_t* pcb = KER_BOTTOM - (curr_pid + 1) * KER_STACK_SIZE;
-
+	char task_arg[128];
+	pcb_t* pcb;
+	char elf[] = "ELF";
+	char ELF_check_buf[3];
 
 	// sanity checks
 	if(command == NULL){
@@ -39,7 +41,7 @@ int32_t execute(const uint8_t* command){
 	}
 
 	// find the location of the space character or null character
-	while(true){
+	while(1){
 		// reached max, return -1 for failure
 		if(i == 128){
 			return -1;
@@ -49,18 +51,18 @@ int32_t execute(const uint8_t* command){
 		if(command[i] == '\0' || command[i] == ' '){
 			strncpy(task_name, command, i);				// copy over the task name over
 			task_name[i] = '\0';						// makes sure that there's a null termination
-			task_args[0] = '\0';						// set up the args string
+			task_arg[0] = '\0';						// set up the args string
 			if(command[i] == '\0'){						// if there's a null termination, we're done
 				break;
 			}
 
-			while(true){ 								// otherwise we need to get the argument as well
+			while(1){ 								// otherwise we need to get the argument as well
 				if(i == 128){							// reached max, return -1 for failure
 					return -1;
 				}
 
 				if(command[i] != ' '){					// once we see a non-space, we copy the rest of the string to args
-					strcpy(task_args, &(command[i]));	// copy to args
+					strcpy(task_arg, &(command[i]));	// copy to args
 					break;								// stop
 				}
 
@@ -72,30 +74,54 @@ int32_t execute(const uint8_t* command){
 		i++;											// increment until we find a space or null
 	}
 
-	strcpy(pcb->arg, task_args); 						// move the args into pcb
-	pcb->pid = curr_pid++; 								// set pid in the pcb
+	for (curr_avail_pid = 0; curr_avail_pid < MAX_TASKS; curr_avail_pid++) {
+		if (pid_avail[curr_avail_pid] == 0) {
+			pid_avail[curr_avail_pid] = 1;
+			break;
+		}
+	}
+
+	pcb = KER_BOTTOM - (curr_avail_pid + 1) * KER_STACK_SIZE;
+
+	strcpy(pcb->arg, task_arg); 						// move the args into pcb
+	pcb->pid = curr_avail_pid++; 								// set pid in the pcb
 	pcb->parent_pid = pcb->pid - 1;						// set the parent pid to pid - 1 for now
+
+	//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 	// Step 2: Check if executable
 
+	fd = open(task_name); 								// open the file
+
+	if(fd == -1){										// see if it failed (e.g. file not found in file system)
+		return -1;										// return -1 on failure
+	}	
+
+	// check if file is a valid executable (has starting bytes ELF) 
+	if ((fd_arr[fd].jmp_table.f_ops_read)(fd, ELF_check_buf, 3) != 3) {			// if cannot read three bytes
+		close(fd);
+		return -1;																
+	} else {																	// first three bytes of file read to ELF_check_buf
+		if(strncmp(ELF_check_buf, elf, 3) != 0) {								// compare three starting bytes with ELF
+			close(fd);
+			return -1;
+		}
+	}
+
 	// Step 3: Setup paging
-	if(exe_paging(pcb->pid) != 0){
+	if(exe_paging(pcb->pid) != 0){					
 		printf("Process ID invalid");
 	}
 
 	// Step 4: Load user program to user page
-	fd = open(task_name); 								// open the file
-
-	if(fd == -1){										// see if it failed
-		return -1;										// return -1 on failure
-	}
-
-	read(fd, (void*)USR_PTR, _get_file_length(fd)); 	// read out the memory to the pointer
+	read_data(fd, (void*)USR_PTR, _get_file_length(fd)); 	// read out the memory to the pointer    //....what is USR ptr....(maybe use read_data in filesystem.c).....read is for terminal_read only!!!!?????????
 
 	close(fd); 											// close the file we opened
 
-	// Step 5: context switch
+	// Step 5: PCB + Kernel Stack TSS
 
+	// Step 6: context switch
+		//halt (<--- has tss in function)
 }
 
 /* open
@@ -187,7 +213,7 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes){
 	}
 
 	if(fd == 0){
-		return terminal_read(fd, buf, nbytes);
+		return (stdin_ops.f_ops_read)(fd, buf, nbytes);
 	}
 
 	return (fd_arr[fd].jmp_table.f_ops_read)(fd, buf, nbytes);
@@ -209,7 +235,7 @@ int32_t write(int32_t fd, void* buf, int32_t nbytes){
 	}
 
 	if(fd == 1){
-		return terminal_write(fd, buf, nbytes);
+		return (stdout_ops.f_ops_write)(fd, buf, nbytes);
 	}
 
 	// call the corresponding write function
