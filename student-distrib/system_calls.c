@@ -2,6 +2,8 @@
 #include "filesystem.h"
 #include "types.h"
 #include "terminal.h"
+#include "paging.h"
+#include "x86_desc.h"
 #include "lib.h"
 
 /*
@@ -34,7 +36,7 @@ f_ops_jmp_table_t terminal_file_ops = 	{(void*)invalid_func, 	(void*)terminal_re
 // REMINDER, SETUP STDIN, STDOUT FOPS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
-/* execute 
+/* execute
  *      Inputs: command - pointer to command
  *      Return Value: status to pass into halt
  *      Function: execute the executable
@@ -74,7 +76,7 @@ int32_t execute(const uint8_t* command){
 
 				if(command[i] != ' '){					// once we see a non-space, we copy the rest of the string to args
 					strcpy(task_args, &(command[i]));	// copy to args
-					break;								// stop 
+					break;								// stop
 				}
 
 				i++;									// increment if we are still on a space
@@ -85,23 +87,25 @@ int32_t execute(const uint8_t* command){
 		i++;											// increment until we find a space or null
 	}
 
-
 	// Step 2: Check if executable
 
 	// Step 3: Setup paging
-
+	if(exe_paging(PCB.pid) != 0){
+		printf("Process ID invalid");
+	}
 	// Step 4: Load user program to user page
 
 	// Step 5: context switch
 
 }
 
+}
 
-/* open 
+/* open
  *      Inputs: fname - name of file to open, should be "rtc"
  *      Return Value: file descriptor number
  *      Function: find the right array location have the file open, -1 on failure
- *      Side Effects: none     
+ *      Side Effects: none
  */
 int32_t open(const uint8_t* fname){
 	// set up variables for function
@@ -192,14 +196,14 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes){
 	return (fd_arr[fd].jmp_table.f_ops_read)(fd, buf, nbytes);
 }
 
-/* write 
+/* write
  *      Inputs: fd 		- file descriptor index value
  				buf 	- buffer that holds the data to write
  				nbytes 	- how many bytes to write
  *      Return Value: -1 regardless unless rtc in which case, 0
- *      Function: attempt to write to the file, but not implemented for now, 
+ *      Function: attempt to write to the file, but not implemented for now,
  					write to rtc if file is of rtc type
- *      Side Effects: none     
+ *      Side Effects: none
  */
 int32_t write(int32_t fd, void* buf, int32_t nbytes){
 	// sanity checks
@@ -215,11 +219,11 @@ int32_t write(int32_t fd, void* buf, int32_t nbytes){
 	return (fd_arr[fd].jmp_table.f_ops_write)(fd, buf, nbytes);
 }
 
-/* close 
+/* close
  *      Inputs: fd - file descriptor index value
  *      Return Value: 0 on success, -1 upon failure
  *      Function: attempt to close the rtc in the array and reset it
- *      Side Effects: none     
+ *      Side Effects: none
  */
 int32_t close(int32_t fd){
 	// see if the file descriptor index is valid
@@ -234,27 +238,27 @@ int32_t close(int32_t fd){
 
 	// reset the file
 	fd_arr[fd].inode = -1;
-	fd_arr[fd].file_position = 0;			// 0 since we want the beginning of the file			
+	fd_arr[fd].file_position = 0;			// 0 since we want the beginning of the file
 	fd_arr[fd].flags = FILE_NOT_USE;
 
 	return (fd_arr[fd].jmp_table.f_ops_close)(fd);
 }
 
-/* invalid_func 
+/* invalid_func
  *      Inputs: none
  *      Return Value: return -1
  *      Function: report failure
- *      Side Effects: none     
+ *      Side Effects: none
  */
 int32_t invalid_func(){
 	return -1;
 }
 
-/* _get_fd_arr 
+/* _get_fd_arr
  *      Inputs: none
  *      Return Value: return the file_descriptor_t
- *      Function: 
- *      Side Effects: none     
+ *      Function:
+ *      Side Effects: none
  */
 file_descriptor_t* _get_fd_arr(){
 	return fd_arr;
