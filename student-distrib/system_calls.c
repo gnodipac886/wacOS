@@ -6,26 +6,8 @@
 #include "x86_desc.h"
 #include "lib.h"
 
-/*
-user:
-ece391open(".")
+int32_t curr_pid = 0;
 
-ece391syscall.S
-pushes args into registers
-int $80
-
-idt.c
-skip syscallhandler and go straight to assembly linkage
-
-assembly linkage
-push arguments onto stack all 3 is fine
-
-say open func:
-switch statements for particular open (rtc, files, dir)
-
-say rtc_open:
-code
-*/
 // file descriptor array
 file_descriptor_t fd_arr[MAX_FILES_OPEN];
 
@@ -45,8 +27,11 @@ f_ops_jmp_table_t terminal_file_ops = 	{(void*)invalid_func, 	(void*)terminal_re
 int32_t execute(const uint8_t* command){
 	// Step 1: Parse, remember to sanity check command
 	int i = 0;
+	int fd;
 	char task_name[128];
 	char task_args[128];
+	pcb_t* pcb = KER_BOTTOM - (curr_pid + 1) * KER_STACK_SIZE;
+
 
 	// sanity checks
 	if(command == NULL){
@@ -87,17 +72,29 @@ int32_t execute(const uint8_t* command){
 		i++;											// increment until we find a space or null
 	}
 
+	strcpy(pcb->arg, task_args); 						// move the args into pcb
+	pcb->pid = curr_pid++; 								// set pid in the pcb
+	pcb->parent_pid = pcb->pid - 1;						// set the parent pid to pid - 1 for now
+
 	// Step 2: Check if executable
 
 	// Step 3: Setup paging
-	if(exe_paging(PCB.pid) != 0){
+	if(exe_paging(pcb->pid) != 0){
 		printf("Process ID invalid");
 	}
+
 	// Step 4: Load user program to user page
+	fd = open(task_name); 								// open the file
+
+	if(fd == -1){										// see if it failed
+		return -1;										// return -1 on failure
+	}
+
+	read(fd, (void*)USR_PTR, _get_file_length(fd)); 	// read out the memory to the pointer
+
+	close(fd); 											// close the file we opened
 
 	// Step 5: context switch
-
-}
 
 }
 
@@ -185,7 +182,7 @@ int32_t open(const uint8_t* fname){
  */
 int32_t read(int32_t fd, void* buf, int32_t nbytes){
 	// sanity checks
-	if(fd >= MAX_FILES_OPEN || fd < STDIN || fd == STDOUT || fd_arr[fd].flags == FILE_NOT_USE ||buf == NULL){
+	if(fd >= MAX_FILES_OPEN || fd < STDIN || fd == STDOUT || fd_arr[fd].flags == FILE_NOT_USE || buf == NULL){
 		return -1;
 	}
 
