@@ -6,7 +6,6 @@
 
 #define STDIN	0
 #define STDOUT	1
-#define USER_PAGE 32 	//user page memory location
 
 typedef struct PCB{
 	char 	arg[128];
@@ -19,7 +18,6 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes);
 int32_t write(int32_t fd, void* buf, int32_t nbytes);
 int32_t close(int32_t fd);
 
-int exe_paging(int pid);
 
 int32_t invalid_func();
 file_descriptor_t* _get_fd_arr();
