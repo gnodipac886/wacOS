@@ -2,6 +2,7 @@
 #include "filesystem.h"
 #include "types.h"
 #include "terminal.h"
+#include "lib.h"
 
 /*
 user:
@@ -41,15 +42,58 @@ f_ops_jmp_table_t terminal_file_ops = 	{(void*)invalid_func, 	(void*)terminal_re
  */
 int32_t execute(const uint8_t* command){
 	// Step 1: Parse, remember to sanity check command
-	
+	int i = 0;
+	char task_name[128];
+	char task_args[128];
+
+	// sanity checks
+	if(command == NULL){
+		return -1;
+	}
+
+	// find the location of the space character or null character
+	while(true){
+		// reached max, return -1 for failure
+		if(i == 128){
+			return -1;
+		}
+
+		// if the current character is null or space, then we found the complete task name
+		if(command[i] == '\0' || command[i] == ' '){
+			strncpy(task_name, command, i);				// copy over the task name over
+			task_name[i] = '\0';						// makes sure that there's a null termination
+			task_args[0] = '\0';						// set up the args string
+			if(command[i] == '\0'){						// if there's a null termination, we're done
+				break;
+			}
+
+			while(true){ 								// otherwise we need to get the argument as well
+				if(i == 128){							// reached max, return -1 for failure
+					return -1;
+				}
+
+				if(command[i] != ' '){					// once we see a non-space, we copy the rest of the string to args
+					strcpy(task_args, &(command[i]));	// copy to args
+					break;								// stop 
+				}
+
+				i++;									// increment if we are still on a space
+			}
+			break;										// break if we found a space or null
+		}
+
+		i++;											// increment until we find a space or null
+	}
+
+
 	// Step 2: Check if executable
-	
+
 	// Step 3: Setup paging
-	
+
 	// Step 4: Load user program to user page
-	
+
 	// Step 5: context switch
-	
+
 }
 
 
