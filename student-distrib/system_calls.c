@@ -84,10 +84,9 @@ int32_t execute(const uint8_t* command){
 	pcb = KER_BOTTOM - (curr_avail_pid + 1) * KER_STACK_SIZE;
 
 	strcpy(pcb->arg, task_arg); 						// move the args into pcb
-	pcb->pid = curr_avail_pid++; 								// set pid in the pcb
-	pcb->parent_pid = pcb->pid - 1;						// set the parent pid to pid - 1 for now
-
-	//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	pcb->pid = curr_avail_pid++; 						// set pid in the pcb
+	// if current pid is 0, we are shell, so we ahve no parent
+	pcb->parent_pid = pcb->pid == 0 ? 0 : _get_curr_pcb(&i)->pid;
 
 	// Step 2: Check if executable
 
@@ -285,4 +284,20 @@ int32_t invalid_func(){
  */
 file_descriptor_t* _get_fd_arr(){
 	return fd_arr;
+}
+
+/* _get_curr_pcb
+ *      Inputs: ptr - pointer to anything on the kernel stack
+ *      Return Value: pcb* pointer to pcb at the top of the stack
+ *      Function:
+ *      Side Effects: none
+ */
+pcb_t* _get_curr_pcb(int32_t* ptr){
+	// check if its in the kernel range at all
+	if((uint32_t)ptr >= KER_BOTTOM || (uint32_t)ptr < KER_TOP){
+		return NULL;
+	}
+
+	// bitwise and with the mask and return the pointer
+	return (pcb_t*)(ptr & PCB_MASK);
 }
