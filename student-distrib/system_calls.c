@@ -164,9 +164,11 @@ int32_t execute(const uint8_t* command){
  */
 int32_t halt(uint8_t status){
 	int fd;
-	pcb_t* pcb;
+	pcb_t* pcb = _get_curr_pcb(&fd);						// get the current pcb
 
-	pcb = _get_curr_pcb(&fd);						// get the current pcb
+	if(pcb->pid == 0 && pcb->parent_pid == 0){				// base shell case
+		return -1;
+	}
 
 	// close all open files
 	for(fd = 0; fd < MAX_FILES_OPEN; fd++){

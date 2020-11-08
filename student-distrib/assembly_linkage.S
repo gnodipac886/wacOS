@@ -59,7 +59,6 @@ interrupt_handler_jump:
  */
 
 system_call_interrupt:
-	pushl 	%ds
 	pushal
 	cmpl 	$0, 	%eax 					// have to check 0 case since its from 1 - 10
 	je 		wrong_number
@@ -84,7 +83,6 @@ valid_call_number:
 system_call_ret:
 	popal
 	movl 	sys_call_ret_val, %eax
-	popl 	%ds	
 	iret
 
 system_call_jmp:
