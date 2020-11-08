@@ -3,6 +3,7 @@
 #include "lib.h"
 #include "filesystem.h"
 #include "terminal.h"
+#include "system_calls.h"
 
 #define PASS 1
 #define FAIL 0
@@ -254,7 +255,7 @@ int read_dir(){
 	clear();
 
 	// attempts to open the directory
-	fd = directory_open((uint8_t*)".");
+	fd = open((uint8_t*)".");
 
 	// see if the fd is valid
 	if(fd == -1){
@@ -262,13 +263,13 @@ int read_dir(){
 	}
 
 	// keep read files until we hit the end and print out the name
-	while(directory_read(fd, (void*)curr_name, 1024)){	// 1024 is random number
+	while(read(fd, (void*)curr_name, 1024)){	// 1024 is random number
 		// print out the name of the file
 		printf("%s\n", curr_name);
 	}
 
 	// close file when done
-	directory_close(fd);
+	close(fd);
 
 	// return success if we pass
 	return PASS;
@@ -294,7 +295,7 @@ int read_file(char * fname){
 	clear();
 
 	// open the file
-	fd = file_open((uint8_t*)fname);
+	fd = open((uint8_t*)fname);
 
 	// see if the fd is valid
 	if(fd == -1){
@@ -510,12 +511,14 @@ void launch_tests(){
 
 	/*CHECKPOINT 2*/
 	// TEST_OUTPUT("read_dir", read_dir());
-	// TEST_OUTPUT("reading a file", read_file("verylargetextwithverylongname.tx"));
+	// TEST_OUTPUT("reading a file", read_file("shell"));
 	// TEST_OUTPUT("reading file with name too long", read_long_name_file());
 	// TEST_OUTPUT("Sanity checks for filesystem", filesystem_sanity_check());
 	// TEST_OUTPUT("Testing RTC", test_rtc_freq());
 	// TEST_OUTPUT("vertical scroll test", vert_scroll_test());
 	// TEST_OUTPUT("terminal read/write from keyboard test", term_read_write_test());
+
+	/*CHECKPOINT 3*/
 
 	// launch your tests here
 }

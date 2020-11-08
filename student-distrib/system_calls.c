@@ -8,14 +8,15 @@
 
 /*
 	1. when doing paging, do we have to disable the parent page?
+	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	2. integrate the fd_arr into pcb
+	3. in halt, remember to switch tss->esp0 to parent kernel stack pointer
+	4. cli needed in asm for context switch?
 */
 
 int32_t curr_avail_pid = 0;
-pcb_t pcb_arr[MAX_TASKS];
+pcb_t* pcb_arr[MAX_TASKS];
 int8_t pid_avail[MAX_TASKS] = {0, 0, 0, 0, 0, 0};					
-
-// file descriptor array
-file_descriptor_t fd_arr[MAX_FILES_OPEN];
 
 f_ops_jmp_table_t rtc_file_ops		= 	{(void*)rtc_open, 		(void*)rtc_read, 		(void*)rtc_write, 		(void*)rtc_close};
 f_ops_jmp_table_t dir_file_ops		= 	{(void*)directory_open, (void*)directory_read, 	(void*)directory_write, (void*)directory_close};
@@ -31,7 +32,7 @@ f_ops_jmp_table_t stdout_ops		= 	{(void*)invalid_func, 	(void*)invalid_func, 	(v
  */
 int32_t execute(const uint8_t* command){
 	// Step 1: Parse, remember to sanity check command
-	int i = 0;
+	uint32_t i = 0;
 	char task_name[128];
 	char task_arg[128];
 	pcb_t* pcb;
@@ -53,7 +54,7 @@ int32_t execute(const uint8_t* command){
 
 		// if the current character is null or space, then we found the complete task name
 		if(command[i] == '\0' || command[i] == ' '){
-			strncpy(task_name, command, i);				// copy over the task name over
+			strncpy((int8_t*)task_name, (int8_t*)command, i);				// copy over the task name over
 			task_name[i] = '\0';						// makes sure that there's a null termination
 			task_arg[0] = '\0';						// set up the args string
 			if(command[i] == '\0'){						// if there's a null termination, we're done
@@ -66,7 +67,7 @@ int32_t execute(const uint8_t* command){
 				}
 
 				if(command[i] != ' '){					// once we see a non-space, we copy the rest of the string to args
-					strcpy(task_arg, &(command[i]));	// copy to args
+					strcpy((int8_t*)task_arg, (int8_t*)(&(command[i])));	// copy to args
 					break;								// stop
 				}
 
@@ -85,24 +86,34 @@ int32_t execute(const uint8_t* command){
 		}
 	}
 
-	pcb = KER_BOTTOM - (curr_avail_pid + 1) * KER_STACK_SIZE;
+	pcb = (pcb_t*)(KER_BOTTOM - (curr_avail_pid + 1) * KER_STACK_SIZE);
+
+	// set up the file descriptor array and initialize to proper values
+	for(i = 0; i < MAX_FILES_OPEN; i++){
+		pcb->fd_arr[i].inode = -1;
+		pcb->fd_arr[i].file_position = 0;
+		pcb->fd_arr[i].flags = FILE_NOT_USE;
+	}
 
 	strcpy(pcb->arg, task_arg); 						// move the args into pcb
 	pcb->pid = curr_avail_pid;	 						// set pid in the pcb
 	// if current pid is 0, we are shell, so we ahve no parent
-	pcb->parent_pid = pcb->pid == 0 ? 0 : _get_curr_pcb(&i)->pid;
+	pcb->parent_pid = pcb->pid == 0 ? 0 : _get_curr_pcb((int32_t*)&i)->pid;
+
+	// set the pcb to global
+	pcb_arr[curr_avail_pid] = pcb;
 
 	// Step 2: Check if task_name file is a valid executable
 
-	if(read_dentry_by_name(task_name, &cur_dentry) == -1){			// Find file in file system and copy func info to cur_dentry
+	if(read_dentry_by_name((uint8_t*)task_name, &cur_dentry) == -1){			// Find file in file system and copy func info to cur_dentry
 		return -1;
 	}
 
-	if (read_data(cur_dentry.inode, 0, ELF_check_buf, 3) != 3) {	// Error if cannot read starting three bytes into ELF_check_buf
+	if (read_data(cur_dentry.inode, 1, (uint8_t*)ELF_check_buf, 3) != 3) {	// Error if cannot read starting three bytes into ELF_check_buf
 		return -1;
 	}
 
-	if (strncmp(ELF_check_buf, elf, 3) != 0) {						// compare starting three bytes of file with ELF
+	if (strncmp((int8_t*)ELF_check_buf, (int8_t*)elf, 3) != 0) {						// compare starting three bytes of file with ELF
 		return -1;
 	}
 
@@ -114,7 +125,7 @@ int32_t execute(const uint8_t* command){
 	}
 
 	// Step 4: Load user program to user page
-	read_data(cur_dentry.inode, 0, USR_PTR, _get_file_length_inode(cur_dentry.inode));		// read out the memory to the pointer    
+	read_data(cur_dentry.inode, 0, (uint8_t*)USR_PTR, _get_file_length_inode(cur_dentry.inode));		// read out the memory to the pointer    
 
 	// Step 5: Kernel Stack TSS Update before context switch
 	tss.esp0 = KER_BOTTOM - pcb->pid * KER_STACK_SIZE - sizeof(unsigned long);
@@ -125,23 +136,29 @@ int32_t execute(const uint8_t* command){
 	// set up CRX registers
 
 	asm volatile(
-		"pushl		$USER_DS"		// push the SS which we use here the DS
-		"pushl 		%0"				// push address of the user stack
-		"pushfl"					// push the flags
-		"pushl		$USER_CS"		// push the code segment
-		"pushl 		%1"				// push the first line
-		"iret"						// perform context switch
-
-		:							// not outputs yet
-		:"r"(KER_BOTTOM - 1 + (1 + pcb->pid) * PG_4MB), "r"(KER_BOTTOM + (pcb->pid) * PG_4MB + FRST_INSTR) // -1 to remain in stack, +1 to go to stack bottom
-		:
+		"cli;"
+		"pushl		%0;"						// push the SS which we use here the DS
+		"pushl 		%2;"						// push address of the user stack
+		"pushfl;"								// push the flags
+		"pushl		%1;"						// push the code segment
+		"pushl 		%3;"						// push the first line
+		"movl 		%0, 		%%eax;"			// move DS to eax
+		"movw 		%%ax, 		%%ds;"			// move DS into ds register
+		"sti;"
+		"iret;"									// perform context switch
+		"halt_jmp_dest:;"
+		"leave;"
+		"ret;"
+		:										// no outputs yet
+		:"r"(USER_DS), "r"(USER_CS), "r"(USR_STACK), "r"(*(uint32_t*)(USR_PTR + FRST_INSTR)) // -1 to remain in stack, +1 to go to stack bottom
+		:"eax"
 		);
-	return;
+	return 0;
 }
 
 /* halt
  *      Inputs: status - executing status of the program
- *      Return Value: file descriptor number
+ *      Return Value: status variable
  *      Function: find the right array location have the file open, -1 on failure
  *      Side Effects: none
  */
@@ -149,30 +166,36 @@ int32_t halt(uint8_t status){
 	int fd;
 	pcb_t* pcb;
 
+	pcb = _get_curr_pcb(&fd);						// get the current pcb
+
 	// close all open files
 	for(fd = 0; fd < MAX_FILES_OPEN; fd++){
-		if(FILE_IN_USE){
-			fd_arr[fd].inode = -1;
-			fd_arr[fd].file_position = 0;			// 0 since we want the beginning of the file
-			fd_arr[fd].flags = FILE_NOT_USE;
-			(fd_arr[fd].jmp_table.f_ops_close)(fd);
+		if(pcb->fd_arr[fd].flags == FILE_IN_USE){
+			pcb->fd_arr[fd].inode = -1;
+			pcb->fd_arr[fd].file_position = 0;			// 0 since we want the beginning of the file
+			pcb->fd_arr[fd].flags = FILE_NOT_USE;
+			(pcb->fd_arr[fd].jmp_table.f_ops_close)(fd);
 		}
 	}
-
-	pcb = _get_curr_pcb(&fd);						// get the current pcb
 	exe_paging(pcb->pid, 0);						// turn off paging for current user
 	exe_paging(pcb->parent_pid, 1);					// revert back to parent paging
 
+	pid_avail[pcb->pid] = 0; 						// reset the pid array
+	curr_avail_pid = pcb->parent_pid; 				// set global pid to paretn's
+
+	tss.esp0 = KER_BOTTOM - pcb->parent_pid * KER_STACK_SIZE - sizeof(unsigned long);
+	tss.ss0 = KERNEL_DS;
+
 	asm volatile(
-		"xorl 		%%eax, 		%%eax"				// clear eax
-		"movb		%%bl, 		%%eax"				// move the argument status into eax for return
-		"jmp 		%0"								// jump to the parent kernel stack
+		"xorl 		%%eax, 		%%eax;"				// clear eax
+		"movzx		%%bl, 		%%eax;"				// move the argument status into eax for return
+		"jmp 		halt_jmp_dest;"							// jump to the parent kernel stack
 		:							// not outputs yet
-		:"r"(system_call_ret)
-		:"%eax" 					// clobbered register
+		: 							// nothing here
+		:"eax", "bl" 					// clobbered register
 		);
 
-	goto system_call_ret; 			// serves as jmp as well?
+	return -1;
 }
 
 
@@ -212,7 +235,7 @@ int32_t open(const uint8_t* fname){
 	}
 
 	// loop through the array to see which location in array is vacant
-	while(fd_arr[fd].flags){
+	while((pcb_arr[curr_avail_pid])->fd_arr[fd].flags){
 		fd++;
 
 		// if the whole file array is full, return fail
@@ -224,26 +247,26 @@ int32_t open(const uint8_t* fname){
 
 	switch (dentry.type) {
 		case RTC_TYPE:
-			fd_arr[fd].jmp_table = rtc_file_ops;
+			(pcb_arr[curr_avail_pid])->fd_arr[fd].jmp_table = rtc_file_ops;
 			break;
 
 		case DIR_TYPE:
-			fd_arr[fd].jmp_table = dir_file_ops;
+			(pcb_arr[curr_avail_pid])->fd_arr[fd].jmp_table = dir_file_ops;
 			break;
 
 		case FILE_TYPE:
-			fd_arr[fd].jmp_table = file_file_ops;
+			(pcb_arr[curr_avail_pid])->fd_arr[fd].jmp_table = file_file_ops;
 			break;
 
 		default:
 			return -1;
 	}
 
-	fd_arr[fd].inode = dentry.type == FILE_TYPE ? dentry.inode : 0;
-	fd_arr[fd].file_position = 0;										// 0 since we want the beginning of the file
-	fd_arr[fd].flags = FILE_IN_USE;
+	(pcb_arr[curr_avail_pid])->fd_arr[fd].inode = dentry.type == FILE_TYPE ? dentry.inode : 0;
+	(pcb_arr[curr_avail_pid])->fd_arr[fd].file_position = 0;										// 0 since we want the beginning of the file
+	(pcb_arr[curr_avail_pid])->fd_arr[fd].flags = FILE_IN_USE;
 
-	if((fd_arr[fd].jmp_table.f_ops_open)(fname) == -1){
+	if(((pcb_arr[curr_avail_pid])->fd_arr[fd].jmp_table.f_ops_open)(fname) == -1){
 		return -1;
 	}
 
@@ -260,15 +283,19 @@ int32_t open(const uint8_t* fname){
  */
 int32_t read(int32_t fd, void* buf, int32_t nbytes){
 	// sanity checks
-	if(fd >= MAX_FILES_OPEN || fd < STDIN || fd == STDOUT || fd_arr[fd].flags == FILE_NOT_USE || buf == NULL){
+	if(fd >= MAX_FILES_OPEN || fd < STDIN || fd == STDOUT || buf == NULL){
 		return -1;
 	}
 
-	if(fd == 0){
+	if(fd == STDIN){
 		return (stdin_ops.f_ops_read)(fd, buf, nbytes);
 	}
 
-	return (fd_arr[fd].jmp_table.f_ops_read)(fd, buf, nbytes);
+	if((pcb_arr[curr_avail_pid])->fd_arr[fd].flags == FILE_NOT_USE){
+		return -1;
+	}
+
+	return ((pcb_arr[curr_avail_pid])->fd_arr[fd].jmp_table.f_ops_read)(fd, buf, nbytes);
 }
 
 /* write
@@ -282,16 +309,20 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes){
  */
 int32_t write(int32_t fd, void* buf, int32_t nbytes){
 	// sanity checks
-	if(fd >= MAX_FILES_OPEN || fd < STDIN || fd == STDIN || fd_arr[fd].flags == FILE_NOT_USE || buf == NULL){
+	if(fd >= MAX_FILES_OPEN || fd <= STDIN || buf == NULL){
 		return -1;
 	}
 
-	if(fd == 1){
+	if(fd == STDOUT){
 		return (stdout_ops.f_ops_write)(fd, buf, nbytes);
 	}
 
+	if((pcb_arr[curr_avail_pid])->fd_arr[fd].flags == FILE_NOT_USE){
+		return -1;
+	}
+
 	// call the corresponding write function
-	return (fd_arr[fd].jmp_table.f_ops_write)(fd, buf, nbytes);
+	return ((pcb_arr[curr_avail_pid])->fd_arr[fd].jmp_table.f_ops_write)(fd, buf, nbytes);
 }
 
 /* close
@@ -307,16 +338,16 @@ int32_t close(int32_t fd){
 	}
 
 	// check if the file is used at all
-	if(fd_arr[fd].flags == FILE_NOT_USE){
+	if((pcb_arr[curr_avail_pid])->fd_arr[fd].flags == FILE_NOT_USE){
 		return -1;
 	}
 
 	// reset the file
-	fd_arr[fd].inode = -1;
-	fd_arr[fd].file_position = 0;			// 0 since we want the beginning of the file
-	fd_arr[fd].flags = FILE_NOT_USE;
+	(pcb_arr[curr_avail_pid])->fd_arr[fd].inode = -1;
+	(pcb_arr[curr_avail_pid])->fd_arr[fd].file_position = 0;			// 0 since we want the beginning of the file
+	(pcb_arr[curr_avail_pid])->fd_arr[fd].flags = FILE_NOT_USE;
 
-	return (fd_arr[fd].jmp_table.f_ops_close)(fd);
+	return ((pcb_arr[curr_avail_pid])->fd_arr[fd].jmp_table.f_ops_close)(fd);
 }
 
 /* invalid_func
@@ -336,7 +367,7 @@ int32_t invalid_func(){
  *      Side Effects: none
  */
 file_descriptor_t* _get_fd_arr(){
-	return fd_arr;
+	return (pcb_arr[curr_avail_pid])->fd_arr;
 }
 
 /* _get_curr_pcb
@@ -352,5 +383,5 @@ pcb_t* _get_curr_pcb(int32_t* ptr){
 	}
 
 	// bitwise and with the mask and return the pointer
-	return (pcb_t*)(ptr & PCB_MASK);
+	return (pcb_t*)((uint32_t)ptr & PCB_MASK);
 }

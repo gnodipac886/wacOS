@@ -7,6 +7,7 @@
 // functions from assembly_linkage
 extern void keyboard_interrupt_stub();
 extern void rtc_interrupt_stub();
+extern void system_call_interrupt();
 
 /* exception
  * 		Inputs: none
@@ -30,7 +31,7 @@ void exception() {
  */
 void divide_error(){
 	//cli();
-	clear();
+	// clear();
 	printf("Exception: Divides 0 error\n");
 	exception();
 	sti();
@@ -44,7 +45,7 @@ void divide_error(){
  */
 void reserv(){
 	//cli();
-	clear();
+	// clear();
 	printf("Exception: Reserved\n");
 	exception();
 	sti();
@@ -58,7 +59,7 @@ void reserv(){
  */
 void nmi_interrupt(){
 	//cli();
-	clear();
+	// clear();
 	printf("Exception: NMI Interrupt\n");
 	exception();
 	sti();
@@ -72,7 +73,7 @@ void nmi_interrupt(){
  */
 void breakp(){
 	//cli();
-	clear();
+	// clear();
 	printf("Exception: Breakpoint\n");
 	exception();
 	sti();
@@ -86,7 +87,7 @@ void breakp(){
  */
 void overflow(){
 	//cli();
-	clear();
+	// clear();
 	printf("Exception: Overflow\n");
 	exception();
 	sti();
@@ -100,7 +101,7 @@ void overflow(){
  */
 void bounds_range_ex(){
 	//cli();
-	clear();
+	// clear();
 	printf("Exception: Bounds range exceeded\n");
 	exception();
 	sti();
@@ -114,7 +115,7 @@ void bounds_range_ex(){
  */
 void invalid_op(){
 	//cli();
-	clear();
+	// clear();
 	printf("Exception: Invalid opcode\n");
 	exception();
 	sti();
@@ -128,7 +129,7 @@ void invalid_op(){
  */
 void dev_not_avail(){
 	//cli();
-	clear();
+	// clear();
 	printf("Exception: Device not available\n");
 	exception();
 	sti();
@@ -142,7 +143,7 @@ void dev_not_avail(){
  */
 void double_fault(){
 	//cli();
-	clear();
+	// clear();
 	printf("Exception: Double fault\n");
 	exception();
 	sti();
@@ -156,7 +157,7 @@ void double_fault(){
  */
 void invalid_tss(){
 	//cli();
-	clear();
+	// clear();
 	printf("Exception: Invalid TSS\n");
 	exception();
 	sti();
@@ -170,7 +171,7 @@ void invalid_tss(){
  */
 void seg_not_pres(){
 	//cli();
-	clear();
+	// clear();
 	printf("Exception: Segment not present\n");
 	exception();
 	sti();
@@ -184,7 +185,7 @@ void seg_not_pres(){
  */
 void stack_seg_fault(){
 	//cli();
-	clear();
+	// clear();
 	printf("Exception: Stack-segment fault\n");
 	exception();
 	sti();
@@ -198,7 +199,7 @@ void stack_seg_fault(){
  */
 void gen_prot_fault(){
 	//cli();
-	clear();
+	// clear();
 	printf("Exception: General protection fault\n");
 	exception();
 	sti();
@@ -212,7 +213,7 @@ void gen_prot_fault(){
  */
 void page_fault(){
 	//cli();
-	clear();
+	// clear();
 	printf("Exception: Page fault\n");
 	exception();
 	sti();
@@ -226,7 +227,7 @@ void page_fault(){
  */
 void x87_fpu_fault(){
 	//cli();
-	clear();
+	// clear();
 	printf("Exception: x87 FPU error\n");
 	exception();
 	sti();
@@ -240,7 +241,7 @@ void x87_fpu_fault(){
  */
 void align_check(){
 	//cli();
-	clear();
+	// clear();
 	printf("Exception: Alignment check\n");
 	exception();
 	sti();
@@ -254,7 +255,7 @@ void align_check(){
  */
 void mach_check(){
 	//cli();
-	clear();
+	// clear();
 	printf("Exception: Machine check\n");
 	exception();
 	sti();
@@ -268,7 +269,7 @@ void mach_check(){
  */
 void simd_float_exc(){
 	//cli();
-	clear();
+	// clear();
 	printf("Exception: SIMD Floating-Point Exception\n");
 	exception();
 	sti();
@@ -283,7 +284,7 @@ void simd_float_exc(){
 void system_call_handler() {
 	//hard interrupts have higher priority
 	sti();
-	clear();
+	// clear();
 	printf("System call was called");
 }
 
@@ -295,7 +296,7 @@ void system_call_handler() {
  */
 void interrupt_dummy(){
 	//cli();
-	clear();
+	// clear();
 	printf("You haven't set up this interrupt yet\n");
 	sti();
 }

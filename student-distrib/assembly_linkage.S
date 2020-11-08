@@ -1,6 +1,6 @@
 #include "assembly_linkage.h"
-#include "system_calls.h"
 .globl keyboard_interrupt_stub, rtc_interrupt_stub
+.globl system_call_interrupt
 .globl system_call_ret
 
 /* Interrupt Assembly Linkage
@@ -59,31 +59,38 @@ interrupt_handler_jump:
  */
 
 system_call_interrupt:
+	pushl 	%ds
 	pushal
-	cmpl	$0,	 %eax
-	jg		valid_call_number
-	cmpl	%eax,   $10
-	jle	 	valid_call_number
+	cmpl 	$0, 	%eax 					// have to check 0 case since its from 1 - 10
+	je 		wrong_number
+	cmpl	$10,	%eax					// check number for below 10
+	jbe		valid_call_number
+
+wrong_number:
 	movl	$-1,	sys_call_ret_val	  //call number is not in 1-10 range
 	jmp 	system_call_ret
+
 valid_call_number:
 	pushl   %edx 
 	pushl   %ecx 
 	pushl   %ebx 
+	sti
 	call	*system_call_jmp(,%eax,4)
 	movl	%eax,   sys_call_ret_val
 	popl	%ebx 
 	popl	%ecx 
 	popl	%edx
+
 system_call_ret:
 	popal
 	movl 	sys_call_ret_val, %eax
+	popl 	%ds	
 	iret
 
-system_call_jump:
+system_call_jmp:
 	.long 0
-	.long 0				 //halt 
-	.long 0				 //execute 
+	.long halt
+	.long execute
 	.long read 
 	.long write 
 	.long open 
