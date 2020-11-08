@@ -84,7 +84,7 @@ int32_t execute(const uint8_t* command){
 	pcb = KER_BOTTOM - (curr_avail_pid + 1) * KER_STACK_SIZE;
 
 	strcpy(pcb->arg, task_arg); 						// move the args into pcb
-	pcb->pid = curr_avail_pid++; 						// set pid in the pcb
+	pcb->pid = curr_avail_pid;	 						// set pid in the pcb
 	// if current pid is 0, we are shell, so we ahve no parent
 	pcb->parent_pid = pcb->pid == 0 ? 0 : _get_curr_pcb(&i)->pid;
 
@@ -109,10 +109,11 @@ int32_t execute(const uint8_t* command){
 	}
 
 	// Step 4: Load user program to user page
-	
 	read_data(cur_dentry.inode, 0, USR_PTR, _get_file_length_inode(cur_dentry.inode));		// read out the memory to the pointer    
 
-	// Step 5: PCB + Kernel Stack TSS
+	// Step 5: Kernel Stack TSS Update before context switch
+	tss.esp0 = KER_BOTTOM - pcb->pid * KER_STACK_SIZE - sizeof(unsigned long);
+	tss.ss0 = KERNEL_DS;
 
 	// Step 6: context switch
 		//halt (<--- has tss in function)
