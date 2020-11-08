@@ -1,6 +1,7 @@
 #include "assembly_linkage.h"
 #include "system_calls.h"
 .globl keyboard_interrupt_stub, rtc_interrupt_stub
+.globl system_call_ret
 
 /* Interrupt Assembly Linkage
  * Description: x86 wrapper function that calls interrupt handlers;

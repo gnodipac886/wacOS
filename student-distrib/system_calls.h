@@ -6,6 +6,8 @@
 
 #define STDIN				0
 #define STDOUT				1
+#define PG_4MB 				0x400000
+#define FRST_INSTR			23
 #define KER_TOP 			0x400000 			// 4MB
 #define KER_BOTTOM			0x800000 			// 8MB
 #define KER_STACK_SIZE		0x2000				// 8KB
@@ -20,6 +22,7 @@ typedef struct pcb{
 } pcb_t;
 
 int32_t execute(const uint8_t* command);
+int32_t halt(uint8_t status);
 int32_t open(const uint8_t* fname);
 int32_t read(int32_t fd, void* buf, int32_t nbytes);
 int32_t write(int32_t fd, void* buf, int32_t nbytes);

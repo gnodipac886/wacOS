@@ -6,6 +6,10 @@
 #include "x86_desc.h"
 #include "lib.h"
 
+/*
+	1. when doing paging, do we have to disable the parent page?
+*/
+
 int32_t curr_avail_pid = 0;
 pcb_t pcb_arr[MAX_TASKS];
 int8_t pid_avail[MAX_TASKS] = {0, 0, 0, 0, 0, 0};					
@@ -104,8 +108,9 @@ int32_t execute(const uint8_t* command){
 
 
 	// Step 3: Setup paging
-	if(exe_paging(pcb->pid) != 0){					
+	if(exe_paging(pcb->pid, 1) != 0){					
 		printf("Process ID invalid");
+		return -1;
 	}
 
 	// Step 4: Load user program to user page
@@ -117,7 +122,59 @@ int32_t execute(const uint8_t* command){
 
 	// Step 6: context switch
 		//halt (<--- has tss in function)
+	// set up CRX registers
+
+	asm volatile(
+		"pushl		$USER_DS"		// push the SS which we use here the DS
+		"pushl 		%0"				// push address of the user stack
+		"pushfl"					// push the flags
+		"pushl		$USER_CS"		// push the code segment
+		"pushl 		%1"				// push the first line
+		"iret"						// perform context switch
+
+		:							// not outputs yet
+		:"r"(KER_BOTTOM - 1 + (1 + pcb->pid) * PG_4MB), "r"(KER_BOTTOM + (pcb->pid) * PG_4MB + FRST_INSTR) // -1 to remain in stack, +1 to go to stack bottom
+		:
+		);
+	return;
 }
+
+/* halt
+ *      Inputs: status - executing status of the program
+ *      Return Value: file descriptor number
+ *      Function: find the right array location have the file open, -1 on failure
+ *      Side Effects: none
+ */
+int32_t halt(uint8_t status){
+	int fd;
+	pcb_t* pcb;
+
+	// close all open files
+	for(fd = 0; fd < MAX_FILES_OPEN; fd++){
+		if(FILE_IN_USE){
+			fd_arr[fd].inode = -1;
+			fd_arr[fd].file_position = 0;			// 0 since we want the beginning of the file
+			fd_arr[fd].flags = FILE_NOT_USE;
+			(fd_arr[fd].jmp_table.f_ops_close)(fd);
+		}
+	}
+
+	pcb = _get_curr_pcb(&fd);						// get the current pcb
+	exe_paging(pcb->pid, 0);						// turn off paging for current user
+	exe_paging(pcb->parent_pid, 1);					// revert back to parent paging
+
+	asm volatile(
+		"xorl 		%%eax, 		%%eax"				// clear eax
+		"movb		%%bl, 		%%eax"				// move the argument status into eax for return
+		"jmp 		%0"								// jump to the parent kernel stack
+		:							// not outputs yet
+		:"r"(system_call_ret)
+		:"%eax" 					// clobbered register
+		);
+
+	goto system_call_ret; 			// serves as jmp as well?
+}
+
 
 /* open
  *      Inputs: fname - name of file to open, should be "rtc"
