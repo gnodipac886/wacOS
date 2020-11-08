@@ -6,20 +6,25 @@
 
 #define STDIN				0
 #define STDOUT				1
+#define PG_4MB 				0x400000
+#define FRST_INSTR			24
 #define KER_TOP 			0x400000 			// 4MB
 #define KER_BOTTOM			0x800000 			// 8MB
 #define KER_STACK_SIZE		0x2000				// 8KB
 #define PCB_MASK 			0xFFFFE000
 #define USR_PTR 			0x8048000 			// 128 MB
+#define USR_STACK 			0x83FFFFC 			// 132MB - 4 4 since its 1 slot
 #define MAX_TASKS           6
 
 typedef struct pcb{
 	char 	arg[128];
 	int32_t pid;
 	int32_t parent_pid;
+	file_descriptor_t fd_arr[MAX_FILES_OPEN];
 } pcb_t;
 
 int32_t execute(const uint8_t* command);
+int32_t halt(uint8_t status);
 int32_t open(const uint8_t* fname);
 int32_t read(int32_t fd, void* buf, int32_t nbytes);
 int32_t write(int32_t fd, void* buf, int32_t nbytes);
