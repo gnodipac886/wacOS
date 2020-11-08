@@ -102,13 +102,14 @@ void __init_paging__(){
 }
 
 /* exe_paging
- *      Inputs: pid - process id inside of PCB
+ *      Inputs: pid 	- process id inside of PCB
+ 				present - whether the present bit should be on or off
  *      Return Value: 0 -- paging set up correclty
  *					  -1 -- pid value invalid
  *      Function: 128MB in virtual memory (user page) will map to physical memory for the tasks starting at 8MB
  *      Side Effects: Flushes the TLB after mapping
  */
-int exe_paging(int pid){
+int exe_paging(int pid, int present){
 	// check for a valid process id
 	if (pid < 0){
 		return -1;
@@ -124,7 +125,7 @@ int exe_paging(int pid){
 	page_directory[USER_PAGE].write_through		= 	0; 												// we always want write back
 	page_directory[USER_PAGE].user_supervisor 	= 	1; 												// user-level
 	page_directory[USER_PAGE].read_write 		= 	1; 												// all pages are read write
-	page_directory[USER_PAGE].present 			= 	1; 												// page available
+	page_directory[USER_PAGE].present 			= 	present; 										// page available
 
 	// flush the TLB
 	asm(
