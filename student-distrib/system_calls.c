@@ -33,6 +33,8 @@ f_ops_jmp_table_t stdout_ops		= 	{(void*)invalid_func, 	(void*)invalid_func, 	(v
 int32_t execute(const uint8_t* command){
 	// Step 1: Parse, remember to sanity check command
 	uint32_t i = 0;
+	uint32_t parent_k_esp;
+	uint32_t parent_k_ebp;
 	char task_name[128];
 	char task_arg[128];
 	pcb_t* pcb;
@@ -100,6 +102,16 @@ int32_t execute(const uint8_t* command){
 	// if current pid is 0, we are shell, so we ahve no parent
 	pcb->parent_pid = pcb->pid == 0 ? 0 : _get_curr_pcb((int32_t*)&i)->pid;
 
+	// store parent kernel stack info - esp and ebp
+	asm volatile(
+		"movl	%%esp, 	%0;"
+		"movl	%%ebp, 	%1;"
+		:"=g" (parent_k_esp), "=g" (parent_k_ebp)	// outputs - temp vars to be used to set pcb values
+	);
+
+	pcb->parent_kernel_esp = parent_k_esp;
+	pcb->parent_kernel_ebp = parent_k_ebp;
+
 	// set the pcb to global
 	pcb_arr[curr_avail_pid] = pcb;
 
@@ -132,13 +144,13 @@ int32_t execute(const uint8_t* command){
 	tss.ss0 = KERNEL_DS;
 
 	// Step 6: context switch
-		//halt (<--- has tss in function)
 	// set up CRX registers
 
 	asm volatile(
 		"cli;"
 		"pushl		%0;"						// push the SS which we use here the DS
 		"pushl 		%2;"						// push address of the user stack
+												// <------------------------------------mask to enable interrupt flag
 		"pushfl;"								// push the flags
 		"pushl		%1;"						// push the code segment
 		"pushl 		%3;"						// push the first line
@@ -164,6 +176,8 @@ int32_t execute(const uint8_t* command){
  */
 int32_t halt(uint8_t status){
 	int fd;
+	uint32_t parent_k_esp;
+	uint32_t parent_k_ebp;
 	pcb_t* pcb = _get_curr_pcb(&fd);						// get the current pcb
 
 	if(pcb->pid == 0 && pcb->parent_pid == 0){				// base shell case
@@ -182,6 +196,9 @@ int32_t halt(uint8_t status){
 	exe_paging(pcb->pid, 0);						// turn off paging for current user
 	exe_paging(pcb->parent_pid, 1);					// revert back to parent paging
 
+	parent_k_esp = pcb->parent_kernel_esp;			// restore esp and ebp of parent 
+	parent_k_ebp = pcb->parent_kernel_ebp;
+
 	pid_avail[pcb->pid] = 0; 						// reset the pid array
 	curr_avail_pid = pcb->parent_pid; 				// set global pid to paretn's
 
@@ -189,13 +206,15 @@ int32_t halt(uint8_t status){
 	tss.ss0 = KERNEL_DS;
 
 	asm volatile(
+		"movl		%0,			%%esp;"				// restore esp for parent kernel stack
+		"movl		%1,			%%ebp;"				// restore ebp for parent kernel stack			
 		"xorl 		%%eax, 		%%eax;"				// clear eax
 		"movzx		%%bl, 		%%eax;"				// move the argument status into eax for return
-		"jmp 		halt_jmp_dest;"							// jump to the parent kernel stack
-		:							// not outputs yet
-		: 							// nothing here
-		:"eax", "bl" 					// clobbered register
-		);
+		"jmp 		halt_jmp_dest;"					// jump to the parent kernel stack
+		:											// not outputs yet
+		:"r" (parent_k_esp), "r" (parent_k_ebp)		// esp and ebp values to restore for parent kernel stack
+		:"eax", "bl" 								// clobbered register
+	);
 
 	return -1;
 }
