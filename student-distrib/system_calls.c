@@ -88,6 +88,8 @@ int32_t execute(const uint8_t* command){
 		}
 	}
 
+	// Step 2: Create PCB structure
+
 	pcb = (pcb_t*)(KER_BOTTOM - (curr_avail_pid + 1) * KER_STACK_SIZE);
 
 	// set up the file descriptor array and initialize to proper values
@@ -115,7 +117,7 @@ int32_t execute(const uint8_t* command){
 	// set the pcb to global
 	pcb_arr[curr_avail_pid] = pcb;
 
-	// Step 2: Check if task_name file is a valid executable
+	// Step 3: Check if task_name file is a valid executable
 
 	if(read_dentry_by_name((uint8_t*)task_name, &cur_dentry) == -1){			// Find file in file system and copy func info to cur_dentry
 		return -1;
@@ -130,20 +132,20 @@ int32_t execute(const uint8_t* command){
 	}
 
 
-	// Step 3: Setup paging
+	// Step 4: Setup paging
 	if(exe_paging(pcb->pid, 1) != 0){					
 		printf("Process ID invalid");
 		return -1;
 	}
 
-	// Step 4: Load user program to user page
+	// Step 5: Load user program to user page
 	read_data(cur_dentry.inode, 0, (uint8_t*)USR_PTR, _get_file_length_inode(cur_dentry.inode));		// read out the memory to the pointer    
 
-	// Step 5: Kernel Stack TSS Update before context switch
+	// Step 6: Kernel Stack TSS Update before context switch
 	tss.esp0 = KER_BOTTOM - pcb->pid * KER_STACK_SIZE - sizeof(unsigned long);
 	tss.ss0 = KERNEL_DS;
 
-	// Step 6: context switch
+	// Step 7: context switch
 	// set up CRX registers
 
 	asm volatile(
@@ -200,7 +202,7 @@ int32_t halt(uint8_t status){
 	parent_k_ebp = pcb->parent_kernel_ebp;
 
 	pid_avail[pcb->pid] = 0; 						// reset the pid array
-	curr_avail_pid = pcb->parent_pid; 				// set global pid to paretn's
+	curr_avail_pid = pcb->parent_pid; 				// set global pid to parent's
 
 	tss.esp0 = KER_BOTTOM - pcb->parent_pid * KER_STACK_SIZE - sizeof(unsigned long);
 	tss.ss0 = KERNEL_DS;
