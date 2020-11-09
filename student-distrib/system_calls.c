@@ -317,6 +317,8 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes){
 		return -1;
 	}
 
+	memset(buf, '\0', nbytes);
+
 	if(fd == STDIN){
 		return (stdin_ops.f_ops_read)(fd, buf, nbytes);
 	}

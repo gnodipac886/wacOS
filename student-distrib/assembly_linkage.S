@@ -101,7 +101,7 @@ system_call_jmp:
 	.long write 
 	.long open 
 	.long close 
-	.long 0				 //getargs 
+	.long getargs 
 	.long 0				 //vidmap
 	.long 0				 //set_handler 
 	.long 0				 //sigreturn
