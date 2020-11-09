@@ -15,6 +15,8 @@
 #define USR_PTR 			0x8048000 			// 128 MB
 #define USR_STACK 			0x83FFFFC 			// 132MB - 4 4 since its 1 slot
 #define MAX_TASKS           6
+#define KB_BUF_SIZE 		128					// buffer can contain 128 chars
+#define FAILURE				-1					// return value
 
 typedef struct pcb{
 	char 	arg[128];
