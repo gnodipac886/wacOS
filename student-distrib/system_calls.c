@@ -83,7 +83,7 @@ int32_t execute(const uint8_t* command){
 			break;
 		}
 		if(curr_avail_pid == MAX_TASKS - 1){								// if we haven't found a open space
-			return 255;														// 255 for just failure in general
+			return 255;														// 255 for just failure in general, not -1 (command dne)
 		}
 	}
 
