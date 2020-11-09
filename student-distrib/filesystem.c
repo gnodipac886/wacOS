@@ -25,20 +25,10 @@ void __init_filesystem__(void * filesystem_ptr){
 	}
 
 	// set up variables and pointers for each data structure
-	int i;
 	filesystem 	= filesystem_ptr;
 	boot_block 	= (boot_block_t*)filesystem;
 	inodes 		= (inode_t*)filesystem;
 	data_ptr 	= (data_block_t*)filesystem;
-
-	fd_arr 		= _get_fd_arr();
-
-	// set up the file descriptor array and initialize to proper values
-	for(i = 0; i < MAX_FILES_OPEN; i++){
-		fd_arr[i].inode = -1;
-		fd_arr[i].file_position = 0;
-		fd_arr[i].flags = FILE_NOT_USE;
-	}
 }
 
 /* rtc_open 
@@ -118,7 +108,7 @@ int32_t file_close(int32_t fd){
  */
 int32_t rtc_write(int32_t fd, void* buf, int32_t nbytes){
 	// sanity checks
-	if(fd >= MAX_FILES_OPEN || fd < FIRST_FILE_IDX || fd_arr[fd].flags == FILE_NOT_USE || buf == NULL){
+	if(fd >= MAX_FILES_OPEN || fd < FIRST_FILE_IDX || buf == NULL){
 		return -1;
 	}
 
@@ -164,7 +154,7 @@ int32_t file_write(int32_t fd, void* buf, int32_t nbytes){
  */
 int32_t rtc_read(int32_t fd, void* buf, int32_t nbytes){
 	// sanity checks
-	if(fd >= MAX_FILES_OPEN || fd < FIRST_FILE_IDX || fd_arr[fd].flags == FILE_NOT_USE || buf == NULL){
+	if(fd >= MAX_FILES_OPEN || fd < FIRST_FILE_IDX || buf == NULL){
 		return -1;
 	}
 
@@ -188,14 +178,19 @@ int32_t directory_read(int32_t fd, void* buf, int32_t nbytes){
 	char dir_name[MAX_NAME_LEN + 1]; 		// length +1 since we want to fir 33 characters here
 
 	// sanity checks
-	if(fd >= MAX_FILES_OPEN || fd < FIRST_FILE_IDX || fd_arr[fd].flags == FILE_NOT_USE || buf == NULL){
+	if(fd >= MAX_FILES_OPEN || fd < FIRST_FILE_IDX || buf == NULL){
 		return -1;
 	}
+
+	fd_arr = _get_fd_arr();
 
 	// see if we have already read all the file directories
 	if(fd_arr[fd].file_position == boot_block->num_entries){
 		return 0;
 	}
+
+	// clear the buffer
+	memset(buf, '\0', nbytes);
 
 	// copy it over to check for '\0' at the end
 	strncpy(dir_name, (boot_block->files)[fd_arr[fd].file_position].name, MAX_NAME_LEN);
@@ -225,15 +220,17 @@ int32_t directory_read(int32_t fd, void* buf, int32_t nbytes){
 int32_t file_read(int32_t fd, void* buf, int32_t nbytes){
 	// create variables for function
 	int file_len, num_read;
-	int offset = fd_arr[fd].file_position;
+	int offset;
 
 	// sanity checks
-	if(fd >= MAX_FILES_OPEN || fd < FIRST_FILE_IDX || fd_arr[fd].flags == FILE_NOT_USE || buf == NULL){
+	if(fd >= MAX_FILES_OPEN || fd < FIRST_FILE_IDX || buf == NULL){
 		return -1;
 	}
 
 	// determine the file length so we don't read too much
 	file_len = _get_file_length(fd);
+	offset = fd_arr[fd].file_position;
+	fd_arr = _get_fd_arr();
 
 	// check if the offset is valied
 	if(offset < 0 || offset >= file_len){
@@ -384,6 +381,24 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
 	return offset + num_copied == curr_inode.length ? 0 : num_copied;
 }
 
+/* _get_file_length_inode
+ *      Inputs: inode_num - inode number of the file we want the length of
+ *      Return Value: length of the file, -1 on failure
+ *      Function: finds the length of the file we are looking for
+ *      Side Effects: none
+ */
+int32_t _get_file_length_inode(uint32_t inode_num){
+
+	// check if the inode number is valid
+	if(inode_num >= boot_block->num_inode){
+		return -1;
+	}
+
+	// check the inode for the length of the file
+	return inodes[inode_num + 1].length;
+}
+
+
 /* _get_file_length 
  *      Inputs: fd 		- which file we are looking for the length in the fd_array
  *      Return Value: length fo the file, -1 on failure
@@ -392,6 +407,8 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
  */
 int32_t _get_file_length(int32_t fd){
 	// sanity checks
+	fd_arr = _get_fd_arr();
+
 	if(fd >= MAX_FILES_OPEN || fd < FIRST_FILE_IDX || fd_arr[fd].flags == FILE_NOT_USE){
 		return -1;
 	}

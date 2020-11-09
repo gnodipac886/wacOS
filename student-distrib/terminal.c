@@ -52,7 +52,6 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes){
 	while(1){
 		memset(kb_buf, '\0', BUF_SZ);
 		kb_buf_idx = get_kb_buf(kb_buf);	     // idx of last added char in keyboard buffer (copy keyboard buffer)
-
 		if(kb_buf[kb_buf_idx] == '\n') {
 			clear_terminal_buf();			     //clear terminal's keyboard handler buffer
 			break;

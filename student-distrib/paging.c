@@ -38,6 +38,19 @@ void __init_paging__(){
 	page_directory[1].read_write 		= 	1; 												// all pages are read write
 	page_directory[1].present 			= 	1; 												// all valid PDE needs to be set to 1
 
+	// example for virtual maping
+	// page_directory[32].addr 				= 	3 << SHFT_4MB_ADDR;								// address to the page_table
+	// page_directory[32].accessed 			= 	0;												// not used, set to 0
+	// page_directory[32].dirty 			= 	0;												// not used, set to 0
+	// page_directory[1].global 			= 	1;												// we only set the page for kernel page
+	// page_directory[1].size 				= 	1;												// 1 for 4MB entry
+	// page_directory[1].available 		= 	0;												// not used, set to 0
+	// page_directory[1].cache_disable 	= 	1; 												// set to 1 since kernel code
+	// page_directory[1].write_through		= 	0; 												// we always want write back
+	// page_directory[1].user_supervisor 	= 	0; 												// kernel code should be supervisor
+	// page_directory[1].read_write 		= 	1; 												// all pages are read write
+	// page_directory[1].present 			= 	1; 												// all valid PDE needs to be set to 1
+
 	// set the rest of the directory for other memory spaces
 	for(i = 2; i < NUM_PAGE_DIR; i++){
 		page_directory[i].addr 				= 	i << SHFT_4MB_ADDR;							// address to the page_table
@@ -86,4 +99,44 @@ void __init_paging__(){
 		:"%eax" 					// clobbered register
 
 		);
+}
+
+/* exe_paging
+ *      Inputs: pid 	- process id inside of PCB
+ 				present - whether the present bit should be on or off
+ *      Return Value: 0 -- paging set up correclty
+ *					  -1 -- pid value invalid
+ *      Function: 128MB in virtual memory (user page) will map to physical memory for the tasks starting at 8MB
+ *      Side Effects: Flushes the TLB after mapping
+ */
+int exe_paging(int pid, int present){
+	// check for a valid process id
+	if (pid < 0){
+		return -1;
+	}
+	// mapping user page to physical memory for tasks
+	page_directory[USER_PAGE].addr 				= 	(2 + pid)  << SHFT_4MB_ADDR;					// address to the tasks starting at 8MB
+	page_directory[USER_PAGE].accessed 			= 	0;												// not used, set to 0
+	page_directory[USER_PAGE].dirty 			= 	0;												// not used, set to 0
+	page_directory[USER_PAGE].global 			= 	1;												// we only set the page for kernel page
+	page_directory[USER_PAGE].size 				= 	1;												// 1 for 4MB entry
+	page_directory[USER_PAGE].available 		= 	0;												// not used, set to 0
+	page_directory[USER_PAGE].cache_disable 	= 	1; 												// set to 1 for program code
+	page_directory[USER_PAGE].write_through		= 	0; 												// we always want write back
+	page_directory[USER_PAGE].user_supervisor 	= 	1; 												// user-level
+	page_directory[USER_PAGE].read_write 		= 	1; 												// all pages are read write
+	page_directory[USER_PAGE].present 			= 	present; 										// page available
+
+	// flush the TLB
+	asm(
+		"movl 	%0, 			%%eax;"		// move page directory into eax
+		"movl 	%%eax, 			%%cr3;"		// move page directory address into cr3
+
+		:							// not outputs yet
+		:"r"(page_directory) 		// input is page directory
+		:"%eax" 					// clobbered register
+
+		);
+
+	return 0;
 }
