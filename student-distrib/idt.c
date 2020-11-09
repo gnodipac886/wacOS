@@ -7,6 +7,8 @@
 // functions from assembly_linkage
 extern void keyboard_interrupt_stub();
 extern void rtc_interrupt_stub();
+extern void system_call_interrupt();
+extern void squash_user_exception();
 
 /* exception
  * 		Inputs: none
@@ -18,8 +20,8 @@ void exception() {
 	//disable interrupts
 	//squash(?) user-level program
 	//return control to shell
-
-	while (1);
+	squash_user_exception();
+	// while (1);
 }
 
 /* divide_error
@@ -30,10 +32,10 @@ void exception() {
  */
 void divide_error(){
 	//cli();
-	clear();
+	// clear();
 	printf("Exception: Divides 0 error\n");
 	exception();
-	sti();
+	// sti();
 }
 
 /* reserv
@@ -44,10 +46,10 @@ void divide_error(){
  */
 void reserv(){
 	//cli();
-	clear();
+	// clear();
 	printf("Exception: Reserved\n");
 	exception();
-	sti();
+	// sti();
 }
 
 /* nmi_interrupt
@@ -58,10 +60,10 @@ void reserv(){
  */
 void nmi_interrupt(){
 	//cli();
-	clear();
+	// clear();
 	printf("Exception: NMI Interrupt\n");
 	exception();
-	sti();
+	// sti();
 }
 
 /* breakp
@@ -72,10 +74,10 @@ void nmi_interrupt(){
  */
 void breakp(){
 	//cli();
-	clear();
+	// clear();
 	printf("Exception: Breakpoint\n");
 	exception();
-	sti();
+	// sti();
 }
 
 /* overflow
@@ -86,10 +88,10 @@ void breakp(){
  */
 void overflow(){
 	//cli();
-	clear();
+	// clear();
 	printf("Exception: Overflow\n");
 	exception();
-	sti();
+	// sti();
 }
 
 /* bounds_range_ex
@@ -100,10 +102,10 @@ void overflow(){
  */
 void bounds_range_ex(){
 	//cli();
-	clear();
+	// clear();
 	printf("Exception: Bounds range exceeded\n");
 	exception();
-	sti();
+	// sti();
 }
 
 /* invalid_op
@@ -114,10 +116,10 @@ void bounds_range_ex(){
  */
 void invalid_op(){
 	//cli();
-	clear();
+	// clear();
 	printf("Exception: Invalid opcode\n");
 	exception();
-	sti();
+	// sti();
 }
 
 /* dev_not_avail
@@ -128,10 +130,10 @@ void invalid_op(){
  */
 void dev_not_avail(){
 	//cli();
-	clear();
+	// clear();
 	printf("Exception: Device not available\n");
 	exception();
-	sti();
+	// sti();
 }
 
 /* double_fault
@@ -142,10 +144,10 @@ void dev_not_avail(){
  */
 void double_fault(){
 	//cli();
-	clear();
+	// clear();
 	printf("Exception: Double fault\n");
 	exception();
-	sti();
+	// sti();
 }
 
 /* invalid_tss
@@ -156,10 +158,10 @@ void double_fault(){
  */
 void invalid_tss(){
 	//cli();
-	clear();
+	// clear();
 	printf("Exception: Invalid TSS\n");
 	exception();
-	sti();
+	// sti();
 }
 
 /* seg_not_pres
@@ -170,10 +172,10 @@ void invalid_tss(){
  */
 void seg_not_pres(){
 	//cli();
-	clear();
+	// clear();
 	printf("Exception: Segment not present\n");
 	exception();
-	sti();
+	// sti();
 }
 
 /* stack_seg_fault
@@ -184,10 +186,10 @@ void seg_not_pres(){
  */
 void stack_seg_fault(){
 	//cli();
-	clear();
+	// clear();
 	printf("Exception: Stack-segment fault\n");
 	exception();
-	sti();
+	// sti();
 }
 
 /* gen_prot_fault
@@ -198,10 +200,10 @@ void stack_seg_fault(){
  */
 void gen_prot_fault(){
 	//cli();
-	clear();
+	// clear();
 	printf("Exception: General protection fault\n");
 	exception();
-	sti();
+	// sti();
 }
 
 /* page_fault
@@ -212,10 +214,10 @@ void gen_prot_fault(){
  */
 void page_fault(){
 	//cli();
-	clear();
+	// clear();
 	printf("Exception: Page fault\n");
 	exception();
-	sti();
+	// sti();
 }
 
 /* x87_fpu_fault
@@ -226,10 +228,10 @@ void page_fault(){
  */
 void x87_fpu_fault(){
 	//cli();
-	clear();
+	// clear();
 	printf("Exception: x87 FPU error\n");
 	exception();
-	sti();
+	// sti();
 }
 
 /* align_check
@@ -240,10 +242,10 @@ void x87_fpu_fault(){
  */
 void align_check(){
 	//cli();
-	clear();
+	// clear();
 	printf("Exception: Alignment check\n");
 	exception();
-	sti();
+	// sti();
 }
 
 /* mach_check
@@ -254,10 +256,10 @@ void align_check(){
  */
 void mach_check(){
 	//cli();
-	clear();
+	// clear();
 	printf("Exception: Machine check\n");
 	exception();
-	sti();
+	// sti();
 }
 
 /* simd_float_exc
@@ -268,10 +270,10 @@ void mach_check(){
  */
 void simd_float_exc(){
 	//cli();
-	clear();
+	// clear();
 	printf("Exception: SIMD Floating-Point Exception\n");
 	exception();
-	sti();
+	// sti();
 }
 
 /* system_call_handler
@@ -282,8 +284,8 @@ void simd_float_exc(){
  */
 void system_call_handler() {
 	//hard interrupts have higher priority
-	sti();
-	clear();
+	// sti();
+	// clear();
 	printf("System call was called");
 }
 
@@ -295,9 +297,9 @@ void system_call_handler() {
  */
 void interrupt_dummy(){
 	//cli();
-	clear();
+	// clear();
 	printf("You haven't set up this interrupt yet\n");
-	sti();
+	// sti();
 }
 
 /* __init_idt__
@@ -343,7 +345,27 @@ void __init_idt__(){
 	SET_IDT_ENTRY(idt[AC], align_check); 			// Alignment check
 	SET_IDT_ENTRY(idt[MC], mach_check); 			// Machine check
 	SET_IDT_ENTRY(idt[XF], simd_float_exc); 		// SIMD Floating-Point Exception
+
+	// SET_IDT_ENTRY(idt[DE], squash_user_exception); 			// divide by zero error
+	// SET_IDT_ENTRY(idt[DB], squash_user_exception); 				// reserved
+	// SET_IDT_ENTRY(idt[MI], squash_user_exception); 			// NMI Interrupt........................
+	// SET_IDT_ENTRY(idt[BP], squash_user_exception); 				// Breakpoint
+	// SET_IDT_ENTRY(idt[OF], squash_user_exception); 				// Overflow
+	// SET_IDT_ENTRY(idt[BR], squash_user_exception); 		// Bounds range exceeded
+	// SET_IDT_ENTRY(idt[UD], squash_user_exception); 			// Invalid opcode
+	// SET_IDT_ENTRY(idt[NM], squash_user_exception); 			// Device not available
+	// SET_IDT_ENTRY(idt[DF], squash_user_exception); 			// Double fault
+	// SET_IDT_ENTRY(idt[TS], squash_user_exception); 			// Invalid TSS
+	// SET_IDT_ENTRY(idt[NP], squash_user_exception); 			// Segment not present
+	// SET_IDT_ENTRY(idt[SS], squash_user_exception); 		// Stack-segment fault
+	// SET_IDT_ENTRY(idt[GP], squash_user_exception); 		// General protection fault
+	// SET_IDT_ENTRY(idt[PF], squash_user_exception); 			// Page fault
+	// SET_IDT_ENTRY(idt[MF], squash_user_exception); 			// x87 FPU error
+	// SET_IDT_ENTRY(idt[AC], squash_user_exception); 			// Alignment check
+	// SET_IDT_ENTRY(idt[MC], squash_user_exception); 			// Machine check
+	// SET_IDT_ENTRY(idt[XF], squash_user_exception); 		// SIMD Floating-Point Exception
+
 	SET_IDT_ENTRY(idt[IRQ1_IDT], keyboard_interrupt_stub); 		// handle keyboard interrupt
 	SET_IDT_ENTRY(idt[IRQ8_IDT], rtc_interrupt_stub); 		// handle rtc interrupt
-	SET_IDT_ENTRY(idt[SYS_CALL], system_call_handler);	//handle system call
+	SET_IDT_ENTRY(idt[SYS_CALL], system_call_interrupt);	//handle system call
 }

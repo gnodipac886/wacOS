@@ -20,6 +20,14 @@
 #define 	FILE_IN_USE 	1										// if file is in use 
 #define 	FILE_NOT_USE 	0										// if file is not in use 
 
+// data structure for file operations jump table
+typedef struct f_ops_jmp_table{
+	int32_t (*f_ops_open)(const uint8_t* fname);
+	int32_t (*f_ops_read)(int32_t fd, void* buf, int32_t nbytes);
+	int32_t (*f_ops_write)(int32_t fd, void* buf, int32_t nbytes);
+	int32_t (*f_ops_close)(int32_t fd);
+} f_ops_jmp_table_t;
+
 // data structure for dentry
 typedef struct dentry{
 	char 		name[MAX_NAME_LEN];
@@ -44,10 +52,10 @@ typedef struct boot_block{
 } boot_block_t;
 
 typedef struct file_descriptor{
-	uint32_t* 	jmp_table;
-	uint32_t 	inode;
-	uint32_t 	file_position;
-	uint32_t 	flags;					// 1 for in use, 0 for vacant
+	f_ops_jmp_table_t 	jmp_table;
+	uint32_t 			inode;
+	uint32_t 			file_position;
+	uint32_t 			flags;					// 1 for in use, 0 for vacant
 } file_descriptor_t;
 
 // data structure for data block 
@@ -77,5 +85,6 @@ int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry);
 int32_t read_dentry_by_index(uint32_t index, dentry_t* dentry);
 int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length);
 int32_t _get_file_length(int32_t fd);
+int32_t _get_file_length_inode(uint32_t inode_num);
 
 #endif /* _FILESYSTEM_H */

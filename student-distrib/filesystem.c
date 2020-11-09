@@ -1,4 +1,5 @@
 #include "filesystem.h"
+#include "system_calls.h"
 #include "lib.h"
 #include "rtc.h"
 
@@ -9,12 +10,7 @@ inode_t* inodes;
 data_block_t* data_ptr;
 
 // file descriptor array
-file_descriptor_t fd_arr[MAX_FILES_OPEN];
-
-// 4 for number of functions
-uint32_t rtc_file_ops[4] = {(uint32_t)rtc_open, (uint32_t)rtc_read, (uint32_t)rtc_write, (uint32_t)rtc_close};
-uint32_t dir_file_ops[4] = {(uint32_t)directory_open, (uint32_t)directory_read, (uint32_t)directory_write, (uint32_t)directory_close};
-uint32_t file_file_ops[4] = {(uint32_t)file_open, (uint32_t)file_read, (uint32_t)file_write, (uint32_t)file_close};
+file_descriptor_t* fd_arr;
 
 /* __init_filesystem__ 
  *      Inputs: filesystem_ptr - pointer to the beginning of the file system 
@@ -29,19 +25,10 @@ void __init_filesystem__(void * filesystem_ptr){
 	}
 
 	// set up variables and pointers for each data structure
-	int i;
 	filesystem 	= filesystem_ptr;
 	boot_block 	= (boot_block_t*)filesystem;
 	inodes 		= (inode_t*)filesystem;
 	data_ptr 	= (data_block_t*)filesystem;
-
-	// set up the file descriptor array and initialize to proper values
-	for(i = 0; i < MAX_FILES_OPEN; i++){
-		fd_arr[i].jmp_table = NULL;
-		fd_arr[i].inode = -1;
-		fd_arr[i].file_position = 0;
-		fd_arr[i].flags = FILE_NOT_USE;
-	}
 }
 
 /* rtc_open 
@@ -51,55 +38,10 @@ void __init_filesystem__(void * filesystem_ptr){
  *      Side Effects: none     
  */
 int32_t rtc_open(const uint8_t* fname){
-	// set up variables for function
-	int i;
-	int fd = FIRST_FILE_IDX;
-	dentry_t dentry;
-
-	// check if the name is null
-	if(fname == NULL){
-		return -1;
-	}
-
-	// sanity check for fname
-	for(i = 0; i < MAX_NAME_LEN + 1; i++){
-		// found null, continue
-		if(fname[i] == '\0'){
-			break;
-		}
-
-		// didn't find it, return fail
-		if(i == MAX_NAME_LEN && fname[i] != '\0'){
-			return -1;
-		}
-	}
-
-	// check if the file is found at all
-	if(read_dentry_by_name(fname, &dentry) == -1){
-		return -1;
-	}
-
-	// loop through the array to see which location in array is vacant
-	while(fd_arr[fd].flags){
-		fd++;
-
-		// if the whole file array is full, return fail
-		if(fd >= MAX_FILES_OPEN){
-			return -1;
-		}
-	}
-
-	// set the jump table
-	fd_arr[fd].jmp_table = rtc_file_ops;
-
-	// if we are opening the rtc, we set it up too
+	// call rtc open helper
 	_rtc_open();
 
-	fd_arr[fd].inode = 0;
-	fd_arr[fd].file_position = 0;			// 0 since we want the beginning of the file
-	fd_arr[fd].flags = FILE_IN_USE;
-
-	return fd;
+	return 0;
 }
 
 /* directory_open 
@@ -109,50 +51,7 @@ int32_t rtc_open(const uint8_t* fname){
  *      Side Effects: none     
  */
 int32_t directory_open(const uint8_t* fname){
-	// set up variables for function
-	int i;
-	int fd = FIRST_FILE_IDX;
-	dentry_t dentry;
-
-	// check if the name is null
-	if(fname == NULL){
-		return -1;
-	}
-
-	// sanity check for fname
-	for(i = 0; i < MAX_NAME_LEN + 1; i++){
-		// found null, continue
-		if(fname[i] == '\0'){
-			break;
-		}
-
-		// didn't find it, return fail
-		if(i == MAX_NAME_LEN && fname[i] != '\0'){
-			return -1;
-		}
-	}
-
-	// check if the file is found at all
-	if(read_dentry_by_name(fname, &dentry) == -1){
-		return -1;
-	}
-
-	// loop through the array to see which location in array is vacant
-	while(fd_arr[fd].flags){
-		fd++;
-
-		// if the whole file array is full, return fail
-		if(fd >= MAX_FILES_OPEN){
-			return -1;
-		}
-	}
-
-	fd_arr[fd].jmp_table = dir_file_ops;
-	fd_arr[fd].inode = 0;
-	fd_arr[fd].file_position = 0;			// 0 since we want the beginning of the file
-	fd_arr[fd].flags = FILE_IN_USE;
-
-	return fd;
+	return 0;
 }
 
 /* file_open 
@@ -162,49 +61,7 @@ int32_t directory_open(const uint8_t* fname){
  *      Side Effects: none     
  */
 int32_t file_open(const uint8_t* fname){
-	// set up variables for function
-	int i;
-	int fd = FIRST_FILE_IDX;
-	dentry_t dentry;
-
-	// check if the name is null
-	if(fname == NULL){
-		return -1;
-	}
-
-	// sanity check for fname
-	for(i = 0; i < MAX_NAME_LEN + 1; i++){
-		// found null, continue
-		if(fname[i] == '\0'){
-			break;
-		}
-
-		// didn't find it, return fail
-		if(i == MAX_NAME_LEN && fname[i] != '\0'){
-			return -1;
-		}
-	}
-
-	// check if the file is found at all
-	if(read_dentry_by_name(fname, &dentry) == -1){
-		return -1;
-	}
-
-	// loop through the array to see which location in array is vacant
-	while(fd_arr[fd].flags){
-		fd++;
-
-		// if the whole file array is full, return fail
-		if(fd >= MAX_FILES_OPEN){
-			return -1;
-		}
-	}
-	fd_arr[fd].jmp_table = file_file_ops;
-	fd_arr[fd].inode = dentry.inode;
-	fd_arr[fd].file_position = 0;			// 0 since we want the beginning of the file
-	fd_arr[fd].flags = FILE_IN_USE;
-
-	return fd;
+	return 0;
 }
 
 /* rtc_close 
@@ -214,23 +71,7 @@ int32_t file_open(const uint8_t* fname){
  *      Side Effects: none     
  */
 int32_t rtc_close(int32_t fd){
-	// see if the file descriptor index is valid
-	if(fd >= MAX_FILES_OPEN || fd < FIRST_FILE_IDX){
-		return -1;
-	}
-
-	// check if the file is used at all
-	if(fd_arr[fd].flags == FILE_NOT_USE){
-		return -1;
-	}
-
-	// reset the file
-	fd_arr[fd].jmp_table = NULL;
-	fd_arr[fd].inode = -1;
-	fd_arr[fd].file_position = 0;			// 0 since we want the beginning of the file			
-	fd_arr[fd].flags = FILE_NOT_USE;
-
-	// success
+	// call rtc close helper
 	return _rtc_close();
 }
 
@@ -241,22 +82,6 @@ int32_t rtc_close(int32_t fd){
  *      Side Effects: none     
  */
 int32_t directory_close(int32_t fd){
-	// see if the file descriptor index is valid
-	if(fd >= MAX_FILES_OPEN || fd < FIRST_FILE_IDX){
-		return -1;
-	}
-
-	// check if the file is used at all
-	if(fd_arr[fd].flags == FILE_NOT_USE){
-		return -1;
-	}
-
-	// reset the file
-	fd_arr[fd].jmp_table = NULL;
-	fd_arr[fd].inode = -1;
-	fd_arr[fd].file_position = 0;			// 0 since we want the beginning of the file			
-	fd_arr[fd].flags = FILE_NOT_USE;
-
 	// success
 	return 0;
 }
@@ -268,22 +93,6 @@ int32_t directory_close(int32_t fd){
  *      Side Effects: none     
  */
 int32_t file_close(int32_t fd){
-	// see if the file descriptor index is valid
-	if(fd >= MAX_FILES_OPEN || fd < FIRST_FILE_IDX){
-		return -1;
-	}
-
-	// check if the file is used at all
-	if(fd_arr[fd].flags == FILE_NOT_USE){
-		return -1;
-	}
-
-	// reset the file
-	fd_arr[fd].jmp_table = NULL;
-	fd_arr[fd].inode = -1;
-	fd_arr[fd].file_position = 0;			// 0 since we want the beginning of the file			
-	fd_arr[fd].flags = FILE_NOT_USE;
-
 	// success
 	return 0;
 }
@@ -299,7 +108,7 @@ int32_t file_close(int32_t fd){
  */
 int32_t rtc_write(int32_t fd, void* buf, int32_t nbytes){
 	// sanity checks
-	if(fd >= MAX_FILES_OPEN || fd < FIRST_FILE_IDX || fd_arr[fd].flags == FILE_NOT_USE || buf == NULL){
+	if(fd >= MAX_FILES_OPEN || fd < FIRST_FILE_IDX || buf == NULL){
 		return -1;
 	}
 
@@ -345,7 +154,7 @@ int32_t file_write(int32_t fd, void* buf, int32_t nbytes){
  */
 int32_t rtc_read(int32_t fd, void* buf, int32_t nbytes){
 	// sanity checks
-	if(fd >= MAX_FILES_OPEN || fd < FIRST_FILE_IDX || fd_arr[fd].flags == FILE_NOT_USE || fd_arr[fd].jmp_table != rtc_file_ops || buf == NULL){
+	if(fd >= MAX_FILES_OPEN || fd < FIRST_FILE_IDX || buf == NULL){
 		return -1;
 	}
 
@@ -369,14 +178,19 @@ int32_t directory_read(int32_t fd, void* buf, int32_t nbytes){
 	char dir_name[MAX_NAME_LEN + 1]; 		// length +1 since we want to fir 33 characters here
 
 	// sanity checks
-	if(fd >= MAX_FILES_OPEN || fd < FIRST_FILE_IDX || fd_arr[fd].flags == FILE_NOT_USE || fd_arr[fd].jmp_table != dir_file_ops || buf == NULL){
+	if(fd >= MAX_FILES_OPEN || fd < FIRST_FILE_IDX || buf == NULL){
 		return -1;
 	}
+
+	fd_arr = _get_fd_arr();
 
 	// see if we have already read all the file directories
 	if(fd_arr[fd].file_position == boot_block->num_entries){
 		return 0;
 	}
+
+	// clear the buffer
+	memset(buf, '\0', nbytes);
 
 	// copy it over to check for '\0' at the end
 	strncpy(dir_name, (boot_block->files)[fd_arr[fd].file_position].name, MAX_NAME_LEN);
@@ -406,15 +220,17 @@ int32_t directory_read(int32_t fd, void* buf, int32_t nbytes){
 int32_t file_read(int32_t fd, void* buf, int32_t nbytes){
 	// create variables for function
 	int file_len, num_read;
-	int offset = fd_arr[fd].file_position;
+	int offset;
 
 	// sanity checks
-	if(fd >= MAX_FILES_OPEN || fd < FIRST_FILE_IDX || fd_arr[fd].flags == FILE_NOT_USE || fd_arr[fd].jmp_table != file_file_ops || buf == NULL){
+	if(fd >= MAX_FILES_OPEN || fd < FIRST_FILE_IDX || buf == NULL){
 		return -1;
 	}
 
 	// determine the file length so we don't read too much
 	file_len = _get_file_length(fd);
+	offset = fd_arr[fd].file_position;
+	fd_arr = _get_fd_arr();
 
 	// check if the offset is valied
 	if(offset < 0 || offset >= file_len){
@@ -462,7 +278,8 @@ int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry){
 		}
 
 		// check if the strings are equal
-		if(!(strncmp((int8_t*)curr_file_name, (int8_t*)file_name, strlen((int8_t*)file_name)))){
+		if(strlen((int8_t*)file_name) == strlen((int8_t*)curr_file_name) &&
+		 !(strncmp((int8_t*)curr_file_name, (int8_t*)file_name, strlen((int8_t*)file_name)))){
 			// copy over all the pieces in the directory entry
 			strcpy((int8_t*)(dentry->name), (int8_t*)curr_dentry.name);
 			dentry->type = curr_dentry.type;
@@ -565,6 +382,24 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
 	return offset + num_copied == curr_inode.length ? 0 : num_copied;
 }
 
+/* _get_file_length_inode
+ *      Inputs: inode_num - inode number of the file we want the length of
+ *      Return Value: length of the file, -1 on failure
+ *      Function: finds the length of the file we are looking for
+ *      Side Effects: none
+ */
+int32_t _get_file_length_inode(uint32_t inode_num){
+
+	// check if the inode number is valid
+	if(inode_num >= boot_block->num_inode){
+		return -1;
+	}
+
+	// check the inode for the length of the file
+	return inodes[inode_num + 1].length;
+}
+
+
 /* _get_file_length 
  *      Inputs: fd 		- which file we are looking for the length in the fd_array
  *      Return Value: length fo the file, -1 on failure
@@ -573,7 +408,9 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
  */
 int32_t _get_file_length(int32_t fd){
 	// sanity checks
-	if(fd >= MAX_FILES_OPEN || fd < FIRST_FILE_IDX || fd_arr[fd].flags == FILE_NOT_USE || fd_arr[fd].jmp_table != file_file_ops){
+	fd_arr = _get_fd_arr();
+
+	if(fd >= MAX_FILES_OPEN || fd < FIRST_FILE_IDX || fd_arr[fd].flags == FILE_NOT_USE){
 		return -1;
 	}
 
