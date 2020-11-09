@@ -278,7 +278,8 @@ int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry){
 		}
 
 		// check if the strings are equal
-		if(!(strncmp((int8_t*)curr_file_name, (int8_t*)file_name, strlen((int8_t*)file_name)))){
+		if(strlen((int8_t*)file_name) == strlen((int8_t*)curr_file_name) &&
+		 !(strncmp((int8_t*)curr_file_name, (int8_t*)file_name, strlen((int8_t*)file_name)))){
 			// copy over all the pieces in the directory entry
 			strcpy((int8_t*)(dentry->name), (int8_t*)curr_dentry.name);
 			dentry->type = curr_dentry.type;
