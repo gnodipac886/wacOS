@@ -7,11 +7,13 @@
 #include "keyboard.h"
 #include "lib.h"
 
+// global variables
 int32_t curr_avail_pid = 0;
 pcb_t* pcb_arr[MAX_TASKS];
 int8_t pid_avail[MAX_TASKS] = {0, 0, 0, 0, 0, 0};
 extern uint32_t is_exception;
 
+// fops table for each type of file possible
 static f_ops_jmp_table_t rtc_file_ops		= 	{(void*)rtc_open, 		(void*)rtc_read, 		(void*)rtc_write, 		(void*)rtc_close};
 static f_ops_jmp_table_t dir_file_ops		= 	{(void*)directory_open, (void*)directory_read, 	(void*)directory_write, (void*)directory_close};
 static f_ops_jmp_table_t file_file_ops		= 	{(void*)file_open, 		(void*)file_read, 		(void*)file_write, 		(void*)file_close};
@@ -47,7 +49,7 @@ int32_t execute(const uint8_t* command){
 	}
 
 	while(1){ 																// find the location of the space character or null character
-		if(i == KB_BUF_SIZE){														// reached max, return -1 for failure
+		if(i == KB_BUF_SIZE){												// reached max, return -1 for failure
 			return -1;
 		}
 
@@ -60,7 +62,7 @@ int32_t execute(const uint8_t* command){
 			}
 
 			while(1){ 														// otherwise we need to get the argument as well
-				if(i == KB_BUF_SIZE){												// reached max, return -1 for failure
+				if(i == KB_BUF_SIZE){										// reached max, return -1 for failure
 					return -1;
 				}
 
@@ -121,17 +123,17 @@ int32_t execute(const uint8_t* command){
 	***************************************/
 
 	if(read_dentry_by_name((uint8_t*)task_name, &cur_dentry) == -1){		// Find file in file system and copy func info to cur_dentry
-		pid_avail[curr_avail_pid] = 0;
+		pid_avail[curr_avail_pid] = 0; 										// remove task
 		return -1;
 	}
 
 	if (read_data(cur_dentry.inode, 0, (uint8_t*)ELF_check_buf, 4) != 4) {	// Error if cannot read starting three bytes into ELF_check_buf, 4 for elf length
-		pid_avail[curr_avail_pid] = 0;
+		pid_avail[curr_avail_pid] = 0;										// remove task
 		return -1;
 	}
 
 	if (strncmp((int8_t*)ELF_check_buf, (int8_t*)elf, 4) != 0) {			// compare starting three bytes of file with ELF, 4 for elf length
-		pid_avail[curr_avail_pid] = 0;
+		pid_avail[curr_avail_pid] = 0;										// remove task
 		return -1;
 	}
 
