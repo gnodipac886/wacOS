@@ -6,14 +6,6 @@
 #include "x86_desc.h"
 #include "lib.h"
 
-/*
-	1. when doing paging, do we have to disable the parent page?
-	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	2. integrate the fd_arr into pcb
-	3. in halt, remember to switch tss->esp0 to parent kernel stack pointer
-	4. cli needed in asm for context switch?
-*/
-
 int32_t curr_avail_pid = 0;
 pcb_t* pcb_arr[MAX_TASKS];
 int8_t pid_avail[MAX_TASKS] = {0, 0, 0, 0, 0, 0};
@@ -57,8 +49,7 @@ int32_t execute(const uint8_t* command){
 			return -1;
 		}
 
-		// if the current character is null or space, then we found the complete task name
-		if(command[i] == '\0' || command[i] == ' '){
+		if(command[i] == '\0' || command[i] == ' '){ 						// if the current character is null or space, then we found the complete task name
 			strncpy((int8_t*)task_name, (int8_t*)command, i);				// copy over the task name over
 			task_name[i] = '\0';											// makes sure that there's a null termination
 			task_arg[0] = '\0';												// set up the args string
