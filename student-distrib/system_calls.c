@@ -16,7 +16,8 @@
 
 int32_t curr_avail_pid = 0;
 pcb_t* pcb_arr[MAX_TASKS];
-int8_t pid_avail[MAX_TASKS] = {0, 0, 0, 0, 0, 0};					
+int8_t pid_avail[MAX_TASKS] = {0, 0, 0, 0, 0, 0};
+extern uint32_t* is_exception;
 
 f_ops_jmp_table_t rtc_file_ops		= 	{(void*)rtc_open, 		(void*)rtc_read, 		(void*)rtc_write, 		(void*)rtc_close};
 f_ops_jmp_table_t dir_file_ops		= 	{(void*)directory_open, (void*)directory_read, 	(void*)directory_write, (void*)directory_close};
@@ -81,12 +82,18 @@ int32_t execute(const uint8_t* command){
 		i++;											// increment until we find a space or null
 	}
 
+	// try to allocate a task
 	for (curr_avail_pid = 0; curr_avail_pid < MAX_TASKS; curr_avail_pid++) {
 		if (pid_avail[curr_avail_pid] == 0) {
 			pid_avail[curr_avail_pid] = 1;
 			break;
 		}
+		if(curr_avail_pid == MAX_TASKS - 1){		// if we haven't found a open space
+			return 255;								// 255 for just failure in general
+		}
 	}
+
+	// Step 2: Create PCB structure
 
 	pcb = (pcb_t*)(KER_BOTTOM - (curr_avail_pid + 1) * KER_STACK_SIZE);
 
@@ -115,7 +122,7 @@ int32_t execute(const uint8_t* command){
 	// set the pcb to global
 	pcb_arr[curr_avail_pid] = pcb;
 
-	// Step 2: Check if task_name file is a valid executable
+	// Step 3: Check if task_name file is a valid executable
 
 	if(read_dentry_by_name((uint8_t*)task_name, &cur_dentry) == -1){			// Find file in file system and copy func info to cur_dentry
 		return -1;
@@ -130,21 +137,20 @@ int32_t execute(const uint8_t* command){
 	}
 
 
-	// Step 3: Setup paging
+	// Step 4: Setup paging
 	if(exe_paging(pcb->pid, 1) != 0){					
 		printf("Process ID invalid");
 		return -1;
 	}
 
-	// Step 4: Load user program to user page
+	// Step 5: Load user program to user page
 	read_data(cur_dentry.inode, 0, (uint8_t*)USR_PTR, _get_file_length_inode(cur_dentry.inode));		// read out the memory to the pointer    
 
-	// Step 5: Kernel Stack TSS Update before context switch
+	// Step 6: Kernel Stack TSS Update before context switch
 	tss.esp0 = KER_BOTTOM - pcb->pid * KER_STACK_SIZE - sizeof(unsigned long);
 	tss.ss0 = KERNEL_DS;
 
-	// Step 6: context switch
-	// set up CRX registers
+	// Step 7: context switch
 
 	asm volatile(
 		"cli;"
@@ -180,10 +186,6 @@ int32_t halt(uint8_t status){
 	uint32_t parent_k_ebp;
 	pcb_t* pcb = _get_curr_pcb(&fd);						// get the current pcb
 
-	if(pcb->pid == 0 && pcb->parent_pid == 0){				// base shell case
-		return -1;
-	}
-
 	// close all open files
 	for(fd = 0; fd < MAX_FILES_OPEN; fd++){
 		if(pcb->fd_arr[fd].flags == FILE_IN_USE){
@@ -200,20 +202,27 @@ int32_t halt(uint8_t status){
 	parent_k_ebp = pcb->parent_kernel_ebp;
 
 	pid_avail[pcb->pid] = 0; 						// reset the pid array
-	curr_avail_pid = pcb->parent_pid; 				// set global pid to paretn's
+	curr_avail_pid = pcb->parent_pid; 				// set global pid to parent's
 
 	tss.esp0 = KER_BOTTOM - pcb->parent_pid * KER_STACK_SIZE - sizeof(unsigned long);
 	tss.ss0 = KERNEL_DS;
 
+	if(pcb->pid == 0 && pcb->parent_pid == 0){				// base shell case
+		execute((uint8_t*)"shell");
+	}
+
 	asm volatile(
-		"movl		%0,			%%esp;"				// restore esp for parent kernel stack
-		"movl		%1,			%%ebp;"				// restore ebp for parent kernel stack			
-		"xorl 		%%eax, 		%%eax;"				// clear eax
-		"movzx		%%bl, 		%%eax;"				// move the argument status into eax for return
-		"jmp 		halt_jmp_dest;"					// jump to the parent kernel stack
-		:											// not outputs yet
-		:"r" (parent_k_esp), "r" (parent_k_ebp)		// esp and ebp values to restore for parent kernel stack
-		:"eax", "bl" 								// clobbered register
+		"movl		%0,			%%esp;"								// restore esp for parent kernel stack
+		"movl		%1,			%%ebp;"								// restore ebp for parent kernel stack			
+		"xorl 		%%eax, 		%%eax;"								// clear eax
+		"movzx		%%bl, 		%%eax;"								// move the argument status into eax for return
+		"cmpl 		$256, 		%2;"								// see if we need to load 256 for exceptions
+		"jne 		halt_jmp_dest;"									// jump to the parent kernel stack
+		"movl 		%2, 		%%eax;"								// load 256 into eax for returning
+		"jmp 		halt_jmp_dest;"									// jump to the parent kernel stack
+		:															// not outputs yet
+		:"r" (parent_k_esp), "r" (parent_k_ebp), "r"(is_exception)	// esp and ebp values to restore for parent kernel stack
+		:"eax", "bl" 												// clobbered register
 	);
 
 	return -1;
@@ -369,6 +378,26 @@ int32_t close(int32_t fd){
 	(pcb_arr[curr_avail_pid])->fd_arr[fd].flags = FILE_NOT_USE;
 
 	return ((pcb_arr[curr_avail_pid])->fd_arr[fd].jmp_table.f_ops_close)(fd);
+}
+
+/* getargs
+ *      Inputs: buf 	- buffer to copy the args into
+ 				nbytes 	- how many bytes of the argument to copy
+ *      Return Value: 0 on success, -1 upon failure
+ *      Function: gives the user the args
+ *      Side Effects: none
+ */
+int32_t getargs(uint8_t* buf, int32_t nbytes){
+	int i = 0;
+	pcb_t* pcb = _get_curr_pcb(&i);
+
+	// sanity checks
+	if(buf == NULL || pcb->arg[i] == '\0' || strlen(pcb->arg) >= nbytes){
+		return -1;
+	}
+
+	strcpy((int8_t*)buf, (int8_t*)(pcb->arg));
+	return 0;
 }
 
 /* invalid_func
