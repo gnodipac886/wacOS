@@ -38,19 +38,6 @@ void __init_paging__(){
 	page_directory[1].read_write 		= 	1; 												// all pages are read write
 	page_directory[1].present 			= 	1; 												// all valid PDE needs to be set to 1
 
-	// example for virtual maping
-	// page_directory[32].addr 				= 	3 << SHFT_4MB_ADDR;								// address to the page_table
-	// page_directory[32].accessed 			= 	0;												// not used, set to 0
-	// page_directory[32].dirty 			= 	0;												// not used, set to 0
-	// page_directory[1].global 			= 	1;												// we only set the page for kernel page
-	// page_directory[1].size 				= 	1;												// 1 for 4MB entry
-	// page_directory[1].available 		= 	0;												// not used, set to 0
-	// page_directory[1].cache_disable 	= 	1; 												// set to 1 since kernel code
-	// page_directory[1].write_through		= 	0; 												// we always want write back
-	// page_directory[1].user_supervisor 	= 	0; 												// kernel code should be supervisor
-	// page_directory[1].read_write 		= 	1; 												// all pages are read write
-	// page_directory[1].present 			= 	1; 												// all valid PDE needs to be set to 1
-
 	// set the rest of the directory for other memory spaces
 	for(i = 2; i < NUM_PAGE_DIR; i++){
 		page_directory[i].addr 				= 	i << SHFT_4MB_ADDR;							// address to the page_table
