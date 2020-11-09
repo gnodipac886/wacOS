@@ -146,7 +146,6 @@ int32_t execute(const uint8_t* command){
 	tss.ss0 = KERNEL_DS;
 
 	// Step 7: context switch
-	// set up CRX registers
 
 	asm volatile(
 		"cli;"
