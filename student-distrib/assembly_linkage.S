@@ -1,7 +1,7 @@
 #include "assembly_linkage.h"
 .globl keyboard_interrupt_stub, rtc_interrupt_stub
-.globl system_call_interrupt
-.globl system_call_ret
+.globl system_call_interrupt, system_call_ret
+.globl squash_user_exception, is_exception
 
 /* Interrupt Assembly Linkage
  * Description: x86 wrapper function that calls interrupt handlers;
@@ -58,6 +58,13 @@ interrupt_handler_jump:
  * Side Effects: system call gets handled
  */
 
+squash_user_exception:
+	pushal
+	movl 	$1, 	%eax
+	movb 	$255, 	%bl 					// 256 for exception
+	movl 	$256, 	is_exception 			// indicate we have exception
+	jmp 	valid_call_number
+
 system_call_interrupt:
 	pushal
 	cmpl 	$0, 	%eax 					// have to check 0 case since its from 1 - 10
@@ -83,6 +90,7 @@ valid_call_number:
 system_call_ret:
 	popal
 	movl 	sys_call_ret_val, %eax
+	movl 	$0, 	is_exception
 	iret
 
 system_call_jmp:
@@ -100,3 +108,6 @@ system_call_jmp:
 
 sys_call_ret_val:
 	.long 0 
+
+is_exception:
+	.long 0
