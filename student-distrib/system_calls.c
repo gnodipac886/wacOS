@@ -4,6 +4,7 @@
 #include "terminal.h"
 #include "paging.h"
 #include "x86_desc.h"
+#include "keyboard.h"
 #include "lib.h"
 
 int32_t curr_avail_pid = 0;
@@ -11,11 +12,11 @@ pcb_t* pcb_arr[MAX_TASKS];
 int8_t pid_avail[MAX_TASKS] = {0, 0, 0, 0, 0, 0};
 extern uint32_t is_exception;
 
-f_ops_jmp_table_t rtc_file_ops		= 	{(void*)rtc_open, 		(void*)rtc_read, 		(void*)rtc_write, 		(void*)rtc_close};
-f_ops_jmp_table_t dir_file_ops		= 	{(void*)directory_open, (void*)directory_read, 	(void*)directory_write, (void*)directory_close};
-f_ops_jmp_table_t file_file_ops		= 	{(void*)file_open, 		(void*)file_read, 		(void*)file_write, 		(void*)file_close};
-f_ops_jmp_table_t stdin_ops			= 	{(void*)invalid_func, 	(void*)terminal_read, 	(void*)invalid_func, 	(void*)invalid_func};
-f_ops_jmp_table_t stdout_ops		= 	{(void*)invalid_func, 	(void*)invalid_func, 	(void*)terminal_write, 	(void*)invalid_func};
+static f_ops_jmp_table_t rtc_file_ops		= 	{(void*)rtc_open, 		(void*)rtc_read, 		(void*)rtc_write, 		(void*)rtc_close};
+static f_ops_jmp_table_t dir_file_ops		= 	{(void*)directory_open, (void*)directory_read, 	(void*)directory_write, (void*)directory_close};
+static f_ops_jmp_table_t file_file_ops		= 	{(void*)file_open, 		(void*)file_read, 		(void*)file_write, 		(void*)file_close};
+static f_ops_jmp_table_t stdin_ops			= 	{(void*)invalid_func, 	(void*)terminal_read, 	(void*)invalid_func, 	(void*)invalid_func};
+static f_ops_jmp_table_t stdout_ops			= 	{(void*)invalid_func, 	(void*)invalid_func, 	(void*)terminal_write, 	(void*)invalid_func};
 
 /* execute
  *      Inputs: command - pointer to start of command string
@@ -120,14 +121,17 @@ int32_t execute(const uint8_t* command){
 	***************************************/
 
 	if(read_dentry_by_name((uint8_t*)task_name, &cur_dentry) == -1){		// Find file in file system and copy func info to cur_dentry
+		pid_avail[curr_avail_pid] = 0;
 		return -1;
 	}
 
 	if (read_data(cur_dentry.inode, 0, (uint8_t*)ELF_check_buf, 4) != 4) {	// Error if cannot read starting three bytes into ELF_check_buf, 4 for elf length
+		pid_avail[curr_avail_pid] = 0;
 		return -1;
 	}
 
 	if (strncmp((int8_t*)ELF_check_buf, (int8_t*)elf, 4) != 0) {			// compare starting three bytes of file with ELF, 4 for elf length
+		pid_avail[curr_avail_pid] = 0;
 		return -1;
 	}
 
@@ -136,6 +140,7 @@ int32_t execute(const uint8_t* command){
 	***************************************/
 	if(exe_paging(pcb->pid, 1) != 0){										// try to do paging				
 		printf("Process ID invalid");
+		pid_avail[curr_avail_pid] = 0;
 		return -1;
 	}
 
@@ -150,7 +155,6 @@ int32_t execute(const uint8_t* command){
 	tss.esp0 = KER_BOTTOM - pcb->pid * KER_STACK_SIZE - sizeof(unsigned long);
 	tss.ss0 = KERNEL_DS;
 
-
 	/***************************************
 	********Step 7: context switch**********
 	***************************************/
@@ -158,9 +162,8 @@ int32_t execute(const uint8_t* command){
 		"cli;"
 		"pushl		%0;"													// push the SS which we use here the DS
 		"pushl 		%2;"													// push address of the user stack
-																			// <------------------------------------mask to enable interrupt flag
 		"pushfl;"															// push the flags
-		"orl 		$0x200, 	(%%esp);"									// pop off 
+		"orl 		$0x200, 	(%%esp);"									// or the IF bit so when we iret, it sti's
 		"pushl		%1;"													// push the code segment
 		"pushl 		%3;"													// push the first line
 		"movl 		%0, 		%%eax;"										// move DS to eax
@@ -212,10 +215,12 @@ int32_t halt(uint8_t status){
 	tss.esp0 = KER_BOTTOM - pcb->parent_pid * KER_STACK_SIZE - sizeof(unsigned long);
 	tss.ss0 = KERNEL_DS;
 
+	clear_terminal_buf();													// clear keyboard buffer to prevent deleting the shell prompt
+	clear_kb_buf();
+
 	if(pcb->pid == 0 && pcb->parent_pid == 0){								// base shell case
 		execute((uint8_t*)"shell");
 	}
-
 	asm volatile(
 		"movl		%0,			%%esp;"										// restore esp for parent kernel stack
 		"movl		%1,			%%ebp;"										// restore ebp for parent kernel stack			

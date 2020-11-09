@@ -26,7 +26,7 @@ common_interrupt:
 	notl %eax								   	/*Negate for offset from IRQ0 Vector #*/
 	call *interrupt_handler_jump(,%eax,4)
 	popal
-	addl $4, %esp
+	addl $4, %esp								/*pop off the irq number*/
 	iret									   	/*return from interrupt*/
 
 interrupt_handler_jump:
@@ -60,8 +60,8 @@ interrupt_handler_jump:
 
 squash_user_exception:
 	movl 	$1, 	%eax
-	movb 	$255, 	%bl 					// 256 for exception
-	movl 	$256, 	is_exception 			// indicate we have exception
+	movb 	$255, 	%bl 						// 256 for exception
+	movl 	$256, 	is_exception 				// indicate we have exception
 	jmp 	exception_to_halt
 
 system_call_interrupt:
@@ -76,21 +76,22 @@ wrong_number:
 	jmp 	system_call_ret
 
 valid_call_number:
-	pushl   %edx 
+	pushl   %edx 								// push system call arguents
 	pushl   %ecx 
 	pushl   %ebx 
+	
 exception_to_halt:
 	sti
 	call	*system_call_jmp(,%eax,4)			// 4 for 4 bytes of memory
-	movl	%eax,   sys_call_ret_val
-	popl	%ebx 
+	movl	%eax,   sys_call_ret_val 			// save return value in the placeholder
+	popl	%ebx 								// pop off the arguments
 	popl	%ecx 
 	popl	%edx
 
 system_call_ret:
 	popal
-	movl 	sys_call_ret_val, %eax
-	movl 	$0, 	is_exception
+	movl 	sys_call_ret_val, %eax 				// get the return value from the placeholder
+	movl 	$0, 	is_exception				// reset the exception flag
 	iret
 
 system_call_jmp:
