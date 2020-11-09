@@ -18,9 +18,10 @@ f_ops_jmp_table_t stdin_ops			= 	{(void*)invalid_func, 	(void*)terminal_read, 	(
 f_ops_jmp_table_t stdout_ops		= 	{(void*)invalid_func, 	(void*)invalid_func, 	(void*)terminal_write, 	(void*)invalid_func};
 
 /* execute
- *      Inputs: command - pointer to command
- *      Return Value: status to pass into halt
- *      Function: execute the executable
+ *      Inputs: command - pointer to start of command string
+ *      Return Value: status to pass into halt; -1 on failure
+ *      Function: execute the executable - creates PCB for task/process, sets up paging for new task, 
+ * 										   loads user program to user page, context switches to user program
  *      Side Effects: may print stuff to screen
  */
 int32_t execute(const uint8_t* command){
@@ -32,10 +33,10 @@ int32_t execute(const uint8_t* command){
 	uint32_t i = 0;
 	uint32_t parent_k_esp;
 	uint32_t parent_k_ebp;
-	char task_name[128];
-	char task_arg[128];
+	char task_name[KB_BUF_SIZE];
+	char task_arg[KB_BUF_SIZE];
 	pcb_t* pcb;
-	char elf[] = {(char)0x7f,'E','L','F'};
+	char elf[] = {(char)0x7f,'E','L','F'};									// magic number at front of executable files
 	char ELF_check_buf[4];
 	dentry_t cur_dentry;
 
@@ -45,7 +46,7 @@ int32_t execute(const uint8_t* command){
 	}
 
 	while(1){ 																// find the location of the space character or null character
-		if(i == 128){														// reached max, return -1 for failure
+		if(i == KB_BUF_SIZE){														// reached max, return -1 for failure
 			return -1;
 		}
 
@@ -58,7 +59,7 @@ int32_t execute(const uint8_t* command){
 			}
 
 			while(1){ 														// otherwise we need to get the argument as well
-				if(i == 128){												// reached max, return -1 for failure
+				if(i == KB_BUF_SIZE){												// reached max, return -1 for failure
 					return -1;
 				}
 
@@ -82,7 +83,7 @@ int32_t execute(const uint8_t* command){
 			break;
 		}
 		if(curr_avail_pid == MAX_TASKS - 1){								// if we haven't found a open space
-			return 255;														// 255 for just failure in general
+			return 255;														// 255 for just failure in general, not -1 (command dne)
 		}
 	}
 
@@ -178,8 +179,10 @@ int32_t execute(const uint8_t* command){
 
 /* halt
  *      Inputs: status - executing status of the program
- *      Return Value: status variable
- *      Function: find the right array location have the file open, -1 on failure
+ *      Return Value: status variable; -1 on failure
+ *      Function: - close associated files, turn off current paging, revert back to parent paging, 
+ * 				  return to use old PCB, return to parent kernel stack
+ * 				  - reboots shell if necessary
  *      Side Effects: none
  */
 int32_t halt(uint8_t status){

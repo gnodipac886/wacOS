@@ -59,11 +59,10 @@ interrupt_handler_jump:
  */
 
 squash_user_exception:
-	pushal
 	movl 	$1, 	%eax
-	movb 	$255, 	%bl 						// 255 for just a random number
-	movl 	$256, 	is_exception 				// 256 to indicate we have exception
-	jmp 	valid_call_number
+	movb 	$255, 	%bl 					// 256 for exception
+	movl 	$256, 	is_exception 			// indicate we have exception
+	jmp 	exception_to_halt
 
 system_call_interrupt:
 	pushal
@@ -80,6 +79,7 @@ valid_call_number:
 	pushl   %edx 
 	pushl   %ecx 
 	pushl   %ebx 
+exception_to_halt:
 	sti
 	call	*system_call_jmp(,%eax,4)			// 4 for 4 bytes of memory
 	movl	%eax,   sys_call_ret_val
