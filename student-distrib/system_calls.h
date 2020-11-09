@@ -20,6 +20,8 @@ typedef struct pcb{
 	char 	arg[128];
 	int32_t pid;
 	int32_t parent_pid;
+    int32_t parent_kernel_esp;
+    int32_t parent_kernel_ebp;
 	file_descriptor_t fd_arr[MAX_FILES_OPEN];
 } pcb_t;
 
