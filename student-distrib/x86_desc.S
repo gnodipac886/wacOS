@@ -11,7 +11,7 @@
 .globl tss, tss_desc_ptr, ldt, ldt_desc_ptr
 .globl gdt_ptr
 .globl idt_desc_ptr, idt
-.globl page_table, page_directory
+.globl page_table, page_directory, vidmap_page_table
 
 .align 4
 # initializing GDT
@@ -118,6 +118,14 @@ page_table:
 	.long 0
 	.endr
 page_table_bottom:
+
+# allocate memory for vidmap page table
+.align  ALIGN4KB
+vidmap_page_table:
+	.rept PTE
+	.long 0
+	.endr
+vidmap_page_table_bottom:
 
 # aloocate memory for the page directory
 .align  ALIGN4KB

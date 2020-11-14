@@ -103,6 +103,8 @@ int32_t execute(const uint8_t* command){
 	}
 
 	strcpy(pcb->arg, task_arg); 											// move the args into pcb
+	//pcb->vidmap_page_flag = 0;												// no paging set up for this pcb yet
+	// ............................check if we need to return to previous state of vidmap_page_flag of parent process
 	pcb->pid = curr_avail_pid;	 											// set pid in the pcb
 	pcb->parent_pid = pcb->pid == 0 ? 0 : _get_curr_pcb((int32_t*)&i)->pid; // if current pid is 0, we are shell, so we ahve no parent
 
@@ -204,6 +206,12 @@ int32_t halt(uint8_t status){
 			(pcb->fd_arr[fd].jmp_table.f_ops_close)(fd);
 		}
 	}
+
+	//if (pcb->vidmap_page_flag == 1)	{
+		// deallocate 4kB page........................ set preset bit to 0 via another paging function?
+		//pcb->vidmap_page_flag = 0;
+	//}											
+
 	exe_paging(pcb->pid, 0);												// turn off paging for current user
 	exe_paging(pcb->parent_pid, 1);											// revert back to parent paging
 
@@ -405,6 +413,29 @@ int32_t getargs(uint8_t* buf, int32_t nbytes){
 	return 0;
 }
 
+/* vidmap
+ *      Inputs: screen_start - addr to copy the new 4kB page's start addr into
+ *      Return Value: 0 on success, -1 upon failure
+ *      Function: copies the (virtual) ptr to start of new 4kB page (pointing to physical video memory page)
+ * 				  into screen_start double ptr passed by user program
+ *      Side Effects: Allows user program to write to vid mem directly
+ */
+int32_t vidmap(uint8_t ** screen_start){
+	if (screen_start == NULL || screen_start > (uint8_t**)(USR_BOTTOM - sizeof(uint8_t*)) || screen_start < (uint8_t**)USR_PTR) {					// check if screen_start argument is valid
+		return -1;
+	}
+	
+	if (vidmap_pte_setup(screen_start) == -1) {
+		return -1;
+	}
+
+	//pcb_t* pcb = _get_curr_pcb(&curr_avail_pid);
+	//pcb->vidmap_page_flag = 1;
+	
+
+	return 0;
+}
+
 /* invalid_func
  *      Inputs: none
  *      Return Value: return -1
@@ -431,8 +462,8 @@ file_descriptor_t* _get_fd_arr(){
  *      Function:
  *      Side Effects: none
  */
-pcb_t* _get_curr_pcb(int32_t* ptr){
-	if((uint32_t)ptr >= KER_BOTTOM || (uint32_t)ptr < KER_TOP){ 									// check if its in the kernel range at all
+pcb_t* _get_curr_pcb(int32_t* ptr) {
+	if((uint32_t)ptr >= KER_BOTTOM || (uint32_t)ptr < KER_TOP) { 									// check if its in the kernel range at all
 		return NULL;
 	}
 
