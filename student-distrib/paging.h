@@ -15,6 +15,6 @@
 extern void __init_paging__();
 
 /* paging for execute */
-extern int exe_paging(int pid);
+extern int exe_paging(int pid, int present);
 
 #endif /* _PAGING_H */

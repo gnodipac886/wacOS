@@ -74,10 +74,8 @@ void __keyboard_init__(){
  */
 void handle_keyboard_interrupt(){
 	cli();
-
 	char kb_char = NULL;
 	unsigned char keyboard_input = inb(KB_PORT);
-
 	// conditions for different key presses
 	if (keyboard_input == TAB_PRESSED) {
 		kb_char = ' ';
