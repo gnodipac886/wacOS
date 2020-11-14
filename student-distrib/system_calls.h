@@ -25,8 +25,7 @@ typedef struct pcb{
 	int32_t parent_pid;
     int32_t parent_kernel_esp;
     int32_t parent_kernel_ebp;
-	int8_t vidmap_page_flag;
-	int8_t vidmap_parent_page_flag;
+	int8_t 	vidmap_page_flag;
 	file_descriptor_t fd_arr[MAX_FILES_OPEN];
 } pcb_t;
 

@@ -101,7 +101,7 @@ int exe_paging(int pid, int present){
 		return -1;
 	}
 	// mapping user page to physical memory for tasks
-	page_directory[USER_PAGE].addr 				= 	(2 + pid)  << SHFT_4MB_ADDR;					// address to the tasks starting at 8MB
+	page_directory[USER_PAGE].addr 				= 	(2 + pid)  << SHFT_4MB_ADDR;					// address to the tasks starting at 8MB, 2 to skip first two entries
 	page_directory[USER_PAGE].accessed 			= 	0;												// not used, set to 0
 	page_directory[USER_PAGE].dirty 			= 	0;												// not used, set to 0
 	page_directory[USER_PAGE].global 			= 	1;												// we only set the page for kernel page
@@ -129,6 +129,7 @@ int exe_paging(int pid, int present){
 
 /*  vidmap_pte_setup
  * 		Inputs: screen_start - double ptr, an addr in virtual mem user page
+ 				present 	 - whether we want allocate or deallocate
  * 		Return Value: 0 -- paging is setup
  * 					  -1 -- failure/screen_start val is invalid
  * 		Function: Sets up paging for vidmap; stores virtual addr of new 4kB videomem page into where screen_start points to. 
@@ -136,54 +137,52 @@ int exe_paging(int pid, int present){
  *  
  */
 
-int vidmap_pte_setup(uint8_t ** screen_start) {
-	int i; 										// page table index for iterating
-	if (screen_start == NULL) {					// check if screen_start argument is valid
+int vidmap_pte_setup(uint8_t ** screen_start, uint8_t present) {
+	if (screen_start == NULL && present) {																	// check if screen_start argument is valid
 		return -1;
 	}
 
 	// initialize page table if we haven't already
-	//if (!page_directory[VIDMAP_4MB_PAGE].present) {
 		// set the vidmap page directory entry to have 4kb set up
-		page_directory[VIDMAP_4MB_PAGE].addr 				= 	(uint32_t)(vidmap_page_table) >> ALIGN_4KB;		// address to the page_table
-		page_directory[VIDMAP_4MB_PAGE].accessed 			= 	0;												// not used, set to 0
-		page_directory[VIDMAP_4MB_PAGE].global 				= 	0;												// ignored for 4K page directory entries
-		page_directory[VIDMAP_4MB_PAGE].size 				= 	0;												// 0 for 4kB entry
-		page_directory[VIDMAP_4MB_PAGE].available 			= 	0;												// not used, set to 0
-		page_directory[VIDMAP_4MB_PAGE].dirty 				= 	0; 												// for 4kB PDE, we set it to 0
-		page_directory[VIDMAP_4MB_PAGE].cache_disable 		= 	0; 												// contains video memory so 0
-		page_directory[VIDMAP_4MB_PAGE].write_through		= 	0; 												// we always want write back
-		page_directory[VIDMAP_4MB_PAGE].user_supervisor 	= 	1; 												// contains video memory, should be supervisor
-		page_directory[VIDMAP_4MB_PAGE].read_write 			= 	1; 												// all pages are read write
-		page_directory[VIDMAP_4MB_PAGE].present 			= 	1; 												// all valid PDE needs to be set to 1
+	page_directory[VIDMAP_4MB_PAGE].addr 				= 	(uint32_t)(vidmap_page_table) >> ALIGN_4KB;		// address to the page_table
+	page_directory[VIDMAP_4MB_PAGE].accessed 			= 	0;												// not used, set to 0
+	page_directory[VIDMAP_4MB_PAGE].global 				= 	0;												// ignored for 4K page directory entries
+	page_directory[VIDMAP_4MB_PAGE].size 				= 	0;												// 0 for 4kB entry
+	page_directory[VIDMAP_4MB_PAGE].available 			= 	0;												// not used, set to 0
+	page_directory[VIDMAP_4MB_PAGE].dirty 				= 	0; 												// for 4kB PDE, we set it to 0
+	page_directory[VIDMAP_4MB_PAGE].cache_disable 		= 	0; 												// contains video memory so 0
+	page_directory[VIDMAP_4MB_PAGE].write_through		= 	0; 												// we always want write back
+	page_directory[VIDMAP_4MB_PAGE].user_supervisor 	= 	1; 												// contains video memory, should be supervisor
+	page_directory[VIDMAP_4MB_PAGE].read_write 			= 	1; 												// all pages are read write
+	page_directory[VIDMAP_4MB_PAGE].present 			= 	present; 										// all valid PDE needs to be set to 1
 
-		// set up the vidmap page table
-		//for(i = 0; i < NUM_PAGE_TB; i++){
-			page_table[0].addr 				= 	VIDEO_MEM_IDX;									// address to the page_table
-			page_table[0].accessed 			= 	0;												// not used, set to 0
-			page_table[0].dirty 			= 	0;												// not used, set to 0
-			page_table[0].global 			= 	0;												// we only set the page for kernel page
-			page_table[0].size 				= 	0;												// 0 for page attribute table
-			page_table[0].available 		= 	0;												// not used, set to 0
-			page_table[0].cache_disable 	= 	0;   											// volatile for video mem mapped IO set to 0, otherwise 1
-			page_table[0].write_through		= 	0; 												// we always want write back
-			page_table[0].user_supervisor 	= 	1; 												// user level memory
-			page_table[0].read_write 		= 	1; 												// all pages are read write
-			page_table[0].present 			= 	1; 												// all valid PDE needs to be set to 1
-		//}
+	// set up the vidmap page table
+	vidmap_page_table[0].addr 							= 	VIDEO_MEM_IDX;									// address to the page_table
+	vidmap_page_table[0].accessed 						= 	0;												// not used, set to 0
+	vidmap_page_table[0].dirty 							= 	0;												// not used, set to 0
+	vidmap_page_table[0].global 						= 	0;												// we only set the page for kernel page
+	vidmap_page_table[0].size 							= 	0;												// 0 for page attribute table
+	vidmap_page_table[0].available 						= 	0;												// not used, set to 0
+	vidmap_page_table[0].cache_disable 					= 	0;   											// volatile for video mem mapped IO set to 0, otherwise 1
+	vidmap_page_table[0].write_through					= 	0; 												// we always want write back
+	vidmap_page_table[0].user_supervisor 				= 	1; 												// user level memory
+	vidmap_page_table[0].read_write 					= 	1; 												// all pages are read write
+	vidmap_page_table[0].present 						= 	present; 										// all valid PDE needs to be set to 1
 
-		// flush the TLB
-		asm(
-			"movl 	%0, 			%%eax;"		// move page directory into eax
-			"movl 	%%eax, 			%%cr3;"		// move page directory address into cr3
+	// flush the TLB
+	asm(
+		"movl 	%0, 			%%eax;"																		// move page directory into eax
+		"movl 	%%eax, 			%%cr3;"																		// move page directory address into cr3
 
-			:							// not outputs yet
-			:"r"(page_directory) 		// input is page directory
-			:"%eax" 					// clobbered register
-		);
+		:																									// not outputs yet
+		:"r"(page_directory) 																				// input is page directory
+		:"%eax" 																							// clobbered register
+	);
 	//}
 
-	*screen_start = (uint8_t*)(33<<22);	//(VIDMAP_4MB_PAGE << (SHFT_4MB_ADDR + ALIGN_4KB));
+	if (screen_start != NULL && present) {																	// check if screen_start argument is valid
+		*screen_start = (uint8_t*)(VIDMAP_4MB_PAGE<<22);													// page 33 shift up 22 times to align to 4MB
+	}
 	return 0;
 
 }
