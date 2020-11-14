@@ -134,6 +134,7 @@ typedef struct page_desc{
 } page_desc_t;
 
 extern page_desc_t page_table[PTE];
+extern page_desc_t vidmap_page_table[PTE];
 extern page_desc_t page_directory[PDE];
 
 /* Some external descriptors declared in .S files */
