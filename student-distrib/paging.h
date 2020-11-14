@@ -21,6 +21,6 @@ extern void __init_paging__();
 extern int exe_paging(int pid, int present);
 
 /* paging for vidmap */
-extern int vidmap_pte_setup(uint8_t** screen_start);
+extern int vidmap_pte_setup(uint8_t** screen_start, uint8_t present);
 
 #endif /* _PAGING_H */

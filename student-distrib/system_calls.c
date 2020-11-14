@@ -197,6 +197,7 @@ int32_t halt(uint8_t status){
 	uint32_t parent_k_esp;
 	uint32_t parent_k_ebp;
 	pcb_t* pcb = _get_curr_pcb(&fd);										// get the current pcb
+	pcb_t* par_pcb = pcb_arr[pcb->parent_pid]; 								// get the parent pcb array
 
 	for(fd = 0; fd < MAX_FILES_OPEN; fd++){									// close all open files
 		if(pcb->fd_arr[fd].flags == FILE_IN_USE){
@@ -207,10 +208,11 @@ int32_t halt(uint8_t status){
 		}
 	}
 
-	//if (pcb->vidmap_page_flag == 1)	{
-		// deallocate 4kB page........................ set preset bit to 0 via another paging function?
-		//pcb->vidmap_page_flag = 0;
-	//}											
+	if (par_pcb->vidmap_page_flag != 1 && pcb->vidmap_page_flag){
+		// deallocate 4kB page
+		pcb->vidmap_page_flag = 0;											// change the present bit in the PCB
+		vidmap_pte_setup(NULL, 0);											// revert the paging setup
+	}											
 
 	exe_paging(pcb->pid, 0);												// turn off paging for current user
 	exe_paging(pcb->parent_pid, 1);											// revert back to parent paging
@@ -421,18 +423,19 @@ int32_t getargs(uint8_t* buf, int32_t nbytes){
  *      Side Effects: Allows user program to write to vid mem directly
  */
 int32_t vidmap(uint8_t ** screen_start){
+	int i = 0; 											// set up variable for getting pcb
+
 	if (screen_start == NULL || screen_start > (uint8_t**)(USR_BOTTOM - sizeof(uint8_t*)) || screen_start < (uint8_t**)USR_PTR) {					// check if screen_start argument is valid
 		return -1;
 	}
 	
-	if (vidmap_pte_setup(screen_start) == -1) {
+	if (vidmap_pte_setup(screen_start, 1) == -1) { 		// try to set up the paging for vidmap
 		return -1;
 	}
 
-	//pcb_t* pcb = _get_curr_pcb(&curr_avail_pid);
-	//pcb->vidmap_page_flag = 1;
+	pcb_t* pcb = _get_curr_pcb(&i);
+	pcb->vidmap_page_flag = 1;
 	
-
 	return 0;
 }
 
