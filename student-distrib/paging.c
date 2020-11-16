@@ -129,7 +129,7 @@ int exe_paging(int pid, int present){
 
 /*  vidmap_pte_setup
  * 		Inputs: screen_start - double ptr, an addr in virtual mem user page
- 				present 	 - whether we want allocate or deallocate
+ 				present 	 - whether we want allocate or deallocate 4kB additional vidmem page
  * 		Return Value: 0 -- paging is setup
  * 					  -1 -- failure/screen_start val is invalid
  * 		Function: Sets up paging for vidmap; stores virtual addr of new 4kB videomem page into where screen_start points to. 
@@ -142,8 +142,7 @@ int vidmap_pte_setup(uint8_t ** screen_start, uint8_t present) {
 		return -1;
 	}
 
-	// initialize page table if we haven't already
-		// set the vidmap page directory entry to have 4kb set up
+	// set the vidmap page directory entry to have 4kb vidmap page table set up
 	page_directory[VIDMAP_4MB_PAGE].addr 				= 	(uint32_t)(vidmap_page_table) >> ALIGN_4KB;		// address to the page_table
 	page_directory[VIDMAP_4MB_PAGE].accessed 			= 	0;												// not used, set to 0
 	page_directory[VIDMAP_4MB_PAGE].global 				= 	0;												// ignored for 4K page directory entries
@@ -156,7 +155,7 @@ int vidmap_pte_setup(uint8_t ** screen_start, uint8_t present) {
 	page_directory[VIDMAP_4MB_PAGE].read_write 			= 	1; 												// all pages are read write
 	page_directory[VIDMAP_4MB_PAGE].present 			= 	present; 										// all valid PDE needs to be set to 1
 
-	// set up the vidmap page table
+	// set up the vidmap page table pointing to 4kb pages
 	vidmap_page_table[0].addr 							= 	VIDEO_MEM_IDX;									// address to the page_table
 	vidmap_page_table[0].accessed 						= 	0;												// not used, set to 0
 	vidmap_page_table[0].dirty 							= 	0;												// not used, set to 0
@@ -178,10 +177,9 @@ int vidmap_pte_setup(uint8_t ** screen_start, uint8_t present) {
 		:"r"(page_directory) 																				// input is page directory
 		:"%eax" 																							// clobbered register
 	);
-	//}
 
 	if (screen_start != NULL && present) {																	// check if screen_start argument is valid
-		*screen_start = (uint8_t*)(VIDMAP_4MB_PAGE<<22);													// page 33 shift up 22 times to align to 4MB
+		*screen_start = (uint8_t*)(VIDMAP_4MB_PAGE<<22);													// page 33 shift up 22 times/bits to align to 4MB
 	}
 	return 0;
 

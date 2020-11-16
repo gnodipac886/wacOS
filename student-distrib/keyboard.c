@@ -27,6 +27,8 @@ int shift_flag = 0;
 int capslock_flag = 0;
 int ctrl_flag = 0;
 int alt_flag = 0;
+
+/*other flags*/
 int terminal_read_flag = 0;
 
 // 0x02 - 0x0D from 1 to =
@@ -262,27 +264,27 @@ void handle_backspace() {
  * 		Return Value: none
  */
 void handle_enter() {
-	if (buffer_accessed_flag == 0) {				//ignore enters when handling enters
+	if (buffer_accessed_flag == 0) {				// ignore enters when handling enters
 		buffer_accessed_flag = 1;					// enable flag
 
-		buffer[buffer_cur_idx] = '\n';				//which may cause chars to be added while buffer_cur_idx = 0
+		buffer[buffer_cur_idx] = '\n';				// which may cause chars to be added while buffer_cur_idx = 0
 		buffer_cur_idx++;
 
-		terminal_buf[terminal_cur_idx] = '\n';		//which may cause chars to be added while buffer_cur_idx = 0
+		terminal_buf[terminal_cur_idx] = '\n';		// which may cause chars to be added while buffer_cur_idx = 0
 		terminal_cur_idx++;
 
 		vid_enter();
 		clear_kb_buf();
-		if(!terminal_read_flag){
-			clear_terminal_buf();
+		if(!terminal_read_flag){					// if keyboard interrupts not used by terminal read syscall,
+			clear_terminal_buf();					// clear terminal driver's temporary buf as well
 		}
-		buffer_accessed_flag = 0;					//reset flag
+		buffer_accessed_flag = 0;					// reset flag
 	}
 }
 
 /* set_terminal_read_flag
  *		Description: when terminal read is in use, we set flag to 1
- * 		Inputs: flag - whether terminal read is running
+ * 		Inputs: flag - whether terminal read system call is running
  * 		Return Value: none
  */
 void set_terminal_read_flag(int flag){
