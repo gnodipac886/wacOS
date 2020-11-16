@@ -84,7 +84,7 @@ int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes){
 	int32_t bytes_written = 0;
 	// loop through buf until all nbytes are written to the screen
 	for(i = 0; i < nbytes; i++){
-        // check for null terminating char if not print it
+        // check for null terminating char, if not print it
 		if(((char*)buf)[i] != '\0'){
 			putc(((char*)buf)[i]);
 			bytes_written++;
