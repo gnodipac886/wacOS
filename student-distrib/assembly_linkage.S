@@ -62,7 +62,7 @@ squash_user_exception:
 	movl 	$1, 	%eax
 	movb 	$255, 	%bl 						// 256 for exception
 	movl 	$256, 	is_exception 				// indicate we have exception
-	jmp 	exception_to_halt
+	jmp 	call_syscall
 
 system_call_interrupt:
 	pushal
@@ -80,7 +80,7 @@ valid_call_number:
 	pushl   %ecx 
 	pushl   %ebx 
 	
-exception_to_halt:
+call_syscall:
 	sti
 	call	*system_call_jmp(,%eax,4)			// 4 for 4 bytes of memory
 	movl	%eax,   sys_call_ret_val 			// save return value in the placeholder
