@@ -15,7 +15,7 @@
 #define USR_PTR 			0x8048000 			// 128 MB
 #define USR_BOTTOM			0x8400000			// 132 MB
 #define USR_STACK 			0x83FFFF8 			// 132MB - 8B; 8B, largest possible size of 1 slot
-#define MAX_TASKS           6
+#define MAX_TASKS           6					// Maximum number of tasks open is 6
 #define KB_BUF_SIZE 		128					// buffer can contain 128 chars
 #define FAILURE				-1					// return value
 

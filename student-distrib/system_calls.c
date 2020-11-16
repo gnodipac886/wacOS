@@ -107,7 +107,7 @@ int32_t execute(const uint8_t* command){
 	// ............................check if we need to return to previous state of vidmap_page_flag of parent process
 	pcb->pid = curr_avail_pid;	 											// set pid in the pcb
 	pcb->parent_pid = pcb->pid == 0 ? 0 : _get_curr_pcb((int32_t*)&i)->pid; // if current pid is 0, we are shell, so we ahve no parent
-
+	pcb->vidmap_page_flag = 0;
 	// store parent kernel stack info - esp and ebp
 	asm volatile(
 		"movl	%%esp, 	%0;"
@@ -434,7 +434,7 @@ int32_t vidmap(uint8_t ** screen_start){
 	}
 
 	pcb_t* pcb = _get_curr_pcb(&i);
-	pcb->vidmap_page_flag = 1;
+	pcb->vidmap_page_flag = 1;							// Set vidmap flag to present
 	
 	return 0;
 }
@@ -466,9 +466,15 @@ file_descriptor_t* _get_fd_arr(){
  *      Side Effects: none
  */
 pcb_t* _get_curr_pcb(int32_t* ptr) {
+	int32_t* esp;
 	if((uint32_t)ptr >= KER_BOTTOM || (uint32_t)ptr < KER_TOP) { 									// check if its in the kernel range at all
 		return NULL;
 	}
 
-	return (pcb_t*)((uint32_t)ptr & PCB_MASK); 														// bitwise and with the mask and return the pointer
+	asm volatile(
+		"movl	%%esp, 	%0;"
+		:"=g" (esp)																					// outputs - temp vars to be used to set pcb values
+	);
+
+	return (pcb_t*)((uint32_t)esp & PCB_MASK); 														// bitwise and with the mask and return the pointer
 }
