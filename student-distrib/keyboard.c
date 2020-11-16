@@ -27,6 +27,7 @@ int shift_flag = 0;
 int capslock_flag = 0;
 int ctrl_flag = 0;
 int alt_flag = 0;
+int terminal_read_flag = 0;
 
 // 0x02 - 0x0D from 1 to =
 char kb_sc_row0_nums[] = {'1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '='};
@@ -272,6 +273,18 @@ void handle_enter() {
 
 		vid_enter();
 		clear_kb_buf();
+		if(!terminal_read_flag){
+			clear_terminal_buf();
+		}
 		buffer_accessed_flag = 0;					//reset flag
 	}
+}
+
+/* set_terminal_read_flag
+ *		Description: when terminal read is in use, we set flag to 1
+ * 		Inputs: flag - whether terminal read is running
+ * 		Return Value: none
+ */
+void set_terminal_read_flag(int flag){
+	terminal_read_flag = flag;
 }
