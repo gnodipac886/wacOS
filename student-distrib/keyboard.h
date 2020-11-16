@@ -18,6 +18,7 @@ void clear_kb_buf();
 
 void handle_backspace();
 void handle_enter();
+void set_terminal_read_flag(int flag);
 // #endif /* ASM */
 
 #endif /* _KEYBOARD_H */
