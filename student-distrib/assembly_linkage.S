@@ -49,6 +49,22 @@ interrupt_handler_jump:
 	.long 0
 
 
+
+
+ /* squash_user_exception
+ * Description: helper function for exceptions to jump to halt
+ * Input: None
+ * Output: None
+ * Side Effects: sets 256 as return val of halt
+ */
+
+squash_user_exception:
+	movl 	$1, 	%eax
+	movb 	$255, 	%bl 						// 256 for exception
+	movl 	$256, 	is_exception 				// indicate we have exception
+	jmp 	call_syscall
+
+
 /* System Call Assembly Linkage
  * Description: x86 wrapper function that calls interrupt handlers;
 				eax - holds system call number
@@ -57,12 +73,6 @@ interrupt_handler_jump:
  * Output: None
  * Side Effects: system call gets handled
  */
-
-squash_user_exception:
-	movl 	$1, 	%eax
-	movb 	$255, 	%bl 						// 256 for exception
-	movl 	$256, 	is_exception 				// indicate we have exception
-	jmp 	call_syscall
 
 system_call_interrupt:
 	pushal
