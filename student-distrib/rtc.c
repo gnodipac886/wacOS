@@ -87,9 +87,8 @@ int _rtc_read(){
 	 int i;
 	for(i = 0; i < (1024 / rtc_virtual_frequency); i++){
 
-		while(rtc_interrupt_occurred == 0){
+		while(rtc_interrupt_occurred == 0);
 		
-		}
 		/* rtc interrupt has occured*/
 		rtc_interrupt_occurred = 0; // Reset the flag
 	}

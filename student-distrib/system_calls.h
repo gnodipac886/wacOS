@@ -13,8 +13,9 @@
 #define KER_STACK_SIZE		0x2000				// 8KB
 #define PCB_MASK 			0xFFFFE000
 #define USR_PTR 			0x8048000 			// 128 MB
-#define USR_STACK 			0x83FFFFC 			// 132MB - 4 4 since its 1 slot
-#define MAX_TASKS           6
+#define USR_BOTTOM			0x8400000			// 132 MB
+#define USR_STACK 			0x83FFFF8 			// 132MB - 8B; 8B, largest possible size of 1 slot
+#define MAX_TASKS           6					// Maximum number of tasks open is 6
 #define KB_BUF_SIZE 		128					// buffer can contain 128 chars
 #define FAILURE				-1					// return value
 
@@ -24,6 +25,7 @@ typedef struct pcb{
 	int32_t parent_pid;
     int32_t parent_kernel_esp;
     int32_t parent_kernel_ebp;
+	int8_t 	vidmap_page_flag;
 	file_descriptor_t fd_arr[MAX_FILES_OPEN];
 } pcb_t;
 
@@ -34,6 +36,7 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes);
 int32_t write(int32_t fd, void* buf, int32_t nbytes);
 int32_t close(int32_t fd);
 int32_t getargs(uint8_t* buf, int32_t nbytes);
+int32_t vidmap(uint8_t ** screen_start);
 
 
 int32_t invalid_func();
