@@ -379,7 +379,7 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
 	} while(num_bytes_left > 0);
 
 	// figure out what to return in terms of length or end of file
-	return offset + num_copied == curr_inode.length ? 0 : num_copied;
+	return num_copied;
 }
 
 /* _get_file_length_inode
