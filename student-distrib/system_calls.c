@@ -434,7 +434,7 @@ int32_t vidmap(uint8_t ** screen_start){
 	}
 
 	pcb_t* pcb = _get_curr_pcb(&i);
-	pcb->vidmap_page_flag = 1;
+	pcb->vidmap_page_flag = 1;							// Set vidmap flag to present
 	
 	return 0;
 }
