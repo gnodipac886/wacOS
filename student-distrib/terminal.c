@@ -48,12 +48,16 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes){
 	char kb_buf[BUF_SZ];
 	int kb_buf_idx;
 
+	// tell kb driver terminal read is in use
+	set_terminal_read_flag(1);
+
     // keeps checking until keyboard enters \n or filled buffer
 	while(1){
 		memset(kb_buf, '\0', BUF_SZ);
 		kb_buf_idx = get_kb_buf(kb_buf);	     // idx of last added char in keyboard buffer (copy keyboard buffer)
 		if(kb_buf[kb_buf_idx] == '\n') {
 			clear_terminal_buf();			     //clear terminal's keyboard handler buffer
+			set_terminal_read_flag(0);
 			break;
 		}
 	}
@@ -80,7 +84,7 @@ int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes){
 	int32_t bytes_written = 0;
 	// loop through buf until all nbytes are written to the screen
 	for(i = 0; i < nbytes; i++){
-        // check for null terminating char if not print it
+        // check for null terminating char, if not print it
 		if(((char*)buf)[i] != '\0'){
 			putc(((char*)buf)[i]);
 			bytes_written++;
