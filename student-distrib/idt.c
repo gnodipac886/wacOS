@@ -7,6 +7,7 @@
 // functions from assembly_linkage
 extern void keyboard_interrupt_stub();
 extern void rtc_interrupt_stub();
+extern void mouse_interrupt_stub();
 extern void system_call_interrupt();
 extern void squash_user_exception();
 
@@ -367,5 +368,6 @@ void __init_idt__(){
 
 	SET_IDT_ENTRY(idt[IRQ1_IDT], keyboard_interrupt_stub); 		// handle keyboard interrupt
 	SET_IDT_ENTRY(idt[IRQ8_IDT], rtc_interrupt_stub); 		// handle rtc interrupt
+	SET_IDT_ENTRY(idt[IRQ12_IDT], mouse_interrupt_stub);	//handle system call
 	SET_IDT_ENTRY(idt[SYS_CALL], system_call_interrupt);	//handle system call
 }

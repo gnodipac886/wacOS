@@ -11,6 +11,7 @@
 #include "idt.h"
 #include "rtc.h"
 #include "keyboard.h"
+#include "mouse.h"
 #include "paging.h"
 #include "filesystem.h"
 #include "system_calls.h"
@@ -160,6 +161,8 @@ void entry(unsigned long magic, unsigned long addr) {
 	 * PIC, any other initialization stuff... */
 	__rtc_init__();			 												// Initialize rtc
 	__keyboard_init__();													// enable keyboard interrupt
+	__mouse_init__();
+
 	__init_filesystem__((void*)(mod->mod_start)); 							// enable filesystem
 	__init_paging__();														// enable paging
 
