@@ -1,5 +1,5 @@
 #include "assembly_linkage.h"
-.globl keyboard_interrupt_stub, rtc_interrupt_stub
+.globl keyboard_interrupt_stub, rtc_interrupt_stub, mouse_interrupt_stub
 .globl system_call_interrupt, system_call_ret
 .globl squash_user_exception, is_exception
 
@@ -18,6 +18,10 @@ keyboard_interrupt_stub:
 
 rtc_interrupt_stub:
 	pushl $-9									/*Negative num for rtc IRQ8*/
+	jmp common_interrupt
+
+mouse_interrupt_stub:
+	push $-13									/*Negative num for rtc IRQ12*/
 	jmp common_interrupt
 
 common_interrupt:
@@ -43,10 +47,26 @@ interrupt_handler_jump:
 	.long 0
 	.long 0
 	.long 0
+	.long handle_mouse_interrupt
 	.long 0
 	.long 0
 	.long 0
-	.long 0
+
+
+
+
+ /* squash_user_exception
+ * Description: helper function for exceptions to jump to halt
+ * Input: None
+ * Output: None
+ * Side Effects: sets 256 as return val of halt
+ */
+
+squash_user_exception:
+	movl 	$1, 	%eax
+	movb 	$255, 	%bl 						// 256 for exception
+	movl 	$256, 	is_exception 				// indicate we have exception
+	jmp 	call_syscall
 
 
 /* System Call Assembly Linkage
@@ -57,12 +77,6 @@ interrupt_handler_jump:
  * Output: None
  * Side Effects: system call gets handled
  */
-
-squash_user_exception:
-	movl 	$1, 	%eax
-	movb 	$255, 	%bl 						// 256 for exception
-	movl 	$256, 	is_exception 				// indicate we have exception
-	jmp 	call_syscall
 
 system_call_interrupt:
 	pushal

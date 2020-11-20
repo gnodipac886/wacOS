@@ -26,6 +26,8 @@ void _init_shell_hist();
 void shift_cmds();
 void get_hist_buf(char* cmd);
 void shell_prev_cmds(int arrow);
+
+void set_terminal_read_flag(int flag);
 // #endif /* ASM */
 
 #endif /* _KEYBOARD_H */

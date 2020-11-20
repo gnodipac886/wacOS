@@ -191,6 +191,7 @@ void update_cursor(int x, int y) {
  * Return Value: void
  *  Function: Output a character to the console */
 void putc(uint8_t c) {
+    cli();
     if(c == '\n' || c == '\r') {
         screen_y++;
         screen_x = 0;
@@ -209,6 +210,7 @@ void putc(uint8_t c) {
         screen_y = NUM_ROWS - 1; // set to last row of screen
     }
     update_cursor(screen_x,screen_y);
+    sti();
 }
 
 /* void vid_backspace();

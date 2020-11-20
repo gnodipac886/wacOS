@@ -28,6 +28,8 @@
 #define ROW2_OFFSET_MAP		0x1E		//offset to map scan codes corresponding to row2 array
 #define ROW3_OFFSET_MAP		0x2B		//offset to map scan codes corresponding to row3 array
 
+extern void squash_user_exception();
+
 /*keyboard flags*/
 int shift_flag = 0;
 int capslock_flag = 0;
@@ -38,6 +40,10 @@ int alt_flag = 0;
 char hist_buf[HIST_MX][BUF_SIZE];			// store commands from shell
 int hist_idx;								// keep track of hist_buf's index when pressing up/down
 int hist_curr;								// current index of the last command stored
+
+/*other flags*/
+int terminal_read_flag = 0;
+
 
 // 0x02 - 0x0D from 1 to =
 char kb_sc_row0_nums[] = {'1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '='};
@@ -193,13 +199,16 @@ void handle_keyboard_interrupt(){
 
 
 	if (kb_char != '\0') {
-		if ((kb_char == 'L' || kb_char == 'l') && ctrl_flag == 1) {		//check ctrl+l or ctrl+L
+		if ((kb_char == 'L' || kb_char == 'l') && ctrl_flag == 1) {			//check ctrl+l or ctrl+L
 			clear();
-			update_cursor(0,0);											// move cursor to the top left
+			update_cursor(0,0);												// move cursor to the top left
 			int i;
-			for (i = 0; i < buffer_cur_idx; i++) {						//print keyboard buffer to keep/maintain state before ctrl+l
+			for (i = 0; i < buffer_cur_idx; i++) {							//print keyboard buffer to keep/maintain state before ctrl+l
 				putc(buffer[i]);
 			}
+		} else if ((kb_char == 'C' || kb_char == 'c') && ctrl_flag == 1) {	// check ctrl+c or ctrl+C
+			//send_eoi(KB_IRQ);
+			//squash_user_exception();		//.............................................
 		} else if (buffer_cur_idx < BUF_SIZE -1 && buffer_accessed_flag == 0) {	//if keyboard buffer not filled (127 chars, last char is '\n')
 			putc(kb_char);												//prints char to screen and updates cursor
 			// while (buffer_accessed_flag == 1);						//wait till terminal finishes clearing buffer
@@ -278,18 +287,21 @@ void handle_backspace() {
  * 		Return Value: none
  */
 void handle_enter() {
-	if (buffer_accessed_flag == 0) {				//ignore enters when handling enters
+	if (buffer_accessed_flag == 0) {				// ignore enters when handling enters
 		buffer_accessed_flag = 1;					// enable flag
 
-		buffer[buffer_cur_idx] = '\n';				//which may cause chars to be added while buffer_cur_idx = 0
+		buffer[buffer_cur_idx] = '\n';				// which may cause chars to be added while buffer_cur_idx = 0
 		buffer_cur_idx++;
 
-		terminal_buf[terminal_cur_idx] = '\n';		//which may cause chars to be added while buffer_cur_idx = 0
+		terminal_buf[terminal_cur_idx] = '\n';		// which may cause chars to be added while buffer_cur_idx = 0
 		terminal_cur_idx++;
 
 		vid_enter();
 		clear_kb_buf();
-		buffer_accessed_flag = 0;					//reset flag
+		if(!terminal_read_flag){					// if keyboard interrupts not used by terminal read syscall,
+			clear_terminal_buf();					// clear terminal driver's temporary buf as well
+		}
+		buffer_accessed_flag = 0;					// reset flag
 	}
 }
 
@@ -404,4 +416,12 @@ void shell_prev_cmds(int arrow){
 	}
 	hist_idx = temp;
 	return;
+
+/* set_terminal_read_flag
+ *		Description: when terminal read is in use, we set flag to 1
+ * 		Inputs: flag - whether terminal read system call is running
+ * 		Return Value: none
+ */
+void set_terminal_read_flag(int flag){
+	terminal_read_flag = flag;
 }
