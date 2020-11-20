@@ -11,6 +11,8 @@
 int32_t curr_avail_pid = 0;
 pcb_t* pcb_arr[MAX_TASKS];
 int8_t pid_avail[MAX_TASKS] = {0, 0, 0, 0, 0, 0};
+int non_user_shell_flg = 0;
+
 extern uint32_t is_exception;
 
 // fops table for each type of file possible
@@ -23,7 +25,7 @@ static f_ops_jmp_table_t stdout_ops			= 	{(void*)invalid_func, 	(void*)invalid_f
 /* execute
  *      Inputs: command - pointer to start of command string
  *      Return Value: status to pass into halt; -1 on failure
- *      Function: execute the executable - creates PCB for task/process, sets up paging for new task, 
+ *      Function: execute the executable - creates PCB for task/process, sets up paging for new task,
  * 										   loads user program to user page, context switches to user program
  *      Side Effects: may print stuff to screen
  */
@@ -46,6 +48,13 @@ int32_t execute(const uint8_t* command){
 	// sanity checks
 	if(command == NULL){
 		return -1;
+	}
+
+	// update hist_buf if in shell - 6 chars including null terminating and check for if halt called shell
+	if(strncmp(_get_curr_pcb((int32_t*)&i)->task_name, "shell", 6) == 0 && non_user_shell_flg == 0){
+		get_hist_buf((char*)command);
+	} else{
+		non_user_shell_flg = 0;												// reset flag
 	}
 
 	while(1){ 																// find the location of the space character or null character
@@ -102,6 +111,7 @@ int32_t execute(const uint8_t* command){
 		pcb->fd_arr[i].flags = FILE_NOT_USE;
 	}
 
+	strcpy(pcb->task_name, task_name);										// move task_name into pcb
 	strcpy(pcb->arg, task_arg); 											// move the args into pcb
 	//pcb->vidmap_page_flag = 0;												// no paging set up for this pcb yet
 	// ............................check if we need to return to previous state of vidmap_page_flag of parent process
@@ -142,7 +152,7 @@ int32_t execute(const uint8_t* command){
 	/***************************************
 	**********Step 4: Setup paging**********
 	***************************************/
-	if(exe_paging(pcb->pid, 1) != 0){										// try to do paging				
+	if(exe_paging(pcb->pid, 1) != 0){										// try to do paging
 		printf("Process ID invalid");
 		pid_avail[curr_avail_pid] = 0;
 		return -1;
@@ -151,7 +161,7 @@ int32_t execute(const uint8_t* command){
 	/***************************************
 	*Step 5: Load user program to user page*
 	***************************************/
-	read_data(cur_dentry.inode, 0, (uint8_t*)USR_PTR, _get_file_length_inode(cur_dentry.inode));		// read out the memory to the pointer    
+	read_data(cur_dentry.inode, 0, (uint8_t*)USR_PTR, _get_file_length_inode(cur_dentry.inode));		// read out the memory to the pointer
 
 	/*************************************
 	**********Step 6: Update TSS**********
@@ -187,7 +197,7 @@ int32_t execute(const uint8_t* command){
 /* halt
  *      Inputs: status - executing status of the program
  *      Return Value: status variable; -1 on failure
- *      Function: - close associated files, turn off current paging, revert back to parent paging, 
+ *      Function: - close associated files, turn off current paging, revert back to parent paging,
  * 				  return to use old PCB, return to parent kernel stack
  * 				  - reboots shell if necessary
  *      Side Effects: none
@@ -207,17 +217,22 @@ int32_t halt(uint8_t status){
 			(pcb->fd_arr[fd].jmp_table.f_ops_close)(fd);
 		}
 	}
+	// update hist_buf if in shell - 6 chars including null terminating
+	if(strncmp(_get_curr_pcb((int32_t*)&fd)->task_name, "shell", 6) == 0){
+		non_user_shell_flg = 1;												// set flag for execute shell in halt
+		get_hist_buf("exit");												// exit called
+	}
 
 	if (par_pcb->vidmap_page_flag != 1 && pcb->vidmap_page_flag){
 		// deallocate 4kB page
 		pcb->vidmap_page_flag = 0;											// change the present bit in the PCB
 		vidmap_pte_setup(NULL, 0);											// revert the paging setup
-	}											
+	}
 
 	exe_paging(pcb->pid, 0);												// turn off paging for current user
 	exe_paging(pcb->parent_pid, 1);											// revert back to parent paging
 
-	parent_k_esp = pcb->parent_kernel_esp;									// restore esp and ebp of parent 
+	parent_k_esp = pcb->parent_kernel_esp;									// restore esp and ebp of parent
 	parent_k_ebp = pcb->parent_kernel_ebp;
 
 	pid_avail[pcb->pid] = 0; 												// reset the pid array
@@ -235,7 +250,7 @@ int32_t halt(uint8_t status){
 	}
 	asm volatile(
 		"movl		%0,			%%esp;"										// restore esp for parent kernel stack
-		"movl		%1,			%%ebp;"										// restore ebp for parent kernel stack			
+		"movl		%1,			%%ebp;"										// restore ebp for parent kernel stack
 		"xorl 		%%eax, 		%%eax;"										// clear eax
 		"movzx		%%bl, 		%%eax;"										// move the argument status into eax for return
 		"cmpl 		$256, 		%2;"										// see if we need to load 256 for exceptions
@@ -428,14 +443,14 @@ int32_t vidmap(uint8_t ** screen_start){
 	if (screen_start == NULL || screen_start > (uint8_t**)(USR_BOTTOM - sizeof(uint8_t*)) || screen_start < (uint8_t**)USR_PTR) {					// check if screen_start argument is valid
 		return -1;
 	}
-	
+
 	if (vidmap_pte_setup(screen_start, 1) == -1) { 		// try to set up the paging for vidmap
 		return -1;
 	}
 
 	pcb_t* pcb = _get_curr_pcb(&i);
 	pcb->vidmap_page_flag = 1;
-	
+
 	return 0;
 }
 

@@ -20,7 +20,8 @@
 #define FAILURE				-1					// return value
 
 typedef struct pcb{
-	char 	arg[128];
+	char 	task_name[KB_BUF_SIZE];
+	char 	arg[KB_BUF_SIZE];
 	int32_t pid;
 	int32_t parent_pid;
     int32_t parent_kernel_esp;
@@ -42,5 +43,6 @@ int32_t vidmap(uint8_t ** screen_start);
 int32_t invalid_func();
 file_descriptor_t* _get_fd_arr();
 pcb_t* _get_curr_pcb(int32_t* ptr);
+
 
 #endif /* _SYSTEM_CALLS_H */
