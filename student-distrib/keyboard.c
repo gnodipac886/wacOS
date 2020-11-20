@@ -416,6 +416,7 @@ void shell_prev_cmds(int arrow){
 	}
 	hist_idx = temp;
 	return;
+}
 
 /* set_terminal_read_flag
  *		Description: when terminal read is in use, we set flag to 1
