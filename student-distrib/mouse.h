@@ -9,17 +9,22 @@
 
 #define GET_STATUS_BYTE 0x20 			// Get Compaq Status Byte
 #define SET_STATUS_BYTE 0x60
+#define ENABLE_MOUSE 	0xF4			// enable the mouse devices
+#define MS_CMD_BYTE 	0xD4 			// send to 0x64 before sending bytes to 0x64
+#define MS_DEFAULT 		0xF6
 #define STATUS_INIT_1 	~0x20 			// Disable Mouse Clock set to 0
 #define STATUS_INIT_2 	0x02 			// enable IRQ 12
 
-#define MSK0 	0x01
-#define MSK1 	0x02
-#define MSK2 	0x04
-#define MSK3 	0x08
-#define MSK4 	0x10
-#define MSK5 	0x20
-#define MSK6 	0x40
-#define MSK7 	0x80
+#define MSK0 			0x01
+#define MSK1 			0x02
+#define MSK2 			0x04
+#define MSK3 			0x08
+#define MSK4 			0x10
+#define MSK5 			0x20
+#define MSK6 			0x40
+#define MSK7 			0x80
+
+#define NEGATIVE_NUM 	0xFFFFFF00
 
 typedef struct ms_packet{
 	union{

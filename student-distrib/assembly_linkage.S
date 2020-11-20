@@ -34,8 +34,7 @@ common_interrupt:
 	iret									   	/*return from interrupt*/
 
 interrupt_handler_jump:
-	/*handler ptrs for IR lines of Master PIC*/
-	.long 0										
+	.long 0										/*handler ptrs for IR lines of Master PIC*/
 	.long handle_keyboard_interrupt
 	.long 0
 	.long 0
@@ -44,12 +43,11 @@ interrupt_handler_jump:
 	.long 0
 	.long 0
 
-	/*handler ptrs for IR lines of Slave PIC*/
-	/.long handle_rtc_interrupt				  	
+	.long handle_rtc_interrupt				  	/*handler ptrs for IR lines of Slave PIC*/
 	.long 0
 	.long 0
 	.long 0
-	.long handle_mouse_interrupt 						
+	.long handle_mouse_interrupt
 	.long 0
 	.long 0
 	.long 0
