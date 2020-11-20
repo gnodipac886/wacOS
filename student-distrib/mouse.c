@@ -29,7 +29,7 @@ void __mouse_init__(){
 	uint8_t status_byte;
 
 	mouse_wait(1); 												// wait for the input to clear
-	outb(0xA8, PS2_PORT); 										// get the status byte to show up
+	// outb(ENABLE_ACK, PS2_PORT); 								// get the status byte to show up
 	outb(GET_STATUS_BYTE, PS2_PORT); 							// get the status byte to show up
 	status_byte = inb(MS_PORT); 								// get the status byte
 	status_byte = (status_byte & STATUS_INIT_1) | STATUS_INIT_2;// set the status bytes to init
@@ -37,13 +37,13 @@ void __mouse_init__(){
 	outb(SET_STATUS_BYTE, PS2_PORT); 							// Set Compaq Status
 	outb(status_byte, MS_PORT);									// write the updates status byte to ps2 controller
 
-	outb(MS_CMD_BYTE, PS2_PORT);								// tell command port we are writing to mouse
-	outb(MS_DEFAULT, MS_PORT); 									// enable the mouse
-	inb(MS_PORT); 												// ack
+	// outb(MS_CMD_BYTE, PS2_PORT);								// tell command port we are writing to mouse
+	// outb(MS_DEFAULT, MS_PORT); 									// enable the mouse
+	// inb(MS_PORT); 												// ack
 
 	outb(MS_CMD_BYTE, PS2_PORT);								// tell command port we are writing to mouse
 	outb(ENABLE_MOUSE, MS_PORT); 								// enable the mouse
-	inb(MS_PORT); 												// ack
+	// inb(MS_PORT); 												// ack
 	
 	enable_irq(MS_IRQ);
 

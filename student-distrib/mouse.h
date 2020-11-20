@@ -10,6 +10,7 @@
 #define GET_STATUS_BYTE 0x20 			// Get Compaq Status Byte
 #define SET_STATUS_BYTE 0x60
 #define ENABLE_MOUSE 	0xF4			// enable the mouse devices
+#define ENABLE_ACK 		0xA8
 #define MS_CMD_BYTE 	0xD4 			// send to 0x64 before sending bytes to 0x64
 #define MS_DEFAULT 		0xF6
 #define STATUS_INIT_1 	~0x20 			// Disable Mouse Clock set to 0
