@@ -16,6 +16,8 @@
 #include "filesystem.h"
 #include "system_calls.h"
 
+#include "screen.h"
+
 #define RUN_TESTS
 
 /* Macros. */
@@ -144,7 +146,6 @@ void entry(unsigned long magic, unsigned long addr) {
 		ltr(KERNEL_TSS);
 	}
 
-
 	cli();
 
 	/* Mask all interrupts on PIC */
@@ -177,8 +178,12 @@ void entry(unsigned long magic, unsigned long addr) {
 	launch_tests();
 	
 #endif
+	if(GUI_ACTIVATE){
+		__screen_init__();
+	}
 	/* Execute the first program ("shell") ... */
 	execute((uint8_t*)"shell");
+
 	/* Spin (nicely, so we don't chew up cycles) */
 	asm volatile (".1: hlt; jmp .1;");
 }

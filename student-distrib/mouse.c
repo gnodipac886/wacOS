@@ -5,6 +5,7 @@
 #define SCREEN_X    80
 #define SCREEN_Y    25
 #define VIDEO       0xB8000
+#define VGA_VIDEO	0xA0000
 #define ATTRIB      0x7
 #define MS_COLOR 	0xE0 		// yellow
 #define MS_SPD 		22 			// higher the slower

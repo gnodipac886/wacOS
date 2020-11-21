@@ -67,6 +67,10 @@ void __init_paging__(){
 		page_table[i].present 			= 	i != VIDEO_MEM_IDX ? 0 : 1; 					// all valid PDE needs to be set to 1
 	}
 
+	if(GUI_ACTIVATE){
+		vga_mem_setup();
+	}
+
 	// set up CRX registers
 	asm(
 		"movl 	%0, 			%%eax;"		// move page directory into eax
@@ -183,4 +187,28 @@ int vidmap_pte_setup(uint8_t ** screen_start, uint8_t present) {
 	}
 	return 0;
 
+}
+
+/*  vga_mem_setup
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: Setup VGA video memory
+ * 		Side Effects: none
+ *  
+ */
+void vga_mem_setup(){
+	int i;
+	for(i = VGA_IDX_START; i <= VGA_IDX_END; i++){
+		page_table[i].addr 				= 	i;												// address to the page_table
+		page_table[i].accessed 			= 	0;												// not used, set to 0
+		page_table[i].dirty 			= 	0;												// not used, set to 0
+		page_table[i].global 			= 	0;												// we only set the page for kernel page
+		page_table[i].size 				= 	0;												// 0 for page attribute table
+		page_table[i].available 		= 	0;												// not used, set to 0
+		page_table[i].cache_disable 	= 	1;   											// volatile for video mem mapped IO set to 0, otherwise 1
+		page_table[i].write_through		= 	0; 												// we always want write back
+		page_table[i].user_supervisor 	= 	1; 												// user level memory
+		page_table[i].read_write 		= 	1; 												// all pages are read write
+		page_table[i].present 			= 	1; 												// all valid PDE needs to be set to 1
+	}
 }

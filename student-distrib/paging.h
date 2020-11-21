@@ -10,9 +10,13 @@
 #define NUM_PAGE_TB 		1024   // total space for page table
 
 #define VIDEO_MEM_IDX		0xB8   // video memory index
+#define VGA_IDX_START       0xA0   // VGA video memory index
+#define VGA_IDX_END 		0xBF   // VGA video memory index
 
 #define USER_PAGE           32 	   // user page memory location (page directory index)
 #define VIDMAP_4MB_PAGE     33     // vidmap page memory location (page directory index)
+
+#define GUI_ACTIVATE 		0
 
 /* initializing paging */
 extern void __init_paging__();
@@ -22,5 +26,7 @@ extern int exe_paging(int pid, int present);
 
 /* paging for vidmap */
 extern int vidmap_pte_setup(uint8_t** screen_start, uint8_t present);
+
+void vga_mem_setup();
 
 #endif /* _PAGING_H */
