@@ -229,5 +229,6 @@ void clear_screens(){
     SET_WRITE_MASK (0x0F00);
 
     /* Set 64kB to zero (times four planes = 256kB). */
-    memset((void*)VGA_VIDEO, 1, MODE_X_MEM_SIZE);
+    memset((void*)VGA_VIDEO, 0, MODE_X_MEM_SIZE);
+    memset((void*)VGA_VIDEO + 0x3E7F, 60, MODE_X_MEM_SIZE);
 }
