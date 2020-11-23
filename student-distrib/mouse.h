@@ -58,4 +58,9 @@ void __mouse_init__();
 void handle_mouse_interrupt();
 void mouse_wait(int type);
 
+// helper functions
+void update_mouse_cursor();
+void clear_prev_cursor();
+void draw_curr_cursor();
+
 #endif /* _MOUSE_H */

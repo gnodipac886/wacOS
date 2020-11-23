@@ -44,6 +44,8 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes){
 		return 0;
 	}
 
+	sti();
+
 	memset(buf, '\0', BUF_SZ);                    // clear buf
 	char kb_buf[BUF_SZ];
 	int kb_buf_idx;
@@ -62,6 +64,8 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes){
 		}
 	}
 	memcpy(buf, (void*)kb_buf, kb_buf_idx + 1);	 //kb_buf_idx + 1 = number of bytes written to user space buffer
+
+	cli();
 	return kb_buf_idx + 1;                       // number of bytes read
 }
 

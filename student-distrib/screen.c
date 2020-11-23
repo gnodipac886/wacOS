@@ -1,5 +1,9 @@
 #include "lib.h"
 #include "screen.h"
+#include "types.h"
+#include "paging.h"
+// #include "../images/big_sur.h"
+#include "../images/smile.h"
 
 /* 
  * macro used to write an array of two-byte values to two consecutive ports 
@@ -68,6 +72,17 @@ static unsigned short mode_X_graphics[NUM_GRAPHICS_REGS] = {
     0xFF08
 };
 
+uint32_t fb_addr = (uint32_t)VGA_VIDEO; 			// address of current frame buffer we are using (0 based, 0xA0000 = 0x0)
+uint8_t build_buf[320 * 200];
+
+// int32_t curr_mouse_x = SCREEN_X_DIM / 2;
+// int32_t curr_mouse_y = SCREEN_Y_DIM / 2;
+
+int32_t fb1_mouse_x_prev = SCREEN_X_DIM / 2;
+int32_t fb1_mouse_y_prev = SCREEN_Y_DIM / 2;
+int32_t fb2_mouse_x_prev = SCREEN_X_DIM / 2;
+int32_t fb2_mouse_y_prev = SCREEN_Y_DIM / 2;
+
 /*
  * __screen_init__
  *   DESCRIPTION: call initialize functions for the screen
@@ -83,7 +98,11 @@ void __screen_init__(){
 	set_graphics_registers (mode_X_graphics);    	/* graphics registers    */
 	fill_palette_mode_x ();			 				/* palette colors        */
 	clear_screens();								/* set video memory      */
-	VGA_blank (0);			         				/* unblank the screen    */
+	VGA_blank(0);			         				/* unblank the screen    */
+
+	// draw_rectangle(100, 50, 3, 100, 100);
+	// draw_circle(160, 100, 100, 0xE0);
+	draw_image((uint8_t*)smile_map);
 }
 
 /*
@@ -172,48 +191,61 @@ void VGA_blank(int blank_bit){
  *   SIDE EFFECTS: changes the first 64 palette colors
  */   
 void fill_palette_mode_x(){
+	int i;
+	uint8_t r, g, b;
     /* 6-bit RGB (red, green, blue) values for first 64 colors */
     /* these are coded for 2 bits red, 2 bits green, 2 bits blue */
-    static unsigned char palette_RGB[64][3] = {
-	{0x00, 0x00, 0x00}, {0x00, 0x00, 0x15},
-	{0x00, 0x00, 0x2A}, {0x00, 0x00, 0x3F},
-	{0x00, 0x15, 0x00}, {0x00, 0x15, 0x15},
-	{0x00, 0x15, 0x2A}, {0x00, 0x15, 0x3F},
-	{0x00, 0x2A, 0x00}, {0x00, 0x2A, 0x15},
-	{0x00, 0x2A, 0x2A}, {0x00, 0x2A, 0x3F},
-	{0x00, 0x3F, 0x00}, {0x00, 0x3F, 0x15},
-	{0x00, 0x3F, 0x2A}, {0x00, 0x3F, 0x3F},
-	{0x15, 0x00, 0x00}, {0x15, 0x00, 0x15},
-	{0x15, 0x00, 0x2A}, {0x15, 0x00, 0x3F},
-	{0x15, 0x15, 0x00}, {0x15, 0x15, 0x15},
-	{0x15, 0x15, 0x2A}, {0x15, 0x15, 0x3F},
-	{0x15, 0x2A, 0x00}, {0x15, 0x2A, 0x15},
-	{0x15, 0x2A, 0x2A}, {0x15, 0x2A, 0x3F},
-	{0x15, 0x3F, 0x00}, {0x15, 0x3F, 0x15},
-	{0x15, 0x3F, 0x2A}, {0x15, 0x3F, 0x3F},
-	{0x2A, 0x00, 0x00}, {0x2A, 0x00, 0x15},
-	{0x2A, 0x00, 0x2A}, {0x2A, 0x00, 0x3F},
-	{0x2A, 0x15, 0x00}, {0x2A, 0x15, 0x15},
-	{0x2A, 0x15, 0x2A}, {0x2A, 0x15, 0x3F},
-	{0x2A, 0x2A, 0x00}, {0x2A, 0x2A, 0x15},
-	{0x2A, 0x2A, 0x2A}, {0x2A, 0x2A, 0x3F},
-	{0x2A, 0x3F, 0x00}, {0x2A, 0x3F, 0x15},
-	{0x2A, 0x3F, 0x2A}, {0x2A, 0x3F, 0x3F},
-	{0x3F, 0x00, 0x00}, {0x3F, 0x00, 0x15},
-	{0x3F, 0x00, 0x2A}, {0x3F, 0x00, 0x3F},
-	{0x3F, 0x15, 0x00}, {0x3F, 0x15, 0x15},
-	{0x3F, 0x15, 0x2A}, {0x3F, 0x15, 0x3F},
-	{0x3F, 0x2A, 0x00}, {0x3F, 0x2A, 0x15},
-	{0x3F, 0x2A, 0x2A}, {0x3F, 0x2A, 0x3F},
-	{0x3F, 0x3F, 0x00}, {0x3F, 0x3F, 0x15},
-	{0x3F, 0x3F, 0x2A}, {0x3F, 0x3F, 0x3F}
-    };
+ //    static unsigned char palette_RGB[64][3] = {
+	// {0x00, 0x00, 0x00}, {0x00, 0x00, 0x15},
+	// {0x00, 0x00, 0x2A}, {0x00, 0x00, 0x3F},
+	// {0x00, 0x15, 0x00}, {0x00, 0x15, 0x15},
+	// {0x00, 0x15, 0x2A}, {0x00, 0x15, 0x3F},
+	// {0x00, 0x2A, 0x00}, {0x00, 0x2A, 0x15},
+	// {0x00, 0x2A, 0x2A}, {0x00, 0x2A, 0x3F},
+	// {0x00, 0x3F, 0x00}, {0x00, 0x3F, 0x15},
+	// {0x00, 0x3F, 0x2A}, {0x00, 0x3F, 0x3F},
+	// {0x15, 0x00, 0x00}, {0x15, 0x00, 0x15},
+	// {0x15, 0x00, 0x2A}, {0x15, 0x00, 0x3F},
+	// {0x15, 0x15, 0x00}, {0x15, 0x15, 0x15},
+	// {0x15, 0x15, 0x2A}, {0x15, 0x15, 0x3F},
+	// {0x15, 0x2A, 0x00}, {0x15, 0x2A, 0x15},
+	// {0x15, 0x2A, 0x2A}, {0x15, 0x2A, 0x3F},
+	// {0x15, 0x3F, 0x00}, {0x15, 0x3F, 0x15},
+	// {0x15, 0x3F, 0x2A}, {0x15, 0x3F, 0x3F},
+	// {0x2A, 0x00, 0x00}, {0x2A, 0x00, 0x15},
+	// {0x2A, 0x00, 0x2A}, {0x2A, 0x00, 0x3F},
+	// {0x2A, 0x15, 0x00}, {0x2A, 0x15, 0x15},
+	// {0x2A, 0x15, 0x2A}, {0x2A, 0x15, 0x3F},
+	// {0x2A, 0x2A, 0x00}, {0x2A, 0x2A, 0x15},
+	// {0x2A, 0x2A, 0x2A}, {0x2A, 0x2A, 0x3F},
+	// {0x2A, 0x3F, 0x00}, {0x2A, 0x3F, 0x15},
+	// {0x2A, 0x3F, 0x2A}, {0x2A, 0x3F, 0x3F},
+	// {0x3F, 0x00, 0x00}, {0x3F, 0x00, 0x15},
+	// {0x3F, 0x00, 0x2A}, {0x3F, 0x00, 0x3F},
+	// {0x3F, 0x15, 0x00}, {0x3F, 0x15, 0x15},
+	// {0x3F, 0x15, 0x2A}, {0x3F, 0x15, 0x3F},
+	// {0x3F, 0x2A, 0x00}, {0x3F, 0x2A, 0x15},
+	// {0x3F, 0x2A, 0x2A}, {0x3F, 0x2A, 0x3F},
+	// {0x3F, 0x3F, 0x00}, {0x3F, 0x3F, 0x15},
+	// {0x3F, 0x3F, 0x2A}, {0x3F, 0x3F, 0x3F}
+ //    };
+
+    static unsigned char palette_RGB_8bit[256][3];
+    for(i = 0; i < 256; i++){
+    	r = ((uint8_t)i & 0xE0) >> 5;
+    	g = ((uint8_t)i & 0x1C) >> 2;
+    	b = (uint8_t)i & 0x3;
+    	palette_RGB_8bit[i][0] = r << 3;
+    	palette_RGB_8bit[i][1] = g << 3;
+    	palette_RGB_8bit[i][2] = b << 4;
+    }
 
     /* Start writing at color 0. */
     outb(0x00, 0x03C8);
 
     /* Write all 64 colors from array. */
-    REP_OUTSB (0x03C9, palette_RGB, 64 * 3);
+    // REP_OUTSB (0x03C9, palette_RGB, 64 * 3);
+    REP_OUTSB (0x03C9, palette_RGB_8bit, 256 * 3);
 }
 
 /*
@@ -229,6 +261,180 @@ void clear_screens(){
     SET_WRITE_MASK (0x0F00);
 
     /* Set 64kB to zero (times four planes = 256kB). */
-    memset((void*)VGA_VIDEO, 0, MODE_X_MEM_SIZE);
-    memset((void*)VGA_VIDEO + 0x3E7F, 60, MODE_X_MEM_SIZE);
+    memset((void*)fb_addr, 0, MODE_X_MEM_SIZE);
+    // memset((void*)VGA_VIDEO + 0x3E7F, 60, MODE_X_MEM_SIZE);
+}
+
+/*
+ * draw_rectangle
+ *   DESCRIPTION: 	screen_x	- position x to draw rect
+					screen_y	- position y to draw rect
+					color		- color to use in palette
+					rect_x		- x dim of rect
+					rect_y		- y dim of rect
+ *   INPUTS: none
+ *   OUTPUTS: none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: draws rectangle on screen
+ */   
+void draw_rectangle(int screen_x, int screen_y, uint8_t color, int rect_x, int rect_y){
+	int i, j;
+
+	// put the colors into the build buffer
+	for(i = 0; i < rect_y; i++){
+		for(j = 0; j < rect_x; j++){
+			plot_pixel(screen_x + j, screen_y + i, color);
+		}
+	}
+	// show_screen();
+}
+
+/*
+ * draw_circle
+ *   DESCRIPTION: 	x - x location of the center
+ 					y - y location of the center
+ 					r - radius of the circle
+ 					color - color of the circle
+ *   INPUTS: none
+ *   OUTPUTS: none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: plots circle on screen
+ */ 
+void draw_circle(int x, int y, int r, int color){
+	int i, j;
+
+	for(i = 0; i < SCREEN_Y_DIM; i++){
+		for(j = 0; j < SCREEN_X_DIM; j++){
+			if((j - x) * (j - x) + (i - y) * (i - y) <= (r * r)){
+				plot_pixel(j, i, color);
+			}
+		}
+	}
+	// show_screen();
+}
+
+
+/*
+ * plot_pixel
+ *   DESCRIPTION: Plots the pixel into build buffer in vga memory format
+ *   INPUTS: 	x 		- screen x pos
+ 				y 		- screen y pos
+ 				color 	- color to plot
+ *   OUTPUTS: none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: none
+ */  
+void plot_pixel(int x, int y, uint8_t color){
+	int idx = (y * SCREEN_X_DIM + x); 				// index of pixel row major form
+	int p_off = idx & 3; 						// which plane we are in
+	int p_idx = idx >> 2; 							// which index we are in within that plane
+	// build_buf[p_off * PLANE_DIM + p_idx] = color; 	// plot pixel into buffer
+
+	SET_WRITE_MASK(1 << (p_off + 8));							// set the write mask
+	memcpy((void*)(fb_addr + p_idx), (void*)&color, 1); 		// p_off * PLANE_DIM + 
+	// build_buf[p_off * PLANE_DIM + p_idx] = color; 	// plot pixel into buffer
+}
+
+/*
+ * show_screen
+ *   DESCRIPTION: Show the logical view window on the video display.
+ *   INPUTS: none
+ *   OUTPUTS: none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: copies from the build buffer to video memory;
+ *                 shifts the VGA display source to point to the new image
+ */   
+void show_screen(){
+    // int p_off;            /* plane offset of first display plane */
+    // int i;		  /* loop index over video planes        */
+
+	/* Draw to each plane in the video memory. */
+	// for (i = 0; i < 4; i++) {
+	// 	p_off = 3 - i;
+	// 	SET_WRITE_MASK(1 << (p_off + 8));
+	// 	memcpy((void*)(fb_addr), (void*)(build_buf + p_off * PLANE_DIM), PLANE_DIM);
+	// }
+
+	// SET_WRITE_MASK (0x0F00);
+	// memcpy((void*)fb_addr, (void*)build_buf, SCREEN_DIM);
+
+	/* 
+	 * Change the VGA registers to point the top left of the screen
+	 * to the video memory that we just filled.
+	 */
+	outw (((fb_addr - VGA_VIDEO) & 0xFF00) | 0x0C, 0x03D4);
+	outw ((((fb_addr - VGA_VIDEO) & 0x00FF) << 8) | 0x0D, 0x03D4);
+
+	/* Switch to the other target screen in video memory. */
+	fb_addr ^= 0x4000;
+}
+
+/*
+ * draw_mouse_cursor
+ *   DESCRIPTION: 	curr_x - pointer to cursor x
+ 					curr_y - pointer to cursor y
+ 					dx 	   - delta x
+ 					dy 	   - delta y
+ 					frames - number of frames to move
+ 					sx 	   - small movements in x
+ 					sy 	   - small movements in y
+ *   INPUTS: none
+ *   OUTPUTS: none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: moves the cursor to next location
+ */   
+void draw_mouse_cursor(int * curr_x, int * curr_y, int dx, int dy, int frames, int sx, int sy){
+	int i;
+	int * prev_x;
+	int * prev_y;
+	frames = frames == 0 ? 1 : frames;
+
+	for(i = 0; i < frames; i++){
+		prev_x = (fb_addr == VGA_VIDEO) ? &fb1_mouse_x_prev : &fb2_mouse_x_prev;
+		prev_y = (fb_addr == VGA_VIDEO) ? &fb1_mouse_y_prev : &fb2_mouse_y_prev;
+
+		draw_rectangle(*prev_x, *prev_y, 0, VGA_CURSOR_SIZE, VGA_CURSOR_SIZE);
+
+		*curr_x += dx / frames == 0 ? sx : dx / frames;
+		*curr_y -= dy / frames == 0 ? sy : dy / frames;
+
+		*curr_x = (*curr_x + VGA_CURSOR_SIZE) >= SCREEN_X_DIM ? SCREEN_X_DIM - VGA_CURSOR_SIZE : *curr_x;
+		*curr_y = (*curr_y + VGA_CURSOR_SIZE) >= SCREEN_Y_DIM ? SCREEN_Y_DIM - VGA_CURSOR_SIZE : *curr_y;
+
+		*curr_x = *curr_x < 0 ? 0 : *curr_x;
+		*curr_y = *curr_y < 0 ? 0 : *curr_y;
+
+		draw_rectangle(*curr_x, *curr_y, 3, VGA_CURSOR_SIZE, VGA_CURSOR_SIZE);
+
+		// show_screen(); 				// whether to double buffer
+
+		*prev_x = *curr_x;
+		*prev_y = *curr_y;
+
+		if(!(dx / frames) && !(dy / frames)){
+			break;
+		}
+	}	
+}
+
+/*
+ * draw_image
+ *   DESCRIPTION: 	img - pointer to array of pixels
+ *   INPUTS: none
+ *   OUTPUTS: none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: plots image on screen
+ */   
+void draw_image(uint8_t * img){
+	int i, j;
+
+	for(i = 0; i < SCREEN_Y_DIM; i++){
+		for(j = 0; j < SCREEN_X_DIM; j++){
+			// plot_pixel(j, i, img[i * SCREEN_Y_DIM + j]);
+			if(img[i * SCREEN_Y_DIM + j] == 0xff) // 
+				plot_pixel(j, i, 0x1C);
+			else
+				plot_pixel(j, i, 0x03);
+		}
+	}
 }

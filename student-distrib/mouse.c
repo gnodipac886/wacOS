@@ -1,20 +1,27 @@
 #include "lib.h"
 #include "i8259.h"
 #include "mouse.h"
+#include "screen.h"
+#include "paging.h"
 
-#define SCREEN_X    80
-#define SCREEN_Y    25
-#define VIDEO       0xB8000
-#define VGA_VIDEO	0xA0000
-#define ATTRIB      0x7
-#define MS_COLOR 	0xE0 		// yellow
-#define MS_SPD 		22 			// higher the slower
+#define SCREEN_X    	80
+#define SCREEN_Y    	25
+#define VGA_SCREEN_X 	320
+#define VGA_SCREEN_Y 	200
+#define VIDEO       	0xB8000
+#define VGA_VIDEO		0xA0000
+#define ATTRIB      	0x7
+#define MS_COLOR 		0xE0 		// yellow
+#define MS_SPD 			15 			// higher the slower, 22 good
 
 ms_packet_t packet;
-uint8_t 	state; 		// there are 3 states for each byte of interrupt
+uint8_t 	state; 					// there are 3 states for each byte of interrupt
 
 int32_t curr_x;
 int32_t curr_y;
+
+int32_t screen_x_max;
+int32_t screen_y_max;
 
 static char* video_mem = (char *)VIDEO;
 static char prev_char;
@@ -48,10 +55,20 @@ void __mouse_init__(){
 	
 	enable_irq(MS_IRQ);
 
-	curr_x = SCREEN_X / 2;
-	curr_y = SCREEN_Y / 2;
-	prev_char = *(uint8_t *)(video_mem + ((SCREEN_X * curr_y + curr_x) << 1));
-	prev_color= *(uint8_t *)(video_mem + ((SCREEN_X * curr_y + curr_x) << 1) + 1);
+	if(GUI_ACTIVATE){
+		screen_x_max = VGA_SCREEN_X;
+		screen_y_max = VGA_SCREEN_Y;
+		curr_x = screen_x_max / 2;
+		curr_y = screen_y_max / 2;
+	}
+	else{
+		screen_x_max = SCREEN_X;
+		screen_y_max = SCREEN_Y;
+		curr_x = screen_x_max / 2;
+		curr_y = screen_y_max / 2;
+		prev_char = *(uint8_t *)(video_mem + ((screen_x_max * curr_y + curr_x) << 1));
+		prev_color= *(uint8_t *)(video_mem + ((screen_y_max * curr_y + curr_x) << 1) + 1);
+	}
 
 	state = 0;
 }
@@ -63,9 +80,7 @@ void __mouse_init__(){
  *		Side Effects: none
  */
 void handle_mouse_interrupt(){
-	int32_t scale = 1;
-	int32_t sum = 0;
-	int32_t dx, dy;
+	cli();
 	switch(state){
 		case 0:
 			packet.byte0 = inb(MS_PORT);
@@ -80,43 +95,7 @@ void handle_mouse_interrupt(){
 		case 2:
 			packet.y_move = inb(MS_PORT);
 
-			// revert the previous character on the screen
-			*(uint8_t *)(video_mem + ((SCREEN_X * curr_y + curr_x) << 1)) = prev_char;
-			*(uint8_t *)(video_mem + ((SCREEN_X * curr_y + curr_x) << 1) + 1) = prev_color;
-
-			dx = packet.x_sign ? NEGATIVE_NUM | packet.x_move : packet.x_move;
-			dy = packet.y_sign ? NEGATIVE_NUM | packet.y_move : packet.y_move;
-
-			sum = dx + dy < 0 ? -(dx + dy) : dx + dy;
-
-			asm volatile(
-				"bsr 	%1, 		%%eax;"						// move page directory address into cr3
-				"movl 	%%eax, 		%0;"						// move the scale into the variable scale
-				:"=r"(scale)									// outputs
-				:"r"(sum)										// inputs
-				:"%eax" 	
-			);
-
-			// printf("before: %d, %d scale: %d ", dx, dy, scale);
-			scale = (MS_SPD - scale) >> 1;
-			dx /= scale == 0 ? 1 : scale;			// configure the scaling for movement	
-			dy /= scale == 0 ? 1 : scale;
-			// printf("after: %d, %d, scale: %d\n", dx, dy, scale);
-
-			curr_x += dx;
-			curr_y -= dy;
-
-			curr_x = curr_x >= SCREEN_X ? SCREEN_X - 1 : curr_x;
-			curr_y = curr_y >= SCREEN_Y ? SCREEN_Y - 1 : curr_y;
-
-			curr_x = curr_x < 0 ? 0 : curr_x;
-			curr_y = curr_y < 0 ? 0 : curr_y;
-
-			// set cursor character
-			prev_char = *(uint8_t *)(video_mem + ((SCREEN_X * curr_y + curr_x) << 1));
-			prev_color= *(uint8_t *)(video_mem + ((SCREEN_X * curr_y + curr_x) << 1) + 1);
-			*(uint8_t *)(video_mem + ((SCREEN_X * curr_y + curr_x) << 1)) = ' ';
-			*(uint8_t *)(video_mem + ((SCREEN_X * curr_y + curr_x) << 1) + 1) = MS_COLOR;
+			update_mouse_cursor();
 
 			state = 0;
 			// printf("%d, %d\n", curr_x, curr_y);
@@ -148,4 +127,79 @@ void handle_mouse_interrupt(){
  */
 void mouse_wait(int type){
 	while((inb(PS2_PORT) & (1 << type)) != ((~type) & 1));
+}
+
+void update_mouse_cursor(){
+	int32_t scale = 1;
+	int32_t sum = 0;
+	int32_t dx, dy, sx, sy;
+
+	dx = packet.x_sign ? NEGATIVE_NUM | packet.x_move : packet.x_move;
+	dx = !(packet.x_move & ~7) ? 0 : dx;				// reject all deltas under and including 7
+
+	dy = packet.y_sign ? NEGATIVE_NUM | packet.y_move : packet.y_move;
+	dy = !(packet.y_move & ~7) ? 0 : dy;				// reject all deltas under and including 7
+
+	sx = packet.x_sign ? -1 : 1;
+	sx = dx == 0 ? 0 : sx;
+
+	sy = packet.y_sign ? -1 : 1;
+	sy = dy == 0 ? 0 : sy;
+
+	sum = dx + dy < 0 ? -(dx + dy) : dx + dy;
+
+	asm volatile(
+		"bsr 	%1, 		%%eax;"						// move page directory address into cr3
+		"movl 	%%eax, 		%0;"						// move the scale into the variable scale
+		:"=r"(scale)									// outputs
+		:"r"(sum)										// inputs
+		:"%eax" 	
+	);
+
+	// printf("%d, %d\n", (int8_t)packet.x_move, (int8_t)packet.y_move);
+	// printf("before: %d, %d scale: %d ", dx, dy, scale);
+	scale = (MS_SPD - scale) >> 1;
+	dx /= scale == 0 ? 1 : scale;			// configure the scaling for movement	
+	dy /= scale == 0 ? 1 : scale;
+	// printf("after: %d, %d, scale: %d\n", dx, dy, scale);
+
+	if(GUI_ACTIVATE){
+		draw_mouse_cursor(&curr_x, &curr_y, dx, dy, scale, sx, sy);
+	}
+	else{
+		clear_prev_cursor();
+		curr_x += dx;
+		curr_y -= dy;
+
+		curr_x = curr_x >= SCREEN_X ? SCREEN_X - 1 : curr_x;
+		curr_y = curr_y >= SCREEN_Y ? SCREEN_Y - 1 : curr_y;
+
+		curr_x = curr_x < 0 ? 0 : curr_x;
+		curr_y = curr_y < 0 ? 0 : curr_y;
+		draw_curr_cursor();
+	}
+}
+
+void clear_prev_cursor(){
+	if(GUI_ACTIVATE){
+		draw_rectangle(curr_x, curr_y, 0, VGA_CURSOR_SIZE, VGA_CURSOR_SIZE);
+	}
+	else{
+		// revert the previous character on the screen
+		*(uint8_t *)(video_mem + ((screen_x_max * curr_y + curr_x) << 1)) = prev_char;
+		*(uint8_t *)(video_mem + ((screen_x_max * curr_y + curr_x) << 1) + 1) = prev_color;
+	}
+}
+
+void draw_curr_cursor(){
+	if(GUI_ACTIVATE){
+		draw_rectangle(curr_x, curr_y, 3, VGA_CURSOR_SIZE, VGA_CURSOR_SIZE);
+	}
+	else{
+		// set cursor character
+		prev_char = *(uint8_t *)(video_mem + ((screen_x_max * curr_y + curr_x) << 1));
+		prev_color= *(uint8_t *)(video_mem + ((screen_x_max * curr_y + curr_x) << 1) + 1);
+		*(uint8_t *)(video_mem + ((screen_x_max * curr_y + curr_x) << 1)) = ' ';
+		*(uint8_t *)(video_mem + ((screen_x_max * curr_y + curr_x) << 1) + 1) = MS_COLOR;
+	}
 }

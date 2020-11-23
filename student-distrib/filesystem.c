@@ -158,9 +158,12 @@ int32_t rtc_read(int32_t fd, void* buf, int32_t nbytes){
 		return -1;
 	}
 
+	sti();
+
 	// wait for the rtc to interrupt
 	_rtc_read();
 
+	cli();
 	// return 0 when success
 	return 0;
 }
