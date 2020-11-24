@@ -103,11 +103,10 @@ int32_t execute(const uint8_t* command){
 	}
 
 	strcpy(pcb->arg, task_arg); 											// move the args into pcb
-	//pcb->vidmap_page_flag = 0;												// no paging set up for this pcb yet
-	// ............................check if we need to return to previous state of vidmap_page_flag of parent process
+	pcb->vidmap_page_flag = 0;												// no vidmap paging set up for this pcb yet
 	pcb->pid = curr_avail_pid;	 											// set pid in the pcb
 	pcb->parent_pid = pcb->pid == 0 ? 0 : _get_curr_pcb((int32_t*)&i)->pid; // if current pid is 0, we are shell, so we ahve no parent
-	pcb->vidmap_page_flag = 0;
+
 	// store parent kernel stack info - esp and ebp
 	asm volatile(
 		"movl	%%esp, 	%0;"
