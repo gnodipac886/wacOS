@@ -3,13 +3,20 @@
 
 #include "lib.h"
 
-#define VIDEO       0xB8000
-#define NUM_COLS    80
-#define NUM_ROWS    25
-#define ATTRIB      0x7
+#define VIDEO           0xB8000         // holds current video memory (text screen)
+#define NUM_COLS        80
+#define NUM_ROWS        25
+#define VIDEO_SIZE      4096            // NUM_COLS*NUM_ROWS*2 <= 4096; num of bytes of 4kB page
+//#define TERM1_VIDEO     0xB9000         // background buffer for terminal 1's video memory (text screen)   
+//#define TERM2_VIDEO     0xBA000         // background buffer for terminal 2's video memory (text screen)
+//#define TERM3_VIDEO     0xBB000         // background buffer for terminal 3's video memory (text screen)
+#define MAX_TERMINALS   3
+#define ATTRIB          0x7
 
-static int screen_x;
+static int screen_x;                                // current terminal's cursor position
 static int screen_y;
+static int terminal_cursor_pos[MAX_TERMINALS][2];   // stored cursor positions of terminals 1-3
+
 static char* video_mem = (char *)VIDEO;
 
 /* void clear(void);
@@ -240,6 +247,29 @@ void vid_backspace() {
  */
 void vid_enter() {
     putc('\n');
+}
+
+/* void vid_switch(int old_t_num, int new_t_num);
+ *  Description: switches text screen and cursor position (helper for switching terminals)
+ *  Inputs:
+ *      old_t_num - old/current terminal number
+ *      new_t_num - new terminal number
+ *  Return Value: none
+ *  Function: saves current terminal's text screen and cursor position, then restores new terminal's
+ */
+void vid_switch(int old_t_num, int new_t_num) {
+
+    //.........................(get virtual addr of physical 0xB8000, since scheduling changes virtual 0xB8000 mapping).........................................................
+    memcpy((void*) (VIDEO + old_t_num*VIDEO_SIZE), (void*) ..............., VIDEO_SIZE);    // save - copy from current video mem to old terminal's background buffer
+    memcpy((void*) ................., (void*) (VIDEO + new_t_num*VIDEO_SIZE), VIDEO_SIZE);  // restore - copy from new terminal's background buffer to current video mem
+
+    // save current terminal's cursor position
+    terminal_cursor_pos[old_t_num][0] = screen_x;
+    terminal_cursor_pos[old_t_num][1] = screen_y;
+
+    // restore new terminal's cursor position
+    screen_x = terminal_cursor_pos[new_t_num][0];
+    screen_y = terminal_cursor_pos[new_t_num][1];
 }
 
 
