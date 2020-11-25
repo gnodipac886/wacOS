@@ -29,9 +29,14 @@ void __pit_init__(){
  *	  Side Effects: none	 
  */
 void handle_pit_interrupt(){
+    cli();
     send_eoi(PIT_IRQ);
+    printf("PIT Interrupt!");
     /* schedule(); */
+    sti();
+
 }
+
 
 
 
