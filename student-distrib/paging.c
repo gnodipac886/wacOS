@@ -59,12 +59,18 @@ void __init_paging__(){
 		page_table[i].dirty 			= 	0;												// not used, set to 0
 		page_table[i].global 			= 	0;												// we only set the page for kernel page
 		page_table[i].size 				= 	0;												// 0 for page attribute table
-		page_table[i].available 		= 	0;												// not used, set to 0
-		page_table[i].cache_disable 	= 	i == VIDEO_MEM_IDX ? 0 : 1;   					// volatile for video mem mapped IO set to 0, otherwise 1
+		page_table[i].available 		= 	0;												// not used, set to 0  					
 		page_table[i].write_through		= 	0; 												// we always want write back
 		page_table[i].user_supervisor 	= 	1; 												// user level memory
 		page_table[i].read_write 		= 	1; 												// all pages are read write
-		page_table[i].present 			= 	i != VIDEO_MEM_IDX ? 0 : 1; 					// all valid PDE needs to be set to 1
+					
+		if (i >= VIDEO_MEM_IDX && i <= BACKGROUND_BUF3_IDX) {								
+			page_table[i].cache_disable =	0;												// volatile for video mem mapped IO set to 0, otherwise 1
+			page_table[i].present 		= 	1;												// all valid PTE needs to be set to 1
+		} else {
+			page_table[i].cache_disable = 	1;
+			page_table[i].present 		= 	0;
+		}
 	}
 
 	// set up CRX registers

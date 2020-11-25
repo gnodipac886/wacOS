@@ -3,16 +3,19 @@
 
 #include "types.h"
 
-#define ALIGN_4KB 			12     // alignment for 4kb paging
-#define SHFT_4MB_ADDR 		10     // Memory address interval
+#define ALIGN_4KB 			    12      // alignment for 4kb paging
+#define SHFT_4MB_ADDR 		    10      // Memory address interval
 
-#define NUM_PAGE_DIR 		1024   // total space for page directory
-#define NUM_PAGE_TB 		1024   // total space for page table
+#define NUM_PAGE_DIR 		    1024    // total space for page directory
+#define NUM_PAGE_TB 		    1024    // total space for page table
 
-#define VIDEO_MEM_IDX		0xB8   // video memory index
+#define VIDEO_MEM_IDX		    0xB8    // video memory index
+#define BACKGROUND_BUF1_IDX     0xB9    // terminal 1's background buffer index in page table
+#define BACKGROUND_BUF2_IDX     0xBA    // terminal 2's background buffer index in page table
+#define BACKGROUND_BUF3_IDX     0xBB    // terminal 3's background buffer index in page table
 
-#define USER_PAGE           32 	   // user page memory location (page directory index)
-#define VIDMAP_4MB_PAGE     33     // vidmap page memory location (page directory index)
+#define USER_PAGE               32 	    // user page memory location (page directory index)
+#define VIDMAP_4MB_PAGE         33      // vidmap page memory location (page directory index)
 
 /* initializing paging */
 extern void __init_paging__();

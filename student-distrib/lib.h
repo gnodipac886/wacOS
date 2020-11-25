@@ -26,6 +26,7 @@ int8_t* strncpy(int8_t* dest, const int8_t*src, uint32_t n);
 
 void vid_backspace();
 void vid_enter();
+void vid_switch(int old_t_num, int new_t_num);
 void update_cursor(int x, int y);
 
 /* Userspace address-check functions */
