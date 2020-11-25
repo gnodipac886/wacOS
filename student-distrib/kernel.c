@@ -14,6 +14,7 @@
 #include "paging.h"
 #include "filesystem.h"
 #include "system_calls.h"
+#include "pit.h"
 
 #define RUN_TESTS
 
@@ -162,6 +163,7 @@ void entry(unsigned long magic, unsigned long addr) {
 	__keyboard_init__();													// enable keyboard interrupt
 	__init_filesystem__((void*)(mod->mod_start)); 							// enable filesystem
 	__init_paging__();														// enable paging
+	__pit_init__();															// enalbe pit
 
 	/* Enable interrupts */
 	/* Do not enable the following until after you have set up your

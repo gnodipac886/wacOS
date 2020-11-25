@@ -34,7 +34,7 @@ common_interrupt:
 	iret									   	/*return from interrupt*/
 
 interrupt_handler_jump:
-	.long 0										/*handler ptrs for IR lines of Master PIC*/
+	.long handle_pit_interrupt					/*handler ptrs for IR lines of Master PIC*/									/*handler ptrs for IR lines of Master PIC*/
 	.long handle_keyboard_interrupt
 	.long 0
 	.long 0
@@ -52,14 +52,6 @@ interrupt_handler_jump:
 	.long 0
 	.long 0
 
-	.long handle_pit_interrupt					/*handler ptrs for IR lines of Master PIC*/
-	.long 0
-	.long 0
-	.long 0
-	.long 0
-	.long 0
-	.long 0
-	.long 0
 
 
  /* squash_user_exception
