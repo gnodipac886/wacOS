@@ -1,55 +1,9 @@
 #include "lib.h"
 #include "screen.h"
-#include "types.h"
 #include "paging.h"
-// #include "../images/big_sur.h"
-#include "../images/smile.h"
-
-/* 
- * macro used to write an array of two-byte values to two consecutive ports 
- */
-#define REP_OUTSW(port,source,count)                                    \
-do {                                                                    \
-    asm volatile ("                                                     \
-     1: movw 0(%1),%%ax                                                ;\
-	outw %%ax,(%w2)                                                ;\
-	addl $2,%1                                                     ;\
-	decl %0                                                        ;\
-	jne 1b                                                          \
-    " : /* no outputs */                                                \
-      : "c" ((count)), "S" ((source)), "d" ((port))                     \
-      : "eax", "memory", "cc");                                         \
-} while (0)
-
-/* 
- * macro used to write an array of one-byte values to two consecutive ports 
- */
-#define REP_OUTSB(port,source,count)                                    \
-do {                                                                    \
-    asm volatile ("                                                     \
-     1: movb 0(%1),%%al                                                ;\
-	outb %%al,(%w2)                                                ;\
-	incl %1                                                        ;\
-	decl %0                                                        ;\
-	jne 1b                                                          \
-    " : /* no outputs */                                                \
-      : "c" ((count)), "S" ((source)), "d" ((port))                     \
-      : "eax", "memory", "cc");                                         \
-} while (0)
-
-/* 
- * macro used to target a specific video plane or planes when writing
- * to video memory in mode X; bits 8-11 in the mask_hi_bits enable writes
- * to planes 0-3, respectively
- */
-#define SET_WRITE_MASK(mask_hi_bits)                                    \
-do {                                                                    \
-    asm volatile ("                                                     \
-	movw $0x03C4,%%dx    	/* set write mask                    */;\
-	movb $0x02,%b0                                                 ;\
-	outw %w0,(%%dx)                                                 \
-    " : : "a" ((mask_hi_bits)) : "edx", "memory");                      \
-} while (0)
+#include "octree.h"
+#include "../images/big_sur.h"
+// #include "../images/bar.h"
 
 static unsigned short mode_X_CRTC[NUM_CRTC_REGS] = {
     0x5F00, 0x4F01, 0x5002, 0x8203, 0x5404, 0x8005, 0xBF06, 0x1F07,
@@ -75,6 +29,9 @@ static unsigned short mode_X_graphics[NUM_GRAPHICS_REGS] = {
 uint32_t fb_addr = (uint32_t)VGA_VIDEO; 			// address of current frame buffer we are using (0 based, 0xA0000 = 0x0)
 uint8_t build_buf[320 * 200];
 
+uint8_t cursor_save1[VGA_CURSOR_SIZE * VGA_CURSOR_SIZE];
+uint8_t cursor_save2[VGA_CURSOR_SIZE * VGA_CURSOR_SIZE];
+
 // int32_t curr_mouse_x = SCREEN_X_DIM / 2;
 // int32_t curr_mouse_y = SCREEN_Y_DIM / 2;
 
@@ -96,13 +53,14 @@ void __screen_init__(){
 	set_CRTC_registers (mode_X_CRTC);            	/* CRT control registers */
 	set_attr_registers (mode_X_attr);            	/* attribute registers   */
 	set_graphics_registers (mode_X_graphics);    	/* graphics registers    */
-	fill_palette_mode_x ();			 				/* palette colors        */
+	fill_palette_mode_x_basic();			 		/* palette colors        */
 	clear_screens();								/* set video memory      */
 	VGA_blank(0);			         				/* unblank the screen    */
 
 	// draw_rectangle(100, 50, 3, 100, 100);
 	// draw_circle(160, 100, 100, 0xE0);
-	draw_image((uint8_t*)smile_map);
+	// draw_image_322((uint8_t*)bar_map);
+	draw_image_565((pixel_565_t*)((void*)big_sur_map));
 }
 
 /*
@@ -182,7 +140,7 @@ void VGA_blank(int blank_bit){
 }
 
 /*
- * fill_palette_mode_x
+ * fill_palette_mode_x_basic
  *   DESCRIPTION: Fill VGA palette with necessary colors for the adventure 
  *                game.  Only the first 64 (of 256) colors are written.
  *   INPUTS: none
@@ -190,45 +148,63 @@ void VGA_blank(int blank_bit){
  *   RETURN VALUE: none
  *   SIDE EFFECTS: changes the first 64 palette colors
  */   
-void fill_palette_mode_x(){
+void fill_palette_mode_x_basic(){
+	    /* 6-bit RGB (red, green, blue) values for first 64 colors */
+    /* these are coded for 2 bits red, 2 bits green, 2 bits blue */
+    static unsigned char palette_RGB[64][3] = {
+	{0x00, 0x00, 0x00}, {0x00, 0x00, 0x15},
+	{0x00, 0x00, 0x2A}, {0x00, 0x00, 0x3F},
+	{0x00, 0x15, 0x00}, {0x00, 0x15, 0x15},
+	{0x00, 0x15, 0x2A}, {0x00, 0x15, 0x3F},
+	{0x00, 0x2A, 0x00}, {0x00, 0x2A, 0x15},
+	{0x00, 0x2A, 0x2A}, {0x00, 0x2A, 0x3F},
+	{0x00, 0x3F, 0x00}, {0x00, 0x3F, 0x15},
+	{0x00, 0x3F, 0x2A}, {0x00, 0x3F, 0x3F},
+	{0x15, 0x00, 0x00}, {0x15, 0x00, 0x15},
+	{0x15, 0x00, 0x2A}, {0x15, 0x00, 0x3F},
+	{0x15, 0x15, 0x00}, {0x15, 0x15, 0x15},
+	{0x15, 0x15, 0x2A}, {0x15, 0x15, 0x3F},
+	{0x15, 0x2A, 0x00}, {0x15, 0x2A, 0x15},
+	{0x15, 0x2A, 0x2A}, {0x15, 0x2A, 0x3F},
+	{0x15, 0x3F, 0x00}, {0x15, 0x3F, 0x15},
+	{0x15, 0x3F, 0x2A}, {0x15, 0x3F, 0x3F},
+	{0x2A, 0x00, 0x00}, {0x2A, 0x00, 0x15},
+	{0x2A, 0x00, 0x2A}, {0x2A, 0x00, 0x3F},
+	{0x2A, 0x15, 0x00}, {0x2A, 0x15, 0x15},
+	{0x2A, 0x15, 0x2A}, {0x2A, 0x15, 0x3F},
+	{0x2A, 0x2A, 0x00}, {0x2A, 0x2A, 0x15},
+	{0x2A, 0x2A, 0x2A}, {0x2A, 0x2A, 0x3F},
+	{0x2A, 0x3F, 0x00}, {0x2A, 0x3F, 0x15},
+	{0x2A, 0x3F, 0x2A}, {0x2A, 0x3F, 0x3F},
+	{0x3F, 0x00, 0x00}, {0x3F, 0x00, 0x15},
+	{0x3F, 0x00, 0x2A}, {0x3F, 0x00, 0x3F},
+	{0x3F, 0x15, 0x00}, {0x3F, 0x15, 0x15},
+	{0x3F, 0x15, 0x2A}, {0x3F, 0x15, 0x3F},
+	{0x3F, 0x2A, 0x00}, {0x3F, 0x2A, 0x15},
+	{0x3F, 0x2A, 0x2A}, {0x3F, 0x2A, 0x3F},
+	{0x3F, 0x3F, 0x00}, {0x3F, 0x3F, 0x15},
+	{0x3F, 0x3F, 0x2A}, {0x3F, 0x3F, 0x3F}
+    };
+
+    /* Start writing at color 0. */
+    outb (0x00, 0x03C8);
+
+    /* Write all 64 colors from array. */
+    REP_OUTSB (0x03C9, palette_RGB, 64 * 3);
+}
+
+/*
+ * fill_palette_mode_x_332
+ *   DESCRIPTION: Fill VGA palette with necessary colors for the adventure 
+ *                game.  Only the first 64 (of 256) colors are written.
+ *   INPUTS: none
+ *   OUTPUTS: none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: changes the first 64 palette colors
+ */   
+void fill_palette_mode_x_332(){
 	int i;
 	uint8_t r, g, b;
-    /* 6-bit RGB (red, green, blue) values for first 64 colors */
-    /* these are coded for 2 bits red, 2 bits green, 2 bits blue */
- //    static unsigned char palette_RGB[64][3] = {
-	// {0x00, 0x00, 0x00}, {0x00, 0x00, 0x15},
-	// {0x00, 0x00, 0x2A}, {0x00, 0x00, 0x3F},
-	// {0x00, 0x15, 0x00}, {0x00, 0x15, 0x15},
-	// {0x00, 0x15, 0x2A}, {0x00, 0x15, 0x3F},
-	// {0x00, 0x2A, 0x00}, {0x00, 0x2A, 0x15},
-	// {0x00, 0x2A, 0x2A}, {0x00, 0x2A, 0x3F},
-	// {0x00, 0x3F, 0x00}, {0x00, 0x3F, 0x15},
-	// {0x00, 0x3F, 0x2A}, {0x00, 0x3F, 0x3F},
-	// {0x15, 0x00, 0x00}, {0x15, 0x00, 0x15},
-	// {0x15, 0x00, 0x2A}, {0x15, 0x00, 0x3F},
-	// {0x15, 0x15, 0x00}, {0x15, 0x15, 0x15},
-	// {0x15, 0x15, 0x2A}, {0x15, 0x15, 0x3F},
-	// {0x15, 0x2A, 0x00}, {0x15, 0x2A, 0x15},
-	// {0x15, 0x2A, 0x2A}, {0x15, 0x2A, 0x3F},
-	// {0x15, 0x3F, 0x00}, {0x15, 0x3F, 0x15},
-	// {0x15, 0x3F, 0x2A}, {0x15, 0x3F, 0x3F},
-	// {0x2A, 0x00, 0x00}, {0x2A, 0x00, 0x15},
-	// {0x2A, 0x00, 0x2A}, {0x2A, 0x00, 0x3F},
-	// {0x2A, 0x15, 0x00}, {0x2A, 0x15, 0x15},
-	// {0x2A, 0x15, 0x2A}, {0x2A, 0x15, 0x3F},
-	// {0x2A, 0x2A, 0x00}, {0x2A, 0x2A, 0x15},
-	// {0x2A, 0x2A, 0x2A}, {0x2A, 0x2A, 0x3F},
-	// {0x2A, 0x3F, 0x00}, {0x2A, 0x3F, 0x15},
-	// {0x2A, 0x3F, 0x2A}, {0x2A, 0x3F, 0x3F},
-	// {0x3F, 0x00, 0x00}, {0x3F, 0x00, 0x15},
-	// {0x3F, 0x00, 0x2A}, {0x3F, 0x00, 0x3F},
-	// {0x3F, 0x15, 0x00}, {0x3F, 0x15, 0x15},
-	// {0x3F, 0x15, 0x2A}, {0x3F, 0x15, 0x3F},
-	// {0x3F, 0x2A, 0x00}, {0x3F, 0x2A, 0x15},
-	// {0x3F, 0x2A, 0x2A}, {0x3F, 0x2A, 0x3F},
-	// {0x3F, 0x3F, 0x00}, {0x3F, 0x3F, 0x15},
-	// {0x3F, 0x3F, 0x2A}, {0x3F, 0x3F, 0x3F}
- //    };
 
     static unsigned char palette_RGB_8bit[256][3];
     for(i = 0; i < 256; i++){
@@ -244,8 +220,24 @@ void fill_palette_mode_x(){
     outb(0x00, 0x03C8);
 
     /* Write all 64 colors from array. */
-    // REP_OUTSB (0x03C9, palette_RGB, 64 * 3);
     REP_OUTSB (0x03C9, palette_RGB_8bit, 256 * 3);
+}
+
+/*
+ * fill_palette_mode_x_custom
+ *   DESCRIPTION: Fill VGA palette with necessary colors for the custom photo for 
+ *                game.  
+ *   INPUTS: none
+ *   OUTPUTS: none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: changes the palette colors for the rest of the colors
+ */   
+void fill_palette_mode_x_custom(uint8_t * palette){
+    /* Start writing at color 64. */
+    outb (0x40, 0x03C8);
+
+    /* Write all 64 colors from array. */
+    REP_OUTSB (0x03C9, palette, 192 * 3);
 }
 
 /*
@@ -336,6 +328,27 @@ void plot_pixel(int x, int y, uint8_t color){
 }
 
 /*
+ * get_pixel
+ *   DESCRIPTION: Plots the pixel into build buffer in vga memory format
+ *   INPUTS: 	x 		- screen x pos
+ 				y 		- screen y pos
+ *   OUTPUTS: color - color at the screen location
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: none
+ */  
+uint8_t get_pixel(int x, int y){
+	int idx = (y * SCREEN_X_DIM + x); 				// index of pixel row major form
+	int p_off = idx & 3; 						// which plane we are in
+	int p_idx = idx >> 2; 							// which index we are in within that plane
+	// build_buf[p_off * PLANE_DIM + p_idx] = color; 	// plot pixel into buffer
+
+	SET_WRITE_MASK(1 << (p_off + 8));							// set the write mask
+	// return (fb_addr)[p_idx] & (0xFF << (p_off << 3));
+	return 0;
+	// build_buf[p_off * PLANE_DIM + p_idx] = color; 	// plot pixel into buffer
+}
+
+/*
  * show_screen
  *   DESCRIPTION: Show the logical view window on the video display.
  *   INPUTS: none
@@ -385,15 +398,25 @@ void show_screen(){
  */   
 void draw_mouse_cursor(int * curr_x, int * curr_y, int dx, int dy, int frames, int sx, int sy){
 	int i;
+	// int save_x, save_y;
 	int * prev_x;
 	int * prev_y;
+	uint8_t* save_buf;
 	frames = frames == 0 ? 1 : frames;
 
 	for(i = 0; i < frames; i++){
+		save_buf = (fb_addr == VGA_VIDEO) ? cursor_save1 : cursor_save2;
 		prev_x = (fb_addr == VGA_VIDEO) ? &fb1_mouse_x_prev : &fb2_mouse_x_prev;
 		prev_y = (fb_addr == VGA_VIDEO) ? &fb1_mouse_y_prev : &fb2_mouse_y_prev;
 
-		draw_rectangle(*prev_x, *prev_y, 0, VGA_CURSOR_SIZE, VGA_CURSOR_SIZE);
+		// draw_rectangle(*prev_x, *prev_y, 0, VGA_CURSOR_SIZE, VGA_CURSOR_SIZE);
+
+		// // write original screen
+		// for(save_y = 0; save_y < VGA_CURSOR_SIZE; save_y++){
+		// 	for(save_x = 0; save_x < VGA_CURSOR_SIZE; save_x++){
+		// 		save_buf[save_y * VGA_CURSOR_SIZE + save_x] = get_pixel(curr_x + save_x, curr_y + save_y);
+		// 	}
+		// }
 
 		*curr_x += dx / frames == 0 ? sx : dx / frames;
 		*curr_y -= dy / frames == 0 ? sy : dy / frames;
@@ -403,6 +426,13 @@ void draw_mouse_cursor(int * curr_x, int * curr_y, int dx, int dy, int frames, i
 
 		*curr_x = *curr_x < 0 ? 0 : *curr_x;
 		*curr_y = *curr_y < 0 ? 0 : *curr_y;
+
+		// // save original screen
+		// for(save_y = 0; save_y < VGA_CURSOR_SIZE; save_y++){
+		// 	for(save_x = 0; save_x < VGA_CURSOR_SIZE; save_x++){
+		// 		save_buf[save_y * VGA_CURSOR_SIZE + save_x] = get_pixel(curr_x + save_x, curr_y + save_y);
+		// 	}
+		// }
 
 		draw_rectangle(*curr_x, *curr_y, 3, VGA_CURSOR_SIZE, VGA_CURSOR_SIZE);
 
@@ -425,16 +455,32 @@ void draw_mouse_cursor(int * curr_x, int * curr_y, int dx, int dy, int frames, i
  *   RETURN VALUE: none
  *   SIDE EFFECTS: plots image on screen
  */   
-void draw_image(uint8_t * img){
-	int i, j;
+void draw_image_322(uint8_t * img){
+	int y, x;
 
-	for(i = 0; i < SCREEN_Y_DIM; i++){
-		for(j = 0; j < SCREEN_X_DIM; j++){
-			// plot_pixel(j, i, img[i * SCREEN_Y_DIM + j]);
-			if(img[i * SCREEN_Y_DIM + j] == 0xff) // 
-				plot_pixel(j, i, 0x1C);
-			else
-				plot_pixel(j, i, 0x03);
+	for(y = 0; y < SCREEN_Y_DIM; y++){
+		for(x = 0; x < SCREEN_X_DIM; x++){
+			plot_pixel(x, y, img[y * SCREEN_Y_DIM + (x + y * 120)]);
+		}
+	}
+}
+
+/*
+ * draw_image
+ *   DESCRIPTION: 	img - pointer to array of pixels
+ *   INPUTS: none
+ *   OUTPUTS: none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: plots image on screen
+ */   
+void draw_image_565(pixel_565_t * img){
+	int y, x;
+
+	fill_palette_mode_x_custom(get_palette(img));
+
+	for(y = 0; y < SCREEN_Y_DIM; y++){
+		for(x = 0; x < SCREEN_X_DIM; x++){
+			plot_pixel(x, y, (uint8_t)(img[y * SCREEN_Y_DIM + (x + y * 120)].pixel & 0x00FF));
 		}
 	}
 }

@@ -6,7 +6,7 @@
 #define LV_ATTRIBUTE_IMG_BIG_SUR
 #endif
 
-#define LV_COLOR_DEPTH 1
+#define LV_COLOR_DEPTH 16
 
 const LV_ATTRIBUTE_MEM_ALIGN LV_ATTRIBUTE_IMG_BIG_SUR uint8_t big_sur_map[] = {
 #if LV_COLOR_DEPTH == 1 || LV_COLOR_DEPTH == 8

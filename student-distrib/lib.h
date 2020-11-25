@@ -32,6 +32,10 @@ void update_cursor(int x, int y);
 int32_t bad_userspace_addr(const void* addr, int32_t len);
 int32_t safe_strncpy(int8_t* dest, const int8_t* src, int32_t n);
 
+/* quick sort function */
+void swap(void* v1, void* v2, int size);
+void qsort(void* v, int size, int left, int right, int (*comp)(void*, void*));
+
 /* Port read functions */
 /* Inb reads a byte and returns its value as a zero-extended 32-bit
  * unsigned int */
@@ -155,6 +159,52 @@ do {                                    \
             : "r"(flags)                \
             : "memory", "cc"            \
     );                                  \
+} while (0)
+
+/* 
+ * macro used to write an array of two-byte values to two consecutive ports 
+ */
+#define REP_OUTSW(port,source,count)                                    \
+do {                                                                    \
+    asm volatile ("                                                     \
+     1: movw 0(%1),%%ax                                                ;\
+    outw %%ax,(%w2)                                                ;\
+    addl $2,%1                                                     ;\
+    decl %0                                                        ;\
+    jne 1b                                                          \
+    " : /* no outputs */                                                \
+      : "c" ((count)), "S" ((source)), "d" ((port))                     \
+      : "eax", "memory", "cc");                                         \
+} while (0)
+
+/* 
+ * macro used to write an array of one-byte values to two consecutive ports 
+ */
+#define REP_OUTSB(port,source,count)                                    \
+do {                                                                    \
+    asm volatile ("                                                     \
+     1: movb 0(%1),%%al                                                ;\
+    outb %%al,(%w2)                                                ;\
+    incl %1                                                        ;\
+    decl %0                                                        ;\
+    jne 1b                                                          \
+    " : /* no outputs */                                                \
+      : "c" ((count)), "S" ((source)), "d" ((port))                     \
+      : "eax", "memory", "cc");                                         \
+} while (0)
+
+/* 
+ * macro used to target a specific video plane or planes when writing
+ * to video memory in mode X; bits 8-11 in the mask_hi_bits enable writes
+ * to planes 0-3, respectively
+ */
+#define SET_WRITE_MASK(mask_hi_bits)                                    \
+do {                                                                    \
+    asm volatile ("                                                     \
+    movw $0x03C4,%%dx       /* set write mask                    */;\
+    movb $0x02,%b0                                                 ;\
+    outw %w0,(%%dx)                                                 \
+    " : : "a" ((mask_hi_bits)) : "edx", "memory");                      \
 } while (0)
 
 #endif /* _LIB_H */
