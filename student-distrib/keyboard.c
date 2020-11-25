@@ -3,6 +3,7 @@
 #include "i8259.h"
 
 #define BUF_SIZE 			128			//buffer can contain 128 chars
+#define MAX_TERMINALS		3			//we support maximum of 3 terminals
 /*Scan Code Set 1*/
 #define TAB_PRESSED			0x0F		//scan code for tab key
 #define BACKSPACE_PRESSED	0x0E		//scan code for backspace key
@@ -10,9 +11,13 @@
 #define CTRL_PRESSED		0x1D		//scan code for left control key; also for right control's second byte
 #define LSHIFT_PRESSED		0x2A		//scan code for left shift key
 #define RSHIFT_PRESSED		0x36		//scan code for right shift key
-#define ALT_PRESSED			0x38		//scan codee for left alt key; also right alt's second byte
+#define ALT_PRESSED			0x38		//scan code for left alt key; also right alt's second byte
 #define CAPSLOCK_PRESSED	0x3A		//scan code for capslock key
 #define RIGHT_KEY_BYTE		0xE0		//RCTRL, RALT first byte
+
+#define F1_PRESSED			0x3B		//scan code for f1 key
+#define F2_PRESSED			0x3C		//scan code for f2 key
+#define F3_PRESSED			0x3D		//scan code for f3 key
 
 #define SPACE_PRESSED		0x39		//scan code for space key
 
@@ -52,11 +57,13 @@ char kb_sc_row3_shift_chars[] = {'|', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', '<', '>
 char kb_sc_row3_caps_chars[] = {'\\', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', ',', '.', '/'};
 char kb_sc_row3_caps_shift[] = {'|', 'z', 'x', 'c', 'v', 'b', 'n', 'm', '<', '>', '?'};
 
-char buffer[BUF_SIZE];
+int cur_terminal_num;
+char input_bufs[MAX_TERMINALS][BUF_SIZE];	//array of input buffers for terminal 1-3
 char terminal_buf[BUF_SIZE];
+char * buffer;
 int buffer_cur_idx;
 int terminal_cur_idx;
-int buffer_accessed_flag;				// 1 - being read/written to; 0 - not used (needed since terminal and keyboard driver both access it)
+int buffer_accessed_flag;					// 1 - being read/written to; 0 - not used (needed since terminal and keyboard driver both access it)
 
 /* __keyboard_init__
  * 		Inputs: none
@@ -69,6 +76,8 @@ void __keyboard_init__(){
 	buffer_cur_idx = 0;
 	terminal_cur_idx = 0;
 	buffer_accessed_flag = 0;
+	buffer = input_bufs[1];
+	cur_terminal_num = 1;
 }
 
 /* handle_keyboard_interrupt
@@ -79,104 +88,124 @@ void __keyboard_init__(){
  */
 void handle_keyboard_interrupt(){
 	cli();
-	char kb_char = NULL;
+	char kb_char = '\0';
 	unsigned char keyboard_input = inb(KB_PORT);
+	
 	// conditions for different key presses
-	if (keyboard_input == TAB_PRESSED) {
-		kb_char = ' ';
-	} else if (keyboard_input == BACKSPACE_PRESSED) {
-		handle_backspace();
-	} else if (keyboard_input == ENTER_PRESSED) {
-		handle_enter();
-	} else if (keyboard_input == CTRL_PRESSED) {		//update control flag
-		ctrl_flag = 1;
-	} else if (keyboard_input == (CTRL_PRESSED + RELEASED_OFFSET)) {
-		ctrl_flag = 0;
-	} else if (keyboard_input == LSHIFT_PRESSED) {		//update shift flag
-		shift_flag = 1;
-	} else if (keyboard_input == LSHIFT_PRESSED + RELEASED_OFFSET) {
-		shift_flag = 0;
-	} else if (keyboard_input == RSHIFT_PRESSED) {
-		shift_flag = 1;
-	} else if (keyboard_input == RSHIFT_PRESSED + RELEASED_OFFSET) {
-		shift_flag = 0;
-	} else if (keyboard_input == ALT_PRESSED) {			//update alt flag
-		alt_flag = 1;
-	} else if (keyboard_input == ALT_PRESSED + RELEASED_OFFSET) {
-		alt_flag = 0;
-	} else if (keyboard_input == CAPSLOCK_PRESSED) {	//update capslock flag
-		capslock_flag = capslock_flag ^ 1;
-	} else if (keyboard_input == RIGHT_KEY_BYTE) {
-		switch(inb(KB_PORT)) {							//read secondbyte
-			case CTRL_PRESSED:
-				ctrl_flag = 1;
-				break;
-			case ALT_PRESSED:
-				alt_flag = 1;
-				break;
-			case CTRL_PRESSED + RELEASED_OFFSET:
-				ctrl_flag = 0;
-				break;
-			case ALT_PRESSED + RELEASED_OFFSET:
-				alt_flag = 0;
-				break;
-			default:
-				break;
-		}
-	} else if(keyboard_input == SPACE_PRESSED){					// space pressed = 0x39
-		kb_char = ' ';
-	} else if((keyboard_input <= 0x35) && (keyboard_input > 0x01)){
-	// between 0x35 = /, 0x01 = esc on keyboard
+	switch(keyboard_input) {
+		case TAB_PRESSED:
+			kb_char = ' ';
+			break;
+		case BACKSPACE_PRESSED:
+			handle_backspace();
+			break;
+		case ENTER_PRESSED:
+			handle_enter();
+			break;
+		case CTRL_PRESSED:							//update control flag
+			ctrl_flag = 1;
+			break;
+		case (CTRL_PRESSED + RELEASED_OFFSET):
+			ctrl_flag = 0;
+			break;
+		case LSHIFT_PRESSED:						//update shift flag
+			shift_flag = 1;
+			break;
+		case (LSHIFT_PRESSED + RELEASED_OFFSET):
+			shift_flag = 0;
+			break;
+		case RSHIFT_PRESSED:
+			shift_flag = 1;
+			break;
+		case (RSHIFT_PRESSED + RELEASED_OFFSET):
+			shift_flag = 0;
+			break;
+		case ALT_PRESSED:							//update alt flag
+			alt_flag = 1;
+			break;
+		case (ALT_PRESSED + RELEASED_OFFSET):
+			alt_flag = 0;
+			break;
+		case CAPSLOCK_PRESSED:						//update capslock flag
+			capslock_flag = capslock_flag ^ 1;
+			break;
+		case SPACE_PRESSED:
+			kb_char = ' ';
+			break;
+		case F1_PRESSED:							//perform terminal switch when alt+function-key intercepted
+			if (alt_flag) { terminal_switch(1); }
+			break;
+		case F2_PRESSED:
+			if (alt_flag) { terminal_switch(2); }
+			break;
+		case F3_PRESSED:
+			if (alt_flag) { terminal_switch(3); }
+			break;
+		case RIGHT_KEY_BYTE:
+			switch(inb(KB_PORT)) {					//read secondbyte
+				case CTRL_PRESSED:
+					ctrl_flag = 1;
+					break;
+				case ALT_PRESSED:
+					alt_flag = 1;
+					break;
+				case CTRL_PRESSED + RELEASED_OFFSET:
+					ctrl_flag = 0;
+					break;
+				case ALT_PRESSED + RELEASED_OFFSET:
+					alt_flag = 0;
+					break;
+				default:
+					break;
+			}
+			break;
+		default:
+			if((keyboard_input <= 0x35) && (keyboard_input > 0x01)){
+			// between 0x35 = /, 0x01 = esc on keyboard
 
-		if(keyboard_input <= 0x0D && keyboard_input >= ROW0_OFFSET_MAP){
-			// between 0x02 = 1 and 0x0D = "="				
-			if (shift_flag) {															//deal with shift-related chars
-				kb_char = kb_sc_row0_shift_chars[keyboard_input - ROW0_OFFSET_MAP]; 		
-			} else {
-				kb_char = kb_sc_row0_nums[keyboard_input - ROW0_OFFSET_MAP];				
-			}
-		} else if(keyboard_input <= 0x1B && keyboard_input >= ROW1_OFFSET_MAP){
-			// between 0x10 = q and 0x1B = ]
-			if (shift_flag && capslock_flag) {
-				kb_char = kb_sc_row1_caps_shift[keyboard_input - ROW1_OFFSET_MAP]; 	
-			} else if(shift_flag){														//deal with shift-related chars
-				kb_char = kb_sc_row1_shift_chars[keyboard_input - ROW1_OFFSET_MAP];	
-			} else if(capslock_flag){
-				kb_char = kb_sc_row1_caps_chars[keyboard_input - ROW1_OFFSET_MAP];		
-			} else {
-				kb_char = kb_sc_row1_let[keyboard_input - ROW1_OFFSET_MAP];			
-			}
-		} else if(keyboard_input <= 0x29 && keyboard_input >= ROW2_OFFSET_MAP){
-			// between 0x1E = a and 0x29 =  `
-			if (shift_flag && capslock_flag) {											//deal with shift-related chars
-				kb_char = kb_sc_row2_caps_shift[keyboard_input - ROW2_OFFSET_MAP]; 	
-			} else if (shift_flag) {													//deal with shift-related chars
-				kb_char = kb_sc_row2_shift_chars[keyboard_input - ROW2_OFFSET_MAP]; 	
-			} else if(capslock_flag){
-				kb_char = kb_sc_row2_caps_chars[keyboard_input - ROW2_OFFSET_MAP];		
-			} else {
-				kb_char = kb_sc_row2_let[keyboard_input - ROW2_OFFSET_MAP];			
-			}
-		} else if(keyboard_input <= 0x35 && keyboard_input >= ROW3_OFFSET_MAP){
-			// between 0x2B = \ and 0x35 = /
-			if (shift_flag && capslock_flag) {
-				kb_char = kb_sc_row3_caps_shift[keyboard_input - ROW3_OFFSET_MAP]; 	
-			} else if (shift_flag) {													//deal with shift-related chars
-				kb_char = kb_sc_row3_shift_chars[keyboard_input - ROW3_OFFSET_MAP]; 	
-			} else if(capslock_flag){
-				kb_char = kb_sc_row3_caps_chars[keyboard_input - ROW3_OFFSET_MAP];		
-			} else {
-				kb_char = kb_sc_row3_let[keyboard_input - ROW3_OFFSET_MAP];			
-			}
-		} else{
-			send_eoi(KB_IRQ);
-			sti();
-			return;
-		}
-	} else {
-		send_eoi(KB_IRQ);
-		sti();
-		return;
+				if(keyboard_input <= 0x0D && keyboard_input >= ROW0_OFFSET_MAP){
+					// between 0x02 = 1 and 0x0D = "="				
+					if (shift_flag) {															//deal with shift-related chars
+						kb_char = kb_sc_row0_shift_chars[keyboard_input - ROW0_OFFSET_MAP]; 		
+					} else {
+						kb_char = kb_sc_row0_nums[keyboard_input - ROW0_OFFSET_MAP];				
+					}
+				} else if(keyboard_input <= 0x1B && keyboard_input >= ROW1_OFFSET_MAP){
+					// between 0x10 = q and 0x1B = ]
+					if (shift_flag && capslock_flag) {
+						kb_char = kb_sc_row1_caps_shift[keyboard_input - ROW1_OFFSET_MAP]; 	
+					} else if(shift_flag){														//deal with shift-related chars
+						kb_char = kb_sc_row1_shift_chars[keyboard_input - ROW1_OFFSET_MAP];	
+					} else if(capslock_flag){
+						kb_char = kb_sc_row1_caps_chars[keyboard_input - ROW1_OFFSET_MAP];		
+					} else {
+						kb_char = kb_sc_row1_let[keyboard_input - ROW1_OFFSET_MAP];			
+					}
+				} else if(keyboard_input <= 0x29 && keyboard_input >= ROW2_OFFSET_MAP){
+					// between 0x1E = a and 0x29 =  `
+					if (shift_flag && capslock_flag) {											//deal with shift-related chars
+						kb_char = kb_sc_row2_caps_shift[keyboard_input - ROW2_OFFSET_MAP]; 	
+					} else if (shift_flag) {													//deal with shift-related chars
+						kb_char = kb_sc_row2_shift_chars[keyboard_input - ROW2_OFFSET_MAP]; 	
+					} else if(capslock_flag){
+						kb_char = kb_sc_row2_caps_chars[keyboard_input - ROW2_OFFSET_MAP];		
+					} else {
+						kb_char = kb_sc_row2_let[keyboard_input - ROW2_OFFSET_MAP];			
+					}
+				} else if(keyboard_input <= 0x35 && keyboard_input >= ROW3_OFFSET_MAP){
+					// between 0x2B = \ and 0x35 = /
+					if (shift_flag && capslock_flag) {
+						kb_char = kb_sc_row3_caps_shift[keyboard_input - ROW3_OFFSET_MAP]; 	
+					} else if (shift_flag) {													//deal with shift-related chars
+						kb_char = kb_sc_row3_shift_chars[keyboard_input - ROW3_OFFSET_MAP]; 	
+					} else if(capslock_flag){
+						kb_char = kb_sc_row3_caps_chars[keyboard_input - ROW3_OFFSET_MAP];		
+					} else {
+						kb_char = kb_sc_row3_let[keyboard_input - ROW3_OFFSET_MAP];			
+					}
+				} 
+			} 
+			break;
 	}
 
 
@@ -204,25 +233,23 @@ void handle_keyboard_interrupt(){
 	}
 
 	send_eoi(KB_IRQ);
+	sti();
 	return;
 }
 
 /* get_kb_buf
- *		Description: copies keyboard buffer into terminal's buffer
+ *		Description: copies keyboard buffer into terminal driver's buffer
  * 		Inputs: buf = terminal buffer ptr
  * 		Return Value: index of last char in buffer
  */
 int get_kb_buf(char* buf) {
-	if(terminal_cur_idx >= 0 && terminal_cur_idx <= BUF_SIZE){
-		memcpy((void*)buf, (void*)terminal_buf, terminal_cur_idx);
-
-		// return 0 when its empty
-		return terminal_cur_idx - 1 < 0 ? 0 : terminal_cur_idx - 1;
-	} else{
+	if(terminal_cur_idx < 0 || terminal_cur_idx >= BUF_SIZE){
 		clear_terminal_buf();
-		memcpy((void*)buf, (void*)terminal_buf, terminal_cur_idx);
-		return 0;
 	}
+	memcpy((void*)buf, (void*)terminal_buf, terminal_cur_idx);
+
+	// return 0 when its empty
+	return terminal_cur_idx - 1 < 0 ? 0 : terminal_cur_idx - 1;
 }
 
 /* clear_terminal_buf
@@ -287,6 +314,24 @@ void handle_enter() {
 	}
 }
 
+/* terminal_switch
+ *		Description: ..................................................................................
+ * 		Inputs: terminal_num - a terminal number 1-3
+ * 		Return Value: none
+ */
+void terminal_switch(int terminal_num) {
+	if (terminal_num == cur_terminal_num) { return; }
+
+	//switch input buffer
+	buffer = input_bufs[terminal_num];
+	memcpy((void*)terminal_buf, (void*)buffer, BUF_SIZE);
+
+	//saves current terminal's text screen and cursor position, then restores next terminal's
+	vid_switch(cur_terminal_num, terminal_num);
+	
+	cur_terminal_num = terminal_num;				//update current terminal number
+}
+
 /* set_terminal_read_flag
  *		Description: when terminal read is in use, we set flag to 1
  * 		Inputs: flag - whether terminal read system call is running
@@ -295,3 +340,5 @@ void handle_enter() {
 void set_terminal_read_flag(int flag){
 	terminal_read_flag = flag;
 }
+
+
