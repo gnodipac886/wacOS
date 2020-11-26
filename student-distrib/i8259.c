@@ -15,7 +15,7 @@ uint8_t slave_mask;  /* IRQs 8-15 */
  *      Function: Initialize the i8259 PIC. Load ICW, setup master/slave pic.s
  *      Side Effects: none     
  */
-void i8259_init(void) {
+void __init_i8259__(void) {
 
     // save mask
     // uint32_t _master_mask_save, _slave_mask_save;

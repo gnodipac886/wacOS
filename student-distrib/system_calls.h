@@ -18,11 +18,15 @@
 #define MAX_TASKS           6					// Maximum number of tasks open is 6
 #define KB_BUF_SIZE 		128					// buffer can contain 128 chars
 #define FAILURE				-1					// return value
+#define MAX_TERMINALS    	3          			// Max terminals supported
 
 typedef struct pcb{
 	char 	arg[128];
 	int32_t pid;
 	int32_t parent_pid;
+	uint32_t curr_esp;
+	uint32_t curr_ebp;
+	uint32_t curr_eip;
     int32_t parent_kernel_esp;
     int32_t parent_kernel_ebp;
 	int8_t 	vidmap_page_flag;
@@ -42,5 +46,6 @@ int32_t vidmap(uint8_t ** screen_start);
 int32_t invalid_func();
 file_descriptor_t* _get_fd_arr();
 pcb_t* _get_curr_pcb(int32_t* ptr);
+pcb_t** _get_pcb_arr();
 
 #endif /* _SYSTEM_CALLS_H */

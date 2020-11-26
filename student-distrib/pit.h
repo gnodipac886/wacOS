@@ -11,7 +11,7 @@
 #define PIT_CMD_BYTE        0x36            // Command byte for Counter 0, BCD = 0, Read/Write mode = 3, Square wave mode
  
 /* pit_init: Initializes PIT */
-void __pit_init__();
+void __init_pit__();
 /* handle_pit_interrupt: processes pit interrupt.*/
 void handle_pit_interrupt();
 
