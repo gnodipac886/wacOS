@@ -1,5 +1,5 @@
 #include "assembly_linkage.h"
-.globl keyboard_interrupt_stub, rtc_interrupt_stub
+.globl keyboard_interrupt_stub, rtc_interrupt_stub, pit_interrupt_stub
 .globl system_call_interrupt, system_call_ret
 .globl squash_user_exception, is_exception
 
@@ -20,6 +20,10 @@ rtc_interrupt_stub:
 	pushl $-9									/*Negative num for rtc IRQ8*/
 	jmp common_interrupt
 
+pit_interrupt_stub:
+	pushl $-1									/*Negative num for pit IRQ0*/
+	jmp common_interrupt
+
 common_interrupt:
 	pushal									  	/*save all register values before interrupt*/
 	movl 32(%esp), %eax							/*Get neg IRQ num on Kernel stack*/
@@ -30,7 +34,7 @@ common_interrupt:
 	iret									   	/*return from interrupt*/
 
 interrupt_handler_jump:
-	.long 0										/*handler ptrs for IR lines of Master PIC*/
+	.long handle_pit_interrupt					/*handler ptrs for IR lines of Master PIC*/									/*handler ptrs for IR lines of Master PIC*/
 	.long handle_keyboard_interrupt
 	.long 0
 	.long 0
@@ -47,7 +51,6 @@ interrupt_handler_jump:
 	.long 0
 	.long 0
 	.long 0
-
 
 
 

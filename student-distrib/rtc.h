@@ -10,7 +10,7 @@
 #define RTC_RATE_MAX    0x10    // Max rate for frequency is 16.
 
 /* rtc_init: Initializes RTC */
-void __rtc_init__();
+void __init_rtc__();
 /* handle_rtc_interrupt: processes rtc interrupt.*/
 void handle_rtc_interrupt();
 /* rtc_open: Opens rtc file */
