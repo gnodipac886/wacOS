@@ -6,6 +6,8 @@
 #include "x86_desc.h"
 #include "keyboard.h"
 #include "lib.h"
+#include "scheduler.h"
+
 
 // global variables
 int32_t curr_avail_pid = 0;
@@ -42,6 +44,8 @@ int32_t execute(const uint8_t* command){
 	char elf[] = {(char)0x7f,'E','L','F'};									// magic number at front of executable files
 	char ELF_check_buf[4];
 	dentry_t cur_dentry;
+	int* base_shell_flag = _get_base_shell_flag();
+	int* pid_tracker = _get_pid_tracker();
 
 	// sanity checks
 	if(command == NULL){
@@ -105,7 +109,17 @@ int32_t execute(const uint8_t* command){
 	strcpy(pcb->arg, task_arg); 											// move the args into pcb
 	pcb->vidmap_page_flag = 0;												// no vidmap paging set up for this pcb yet
 	pcb->pid = curr_avail_pid;	 											// set pid in the pcb
-	pcb->parent_pid = pcb->pid == 0 ? 0 : _get_curr_pcb((int32_t*)&i)->pid; // if current pid is 0, we are shell, so we ahve no parent
+	pcb->parent_pid = *base_shell_flag == 1 ? pcb->pid : _get_curr_pcb((int32_t*)&i)->pid;	// check for base shell, 1 = base shell, so pid == parent_pid
+
+	*base_shell_flag = 0;													// reset flag back to not base shell
+
+	// replace pid running on terminals
+	for(i = 0; i < MAX_TERMINALS; i++){
+		// new process running on top of a parent then replace pid
+		if(pcb->parent_pid == pid_tracker[i]){
+			pid_tracker[i] = pcb->pid;
+		}
+	}
 
 	// store parent kernel stack info - esp and ebp
 	asm volatile(
@@ -192,11 +206,13 @@ int32_t execute(const uint8_t* command){
  *      Side Effects: none
  */
 int32_t halt(uint8_t status){
+	int i;					// loop counter
 	int fd;
 	uint32_t parent_k_esp;
 	uint32_t parent_k_ebp;
 	pcb_t* pcb = _get_curr_pcb(&fd);										// get the current pcb
 	pcb_t* par_pcb = pcb_arr[pcb->parent_pid]; 								// get the parent pcb array
+	int* pid_tracker = _get_pid_tracker();
 
 	for(fd = 0; fd < MAX_FILES_OPEN; fd++){									// close all open files
 		if(pcb->fd_arr[fd].flags == FILE_IN_USE){
@@ -216,6 +232,13 @@ int32_t halt(uint8_t status){
 	exe_paging(pcb->pid, 0);												// turn off paging for current user
 	exe_paging(pcb->parent_pid, 1);											// revert back to parent paging
 
+	// replace pid running on terminals with its parent
+	for(i = 0; i < MAX_TERMINALS; i++){
+		if(pcb->pid == pid_tracker[i]){
+			pid_tracker[i] = pcb->parent_pid;
+		}
+	}
+
 	parent_k_esp = pcb->parent_kernel_esp;									// restore esp and ebp of parent 
 	parent_k_ebp = pcb->parent_kernel_ebp;
 
@@ -229,7 +252,7 @@ int32_t halt(uint8_t status){
 	clear_terminal_buf();													// clear keyboard buffer to prevent deleting the shell prompt
 	clear_kb_buf();
 
-	if(pcb->pid == 0 && pcb->parent_pid == 0){								// base shell case
+	if(pcb->pid == pcb->parent_pid){										// base shell case
 		execute((uint8_t*)"shell");
 	}
 	asm volatile(
@@ -451,7 +474,7 @@ int32_t invalid_func(){
 /* _get_fd_arr
  *      Inputs: none
  *      Return Value: return the file_descriptor_t
- *      Function:
+ *      Function: helper function to retrieve fd_arr
  *      Side Effects: none
  */
 file_descriptor_t* _get_fd_arr(){
@@ -476,4 +499,14 @@ pcb_t* _get_curr_pcb(int32_t* ptr) {
 	);
 
 	return (pcb_t*)((uint32_t)esp & PCB_MASK); 														// bitwise and with the mask and return the pointer
+}
+
+/* _get_curr_pcb
+ *      Inputs: none
+ *      Return Value: pcb_arr
+ *      Function: helper function to retrieve pcb_arr
+ *      Side Effects: none
+ */
+pcb_t** _get_pcb_arr(){
+	return pcb_arr;
 }

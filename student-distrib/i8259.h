@@ -44,7 +44,7 @@
 /* Externally-visible functions */
 
 /* Initialize both PICs */
-void i8259_init(void);
+void __init_i8259__(void);
 /* Enable (unmask) the specified IRQ */
 void enable_irq(uint32_t irq_num);
 /* Disable (mask) the specified IRQ */

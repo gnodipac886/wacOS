@@ -1,6 +1,7 @@
 #include "keyboard.h"
 #include "lib.h"
 #include "i8259.h"
+#include "scheduler.h"
 
 #define BUF_SIZE 			128			//buffer can contain 128 chars
 #define MAX_TERMINALS		3			//we support maximum of 3 terminals
@@ -57,10 +58,14 @@ char kb_sc_row3_shift_chars[] = {'|', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', '<', '>
 char kb_sc_row3_caps_chars[] = {'\\', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', ',', '.', '/'};
 char kb_sc_row3_caps_shift[] = {'|', 'z', 'x', 'c', 'v', 'b', 'n', 'm', '<', '>', '?'};
 
-int cur_terminal_num;
+int curr_screen;
 char input_bufs[MAX_TERMINALS][BUF_SIZE];	//array of input buffers for terminal 1-3
-char terminal_buf[BUF_SIZE];
+char ter_bufs[MAX_TERMINALS][BUF_SIZE]; 	// array of input buffers for terminals
+char * terminal_buf;
 char * buffer;
+
+int input_indicies[MAX_TERMINALS];
+int terminal_indicies[MAX_TERMINALS];
 int buffer_cur_idx;
 int terminal_cur_idx;
 int buffer_accessed_flag;					// 1 - being read/written to; 0 - not used (needed since terminal and keyboard driver both access it)
@@ -71,13 +76,22 @@ int buffer_accessed_flag;					// 1 - being read/written to; 0 - not used (needed
  * 		Function: initialization of the keyboard for interrupt
  *		Side Effects: none
  */
-void __keyboard_init__(){
+void __init_keyboard__(){
+	int i;
 	enable_irq(KB_IRQ);
-	buffer_cur_idx = 0;
-	terminal_cur_idx = 0;
 	buffer_accessed_flag = 0;
-	buffer = input_bufs[1];
-	cur_terminal_num = 1;
+
+	curr_screen = 0;
+	buffer = input_bufs[curr_screen];
+	terminal_buf = ter_bufs[curr_screen];
+
+	for(i = 0; i < MAX_TERMINALS; i++){
+		input_indicies[i] = 0;
+		terminal_indicies[i] = 0;
+	}
+
+	buffer_cur_idx = input_indicies[curr_screen];
+	terminal_cur_idx = terminal_indicies[curr_screen];
 }
 
 /* handle_keyboard_interrupt
@@ -133,13 +147,13 @@ void handle_keyboard_interrupt(){
 			kb_char = ' ';
 			break;
 		case F1_PRESSED:							//perform terminal switch when alt+function-key intercepted
-			if (alt_flag) { terminal_switch(1); }
+			if (alt_flag) { terminal_switch(0); }
 			break;
 		case F2_PRESSED:
-			if (alt_flag) { terminal_switch(2); }
+			if (alt_flag) { terminal_switch(1); }
 			break;
 		case F3_PRESSED:
-			if (alt_flag) { terminal_switch(3); }
+			if (alt_flag) { terminal_switch(2); }
 			break;
 		case RIGHT_KEY_BYTE:
 			switch(inb(KB_PORT)) {					//read secondbyte
@@ -314,24 +328,6 @@ void handle_enter() {
 	}
 }
 
-/* terminal_switch
- *		Description: ..................................................................................
- * 		Inputs: terminal_num - a terminal number 1-3
- * 		Return Value: none
- */
-void terminal_switch(int terminal_num) {
-	if (terminal_num == cur_terminal_num) { return; }
-
-	//switch input buffer
-	buffer = input_bufs[terminal_num];
-	memcpy((void*)terminal_buf, (void*)buffer, BUF_SIZE);
-
-	//saves current terminal's text screen and cursor position, then restores next terminal's
-	vid_switch(cur_terminal_num, terminal_num);
-	
-	cur_terminal_num = terminal_num;				//update current terminal number
-}
-
 /* set_terminal_read_flag
  *		Description: when terminal read is in use, we set flag to 1
  * 		Inputs: flag - whether terminal read system call is running
@@ -341,4 +337,42 @@ void set_terminal_read_flag(int flag){
 	terminal_read_flag = flag;
 }
 
+/* terminal_switch
+ *		Description: ..................................................................................
+ * 		Inputs: terminal_num - a terminal number 0-2
+ * 		Return Value: none
+ */
+void terminal_switch(int terminal_num) {
+	/* Do nothing if its the same terminal*/
+	if (terminal_num == curr_screen) { return; }
+	
+	while(get_curr_scheduled() != terminal_num);
+	cli();
 
+	//switch input buffer
+	buffer = input_bufs[terminal_num];
+	terminal_buf = ter_bufs[terminal_num];
+
+	input_indicies[curr_screen] = buffer_cur_idx;
+	terminal_indicies[curr_screen] = terminal_cur_idx;
+	buffer_cur_idx = input_indicies[terminal_num];
+	terminal_cur_idx = terminal_indicies[terminal_num];
+
+	// remember to change buffer indicies
+
+	//saves current terminal's text screen and cursor position, then restores next terminal's
+	vid_switch(curr_screen, terminal_num);
+	
+	curr_screen = terminal_num;				//update current terminal number
+
+	sti();
+}
+
+/* get_curr_screen
+ *		Description: returns which screen we are on
+ * 		Inputs: none
+ * 		Return Value: curr_screen - screen we are on right now
+ */
+int get_curr_screen(){
+	return curr_screen;
+}
