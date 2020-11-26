@@ -15,6 +15,7 @@
 #include "filesystem.h"
 #include "system_calls.h"
 #include "pit.h"
+#include "scheduler.h"
 
 #define RUN_TESTS
 
@@ -155,15 +156,16 @@ void entry(unsigned long magic, unsigned long addr) {
 
 	mod = (module_t*)mbi->mods_addr;										// initializing file system memory
 	/* Init the PIC */
-	i8259_init();
+	__init_i8259__();
 
 	/* Initialize devices, memory, filesystem, enable device interrupts on the
 	 * PIC, any other initialization stuff... */
-	__rtc_init__();			 												// Initialize rtc
-	__keyboard_init__();													// enable keyboard interrupt
+	__init_rtc__();			 												// Initialize rtc
+	__init_keyboard__();													// enable keyboard interrupt
 	__init_filesystem__((void*)(mod->mod_start)); 							// enable filesystem
 	__init_paging__();														// enable paging
-	__pit_init__();															// enalbe pit
+	__init_scheduler__();
+	__init_pit__();															// enalbe pit
 
 	/* Enable interrupts */
 	/* Do not enable the following until after you have set up your
@@ -171,6 +173,7 @@ void entry(unsigned long magic, unsigned long addr) {
 	 * without showing you any output */
 	printf("Enabling Interrupts\n");
 	sti();
+	enable_irq(0x00);
 
 #ifdef RUN_TESTS
 	/* Run tests */
@@ -178,7 +181,7 @@ void entry(unsigned long magic, unsigned long addr) {
 	
 #endif
 	/* Execute the first program ("shell") ... */
-	execute((uint8_t*)"shell");
+	//execute((uint8_t*)"shell");
 	/* Spin (nicely, so we don't chew up cycles) */
 	asm volatile (".1: hlt; jmp .1;");
 }

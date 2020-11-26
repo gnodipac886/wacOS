@@ -13,7 +13,7 @@ int rtc_virtual_frequency = 2;				// default RTC interrupt frequency = 2 Hz
  * 		Function: Initializes rtc and writes to the correct ports
  *		Side Effects: enables interrupt on PIC
  */
-void __rtc_init__(){
+void __init_rtc__(){
 	cli();
 	/*set IRQ8 */
 	outb(RTC_STATUS_REG + 0xB, RTC_IO_PORT);  // Select RTC status register B (offset = 0xB)
@@ -26,7 +26,7 @@ void __rtc_init__(){
 	int buf = 1024;							// RTC interrupt set to highest value = 1024 Hz.(Device interrupt rate will not change!)
 	_rtc_write((void*)(&buf));				
 	rtc_interrupt_occurred = 0;
-	sti();
+	// sti();
 }
 
 /* handle_rtc_interrupt 

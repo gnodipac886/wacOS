@@ -15,7 +15,7 @@
 
 static int screen_x;                                // current terminal's cursor position
 static int screen_y;
-static int terminal_cursor_pos[MAX_TERMINALS][2];   // stored cursor positions of terminals 1-3
+static int terminal_cursor_pos[MAX_TERMINALS][2] = {{0, 0}, {0, 0}, {0, 0}};   // stored cursor positions of terminals 1-3, 2 for x and y
 
 static char* video_mem = (char *)VIDEO;
 
@@ -260,8 +260,8 @@ void vid_enter() {
 void vid_switch(int old_t_num, int new_t_num) {
 
     //.........................(get virtual addr of physical 0xB8000, since scheduling changes virtual 0xB8000 mapping).........................................................
-    memcpy((void*) (VIDEO + old_t_num*VIDEO_SIZE), (void*) ..............., VIDEO_SIZE);    // save - copy from current video mem to old terminal's background buffer
-    memcpy((void*) ................., (void*) (VIDEO + new_t_num*VIDEO_SIZE), VIDEO_SIZE);  // restore - copy from new terminal's background buffer to current video mem
+    memcpy((void*) (VIDEO + (old_t_num + 1)*VIDEO_SIZE), (void*) VIDEO, VIDEO_SIZE);    // save - copy from current video mem to old terminal's background buffer
+    memcpy((void*) (VIDEO), (void*) (VIDEO + (new_t_num + 1)*VIDEO_SIZE), VIDEO_SIZE);  // restore - copy from new terminal's background buffer to current video mem
 
     // save current terminal's cursor position
     terminal_cursor_pos[old_t_num][0] = screen_x;
@@ -270,6 +270,7 @@ void vid_switch(int old_t_num, int new_t_num) {
     // restore new terminal's cursor position
     screen_x = terminal_cursor_pos[new_t_num][0];
     screen_y = terminal_cursor_pos[new_t_num][1];
+    update_cursor(screen_x, screen_y);
 }
 
 
