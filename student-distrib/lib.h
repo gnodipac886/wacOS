@@ -28,6 +28,7 @@ void vid_backspace();
 void vid_enter();
 void vid_switch(int old_t_num, int new_t_num);
 void update_cursor(int x, int y);
+void save_cursor(int terminal);
 
 /* Userspace address-check functions */
 int32_t bad_userspace_addr(const void* addr, int32_t len);

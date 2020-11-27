@@ -2,6 +2,7 @@
  * vim:ts=4 noexpandtab */
 
 #include "lib.h"
+#include "paging.h"
 
 #define VIDEO           0xB8000         // holds current video memory (text screen)
 #define NUM_COLS        80
@@ -49,7 +50,7 @@ void clear(void) {
  *       Also note: %x is the only conversion specifier that can use
  *       the "#" modifier to alter output. */
 int32_t printf(int8_t *format, ...) {
-
+    temp_map_phys_vid();
     /* Pointer to the format string */
     int8_t* buf = format;
 
@@ -154,6 +155,7 @@ format_char_switch:
         }
         buf++;
     }
+    temp_map_switch_back();
     return (buf - format);
 }
 
@@ -271,6 +273,19 @@ void vid_switch(int old_t_num, int new_t_num) {
     screen_x = terminal_cursor_pos[new_t_num][0];
     screen_y = terminal_cursor_pos[new_t_num][1];
     update_cursor(screen_x, screen_y);
+}
+
+/* save_cursor
+ *  Description: switches text screen and cursor position (helper for switching terminals)
+ *  Inputs:
+ *      terminal - which cursor to save
+ *  Return Value: none
+ *  Function: saves current terminal's text screen and cursor position
+ */
+void save_cursor(int terminal){
+    // save current terminal's cursor position
+    terminal_cursor_pos[terminal][0] = screen_x;
+    terminal_cursor_pos[terminal][1] = screen_y;
 }
 
 

@@ -50,7 +50,7 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes){
 
 	// tell kb driver terminal read is in use
 	set_terminal_read_flag(1);
-
+	sti();
     // keeps checking until keyboard enters \n or filled buffer
 	while(1){
 		memset(kb_buf, '\0', BUF_SZ);
@@ -62,6 +62,7 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes){
 		}
 	}
 	memcpy(buf, (void*)kb_buf, kb_buf_idx + 1);	 //kb_buf_idx + 1 = number of bytes written to user space buffer
+	cli();
 	return kb_buf_idx + 1;                       // number of bytes read
 }
 

@@ -14,7 +14,7 @@ int rtc_virtual_frequency = 2;				// default RTC interrupt frequency = 2 Hz
  *		Side Effects: enables interrupt on PIC
  */
 void __init_rtc__(){
-	cli();
+	// cli();
 	/*set IRQ8 */
 	outb(RTC_STATUS_REG + 0xB, RTC_IO_PORT);  // Select RTC status register B (offset = 0xB)
 	uint8_t reg_value = inb(CMOS_IO_PORT);  // Read register B value
@@ -37,7 +37,7 @@ void __init_rtc__(){
  *	  Side Effects: none	 
  */
 void handle_rtc_interrupt(){
-	cli();
+	// cli();
 	send_eoi(RTC_IRQ);
 
 	/* Clear register C to allow another interrupt.*/
