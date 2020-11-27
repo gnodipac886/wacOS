@@ -2,6 +2,7 @@
 #include "lib.h"
 #include "i8259.h"
 #include "scheduler.h"
+#include "paging.h"
 
 #define BUF_SIZE 			128			//buffer can contain 128 chars
 #define MAX_TERMINALS		3			//we support maximum of 3 terminals
@@ -102,6 +103,7 @@ void __init_keyboard__(){
  */
 void handle_keyboard_interrupt(){
 	cli();
+	temp_map_phys_vid();							// temporary switch vid memory mapping
 	char kb_char = '\0';
 	unsigned char keyboard_input = inb(KB_PORT);
 	
@@ -247,6 +249,7 @@ void handle_keyboard_interrupt(){
 	}
 
 	send_eoi(KB_IRQ);
+	temp_map_switch_back();												// switch back mapping 
 	sti();
 	return;
 }
@@ -346,8 +349,9 @@ void terminal_switch(int terminal_num) {
 	/* Do nothing if its the same terminal*/
 	if (terminal_num == curr_screen) { return; }
 	
-	while(get_curr_scheduled() != terminal_num);
-	cli();
+	// sti();
+	// while(get_curr_scheduled() != terminal_num);
+	// cli();
 
 	//switch input buffer
 	buffer = input_bufs[terminal_num];
@@ -364,8 +368,6 @@ void terminal_switch(int terminal_num) {
 	vid_switch(curr_screen, terminal_num);
 	
 	curr_screen = terminal_num;				//update current terminal number
-
-	sti();
 }
 
 /* get_curr_screen

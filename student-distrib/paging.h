@@ -32,6 +32,12 @@ void text_screen_map_update(int curr_scheduled, int curr_screen);
 /* switch vidmap to the right video memory locaiton */
 void vidmap_update();
 
+/* temporary map virtual vid memory to physical video memory 0xb8000 */
+void temp_map_phys_vid();
+
+/* maps virtual vid memory back to the previous mapping */
+void temp_map_switch_back();
+
 /* flushes the tlb */
 void flush_tlb();
 

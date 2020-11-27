@@ -30,11 +30,9 @@ void __init_pit__(){
  *	  Side Effects: none	 
  */
 void handle_pit_interrupt(){
-    cli();
+    // cli();
     int* curr_pid = _get_pid_tracker();
-    printf("PITINT\n");
-    // send_eoi(PIT_IRQ);
-    // sti();
+    // printf("PITINT %d\n", get_curr_scheduled());
 
     switch_process(curr_pid[get_curr_scheduled()], curr_pid[(get_curr_scheduled() + 1) % MAX_TERMINALS]);       // switch between terminals and run their proces
     

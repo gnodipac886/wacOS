@@ -9,8 +9,9 @@ idt.o: idt.c idt.h assembly_linkage.h x86_desc.h types.h lib.h keyboard.h \
 kernel.o: kernel.c multiboot.h types.h x86_desc.h lib.h i8259.h debug.h \
   tests.h idt.h rtc.h keyboard.h paging.h filesystem.h system_calls.h \
   pit.h scheduler.h
-keyboard.o: keyboard.c keyboard.h lib.h types.h i8259.h scheduler.h
-lib.o: lib.c lib.h types.h
+keyboard.o: keyboard.c keyboard.h lib.h types.h i8259.h scheduler.h \
+  paging.h
+lib.o: lib.c lib.h types.h paging.h
 paging.o: paging.c paging.h types.h x86_desc.h
 pit.o: pit.c pit.h lib.h types.h i8259.h tests.h scheduler.h
 rtc.o: rtc.c rtc.h lib.h types.h i8259.h tests.h
