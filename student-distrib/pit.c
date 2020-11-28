@@ -34,6 +34,10 @@ void handle_pit_interrupt(){
     int* curr_pid = _get_pid_tracker();
     // printf("PITINT %d\n", get_curr_scheduled());
 
+    if(get_curr_scheduled() == -1){
+        switch_process(0, 1);
+    }
+
     switch_process(curr_pid[get_curr_scheduled()], curr_pid[(get_curr_scheduled() + 1) % MAX_TERMINALS]);       // switch between terminals and run their proces
     
     send_eoi(PIT_IRQ);

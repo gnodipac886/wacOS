@@ -18,8 +18,8 @@ int base_shell_flag;
 
 void __init_scheduler__(){
 	int i;				// loop counter
-	setup_counter = 0;
-	curr_scheduled = 0;
+	setup_counter = -1;
+	curr_scheduled = -1;
 	base_shell_flag = 0;
 	// pcb_arr = _get_pcb_arr();
 	// init to pid i for all terminals
@@ -31,50 +31,80 @@ void __init_scheduler__(){
 void switch_process(int curr_pid, int next_pid){
 	/*execute shell on all terminals in first epoch*/
 	base_shell_flag = 0;
-	pcb_t* prev_pcb;
 	pcb_t* curr_pcb = pcb_arr[curr_pid];
 	pcb_t* next_pcb = pcb_arr[next_pid];
 
-	/* SETUP TERMINALS INITIALIZING*/
-	if(setup_counter < MAX_TERMINALS){
-		pcb_arr[setup_counter] = (pcb_t*)(KER_BOTTOM - (setup_counter + 1) * KER_STACK_SIZE);
-		curr_pcb = pcb_arr[setup_counter];
-		// store current kernel stack info - esp and ebp
-		prev_pcb = pcb_arr[setup_counter - 1];
-		asm volatile(
-			"movl	%%esp, 	%0;"
-			"movl	%%ebp, 	%1;"
-			:"=g"(curr_pcb->curr_esp), "=g"(curr_pcb->curr_ebp) 						// outputs - temp vars to be used to set pcb values
-		);
-		text_screen_map_update(curr_scheduled, get_curr_screen());
-		if(setup_counter > 0){
-			clear();
-			temp_map_phys_vid();														// temporary switch vid memory mapping
-			terminal_switch(setup_counter);
-			temp_map_switch_back();														// switch back mapping 
-		}
-		curr_scheduled = (curr_scheduled + 1) % 3;
-		pcb_process[setup_counter] = setup_counter;
+	if(setup_counter == -1){
 		setup_counter++;
+		curr_scheduled++;
 		base_shell_flag = 1;
 		send_eoi(PIT_IRQ);					        									// Enable interrupt for PIT on PIC
 		sti();
 		execute((uint8_t*)"shell");
 		return;
-	} 
+	}
+
+	/* SETUP TERMINALS INITIALIZING*/
+	if(setup_counter < MAX_TERMINALS && setup_counter >= 0){
+		pcb_arr[setup_counter] = (pcb_t*)(KER_BOTTOM - (setup_counter + 1) * KER_STACK_SIZE);
+		curr_pcb = pcb_arr[setup_counter];
+		setup_counter++;
+		curr_scheduled = (curr_scheduled + 1) % MAX_TERMINALS;
+		base_shell_flag = 1;
+
+		asm volatile(
+			"movl	%%esp, 	%0;"
+			"movl	%%ebp, 	%1;"
+			:"=g"(curr_pcb->curr_esp), "=g"(curr_pcb->curr_ebp) 						// outputs - temp vars to be used to set pcb values
+		);
+
+		if(setup_counter == 3){
+			base_shell_flag = 0;
+			text_screen_map_update(curr_scheduled, get_curr_screen());
+
+			temp_map_phys_vid();														// temporary switch vid memory mapping
+			terminal_switch(curr_scheduled);
+			temp_map_switch_back();														// switch back mapping 
+
+			exe_paging(next_pid, 1);													// change paging for next process
+
+			// restore next process's tss
+			tss.esp0 = KER_BOTTOM - next_pid * KER_STACK_SIZE - sizeof(unsigned long);
+			tss.ss0 = KERNEL_DS;
+
+			// LOAD NEXT ESP AND EBP
+			asm volatile(
+				"movl 	%0,		%%esp;"
+				"movl	%1,		%%ebp;"
+				:
+				:"r" (next_pcb->curr_esp), "r" (next_pcb->curr_ebp)
+				:"%esp", "%ebp"
+			);
+
+			send_eoi(PIT_IRQ);					        								// Enable interrupt for PIT on PIC
+			sti();
+			return;
+		}
+
+		// store current kernel stack info - esp and ebp
+		text_screen_map_update(curr_scheduled, get_curr_screen());
+		clear();
+		temp_map_phys_vid();															// temporary switch vid memory mapping
+		terminal_switch(curr_scheduled);
+		temp_map_switch_back();															// switch back mapping 
+
+		send_eoi(PIT_IRQ);					        									// Enable interrupt for PIT on PIC
+		sti();
+		execute((uint8_t*)"shell");
+		return;
+	}
+
 	// SAVE ESP AND EBP TO CURR
 	asm volatile(
 		"movl	%%esp, 	%0;"
 		"movl	%%ebp, 	%1;"
-		:"=g"(curr_pcb->curr_esp), "=g"(curr_pcb->curr_ebp) 						// outputs - temp vars to be used to set pcb values
+		:"=g"(curr_pcb->curr_esp), "=g"(curr_pcb->curr_ebp) 							// outputs - temp vars to be used to set pcb values
 	);
-
-	if(setup_counter == 3){
-		temp_map_phys_vid();														// temporary switch vid memory mapping
-		terminal_switch(0);
-		temp_map_switch_back();														// switch back mapping 
-		setup_counter++;
-	}
 
 	curr_scheduled = (curr_scheduled + 1) % 3;
 
@@ -86,18 +116,6 @@ void switch_process(int curr_pid, int next_pid){
 	if(curr_pcb->vidmap_page_flag){														// update the vid map if the program is using it
 		vidmap_update();
 	}
-
-	// store current kernel stack info - esp and ebp
-	// load the next process's esp and ebp
-	// asm volatile(
-	// 	"movl	%%esp, 	%0;"
-	// 	"movl	%%ebp, 	%1;"
-	// 	"movl 	%2,		%%esp;"
-	// 	"movl	%3,		%%ebp;"
-	// 	:"=m" (curr_pcb->curr_esp), "=m" (curr_pcb->curr_ebp)							// outputs - temp vars to be used to set pcb values
-	// 	:"r" (next_pcb->curr_esp), "r" (next_pcb->curr_ebp)
-	// 	:"%esp", "%ebp"
-	// );
 
 	// restore next process's tss
 	tss.esp0 = KER_BOTTOM - next_pid * KER_STACK_SIZE - sizeof(unsigned long);

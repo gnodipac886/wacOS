@@ -19,6 +19,6 @@ scheduler.o: scheduler.c scheduler.h system_calls.h types.h filesystem.h \
   lib.h pit.h keyboard.h paging.h x86_desc.h i8259.h
 system_calls.o: system_calls.c system_calls.h types.h filesystem.h \
   terminal.h paging.h x86_desc.h keyboard.h lib.h scheduler.h
-terminal.o: terminal.c terminal.h types.h keyboard.h lib.h
+terminal.o: terminal.c terminal.h types.h keyboard.h lib.h scheduler.h
 tests.o: tests.c tests.h x86_desc.h types.h lib.h filesystem.h terminal.h \
   system_calls.h
