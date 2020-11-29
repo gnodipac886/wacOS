@@ -2,6 +2,7 @@
  * vim:ts=4 noexpandtab */
 
 #include "lib.h"
+#include "paging.h"
 
 #define VIDEO           0xB8000         // holds current video memory (text screen)
 #define NUM_COLS        80
@@ -15,7 +16,7 @@
 
 static int screen_x;                                // current terminal's cursor position
 static int screen_y;
-static int terminal_cursor_pos[MAX_TERMINALS][2];   // stored cursor positions of terminals 1-3
+static int terminal_cursor_pos[MAX_TERMINALS][2] = {{0, 0}, {0, 0}, {0, 0}};   // stored cursor positions of terminals 1-3, 2 for x and y
 
 static char* video_mem = (char *)VIDEO;
 
@@ -49,7 +50,7 @@ void clear(void) {
  *       Also note: %x is the only conversion specifier that can use
  *       the "#" modifier to alter output. */
 int32_t printf(int8_t *format, ...) {
-
+    temp_map_phys_vid();
     /* Pointer to the format string */
     int8_t* buf = format;
 
@@ -154,6 +155,7 @@ format_char_switch:
         }
         buf++;
     }
+    temp_map_switch_back();
     return (buf - format);
 }
 
@@ -260,8 +262,8 @@ void vid_enter() {
 void vid_switch(int old_t_num, int new_t_num) {
 
     //.........................(get virtual addr of physical 0xB8000, since scheduling changes virtual 0xB8000 mapping).........................................................
-    memcpy((void*) (VIDEO + old_t_num*VIDEO_SIZE), (void*) ..............., VIDEO_SIZE);    // save - copy from current video mem to old terminal's background buffer
-    memcpy((void*) ................., (void*) (VIDEO + new_t_num*VIDEO_SIZE), VIDEO_SIZE);  // restore - copy from new terminal's background buffer to current video mem
+    memcpy((void*) (VIDEO + (old_t_num + 1)*VIDEO_SIZE), (void*) VIDEO, VIDEO_SIZE);    // save - copy from current video mem to old terminal's background buffer
+    memcpy((void*) (VIDEO), (void*) (VIDEO + (new_t_num + 1)*VIDEO_SIZE), VIDEO_SIZE);  // restore - copy from new terminal's background buffer to current video mem
 
     // save current terminal's cursor position
     terminal_cursor_pos[old_t_num][0] = screen_x;
@@ -270,6 +272,20 @@ void vid_switch(int old_t_num, int new_t_num) {
     // restore new terminal's cursor position
     screen_x = terminal_cursor_pos[new_t_num][0];
     screen_y = terminal_cursor_pos[new_t_num][1];
+    update_cursor(screen_x, screen_y);
+}
+
+/* save_cursor
+ *  Description: switches text screen and cursor position (helper for switching terminals)
+ *  Inputs:
+ *      terminal - which cursor to save
+ *  Return Value: none
+ *  Function: saves current terminal's text screen and cursor position
+ */
+void save_cursor(int terminal){
+    // save current terminal's cursor position
+    terminal_cursor_pos[terminal][0] = screen_x;
+    terminal_cursor_pos[terminal][1] = screen_y;
 }
 
 

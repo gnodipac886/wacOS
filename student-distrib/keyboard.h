@@ -8,7 +8,7 @@
 
 // #ifndef ASM
 // initialization of the keyboard for interrupt
-void __keyboard_init__();
+void __init_keyboard__();
 // takes in the input and display to screen
 void handle_keyboard_interrupt();
 // returns ptr to keyboard buffer
@@ -20,6 +20,8 @@ void handle_backspace();
 void handle_enter();
 void set_terminal_read_flag(int flag);
 void terminal_switch(int terminal_num);
+int get_curr_screen();
+
 // #endif /* ASM */
 
 #endif /* _KEYBOARD_H */

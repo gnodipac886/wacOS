@@ -14,7 +14,7 @@
 #define BACKGROUND_BUF2_IDX     0xBA    // terminal 2's background buffer index in page table
 #define BACKGROUND_BUF3_IDX     0xBB    // terminal 3's background buffer index in page table
 
-#define USER_PAGE               32 	    // user page memory location (page directory index)
+#define USER_PAGE               128 >> 2// user page memory location (page directory index)
 #define VIDMAP_4MB_PAGE         33      // vidmap page memory location (page directory index)
 
 /* initializing paging */
@@ -25,5 +25,20 @@ extern int exe_paging(int pid, int present);
 
 /* paging for vidmap */
 extern int vidmap_pte_setup(uint8_t** screen_start, uint8_t present);
+
+/* 4kB text-screen paging for scheduler */
+void text_screen_map_update(int curr_scheduled, int curr_screen);
+
+/* switch vidmap to the right video memory locaiton */
+void vidmap_update();
+
+/* temporary map virtual vid memory to physical video memory 0xb8000 */
+void temp_map_phys_vid();
+
+/* maps virtual vid memory back to the previous mapping */
+void temp_map_switch_back();
+
+/* flushes the tlb */
+void flush_tlb();
 
 #endif /* _PAGING_H */

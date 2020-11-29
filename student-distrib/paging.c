@@ -1,6 +1,8 @@
 #include "paging.h"
 #include "x86_desc.h"
 
+uint32_t temp_vid_addr;																		// temporary variable to store video address
+
 /* __init_paging__
  * 		Inputs: none
  * 		Return Value: none
@@ -10,6 +12,9 @@
 void __init_paging__(){
 	// counter for for loops
 	int i;
+
+	// init to video memory
+	temp_vid_addr = VIDEO_MEM_IDX;
 
 	// set the first page directory entry to have 4kb set up
 	page_directory[0].addr 				= 	(uint32_t)(page_table) >> ALIGN_4KB;			// address to the page_table
@@ -119,16 +124,7 @@ int exe_paging(int pid, int present){
 	page_directory[USER_PAGE].read_write 		= 	1; 												// all pages are read write
 	page_directory[USER_PAGE].present 			= 	present; 										// page available
 
-	// flush the TLB
-	asm(
-		"movl 	%0, 			%%eax;"		// move page directory into eax
-		"movl 	%%eax, 			%%cr3;"		// move page directory address into cr3
-
-		:							// not outputs yet
-		:"r"(page_directory) 		// input is page directory
-		:"%eax" 					// clobbered register
-
-		);
+	flush_tlb();
 
 	return 0;
 }
@@ -140,9 +136,7 @@ int exe_paging(int pid, int present){
  * 					  -1 -- failure/screen_start val is invalid
  * 		Function: Sets up paging for vidmap; stores virtual addr of new 4kB videomem page into where screen_start points to. 
  * 		Side Effects: Flushes TLB after mapping
- *  
  */
-
 int vidmap_pte_setup(uint8_t ** screen_start, uint8_t present) {
 	if (screen_start == NULL && present) {																	// check if screen_start argument is valid
 		return -1;
@@ -162,7 +156,7 @@ int vidmap_pte_setup(uint8_t ** screen_start, uint8_t present) {
 	page_directory[VIDMAP_4MB_PAGE].present 			= 	present; 										// all valid PDE needs to be set to 1
 
 	// set up the vidmap page table pointing to 4kb pages
-	vidmap_page_table[0].addr 							= 	VIDEO_MEM_IDX;									// address to the page_table
+	vidmap_page_table[0].addr 							= 	page_table[VIDEO_MEM_IDX].addr;					// address to the current 4kB text-screen page being edited
 	vidmap_page_table[0].accessed 						= 	0;												// not used, set to 0
 	vidmap_page_table[0].dirty 							= 	0;												// not used, set to 0
 	vidmap_page_table[0].global 						= 	0;												// we only set the page for kernel page
@@ -174,19 +168,95 @@ int vidmap_pte_setup(uint8_t ** screen_start, uint8_t present) {
 	vidmap_page_table[0].read_write 					= 	1; 												// all pages are read write
 	vidmap_page_table[0].present 						= 	present; 										// all valid PDE needs to be set to 1
 
-	// flush the TLB
-	asm(
-		"movl 	%0, 			%%eax;"																		// move page directory into eax
-		"movl 	%%eax, 			%%cr3;"																		// move page directory address into cr3
-
-		:																									// not outputs yet
-		:"r"(page_directory) 																				// input is page directory
-		:"%eax" 																							// clobbered register
-	);
+	flush_tlb();
 
 	if (screen_start != NULL && present) {																	// check if screen_start argument is valid
 		*screen_start = (uint8_t*)(VIDMAP_4MB_PAGE<<22);													// page 33 shift up 22 times/bits to align to 4MB
 	}
 	return 0;
 
+}
+
+/*  text_screen_map_update
+ * 		Inputs: curr_scheduled 	- current scheduling process
+ 				curr_screen 	- current process that's on screen
+ * 		Return Value: none
+ * 		Function: switches the video mapping of the processes, check if screen is the same as scheduled too
+ * 		Side Effects: Flushes TLB after mapping
+ *  
+ */
+void text_screen_map_update(int curr_scheduled, int curr_screen) {
+	page_table[VIDEO_MEM_IDX].addr = VIDEO_MEM_IDX + !(curr_screen == curr_scheduled) * (curr_scheduled + 1);// index of 4kB page of physical video memory
+
+	flush_tlb();
+}
+
+/*  vidmap_update
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: switch vidmap to the right video memory locaiton
+ * 		Side Effects: Flushes TLB after mapping
+ *  
+ */
+void vidmap_update(){
+	vidmap_page_table[0].addr 							= 	page_table[VIDEO_MEM_IDX].addr;					// address to the current 4kB text-screen page being edited
+
+	flush_tlb();
+}
+
+/*  temp_map_phys_vid
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: temporary switches video memory mapping to physical vid memory
+ * 		Side Effects: Flushes TLB after mapping
+ *  
+ */
+void temp_map_phys_vid(){
+	// switch mapping to video memory 
+	if(page_table[VIDEO_MEM_IDX].addr != VIDEO_MEM_IDX){
+		temp_vid_addr = page_table[VIDEO_MEM_IDX].addr;														// store current mapping in temp variable
+		page_table[VIDEO_MEM_IDX].addr = VIDEO_MEM_IDX;														// point to physical vid memory
+
+		flush_tlb();
+	}
+	
+	return;
+}
+
+/*  temp_map_switch_back
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: switches video memory mapping to previous mapping
+ * 		Side Effects: Flushes TLB after mapping
+ *  
+ */
+void temp_map_switch_back(){
+	// switch mapping back
+	if(page_table[VIDEO_MEM_IDX].addr != VIDEO_MEM_IDX){
+		page_table[VIDEO_MEM_IDX].addr = temp_vid_addr;
+
+		flush_tlb();
+	}
+	
+	return;
+}
+
+/*  flush_tlb
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: Flushes TLB
+ * 		Side Effects: Flushes TLB
+ *  
+ */
+void flush_tlb(){
+	// flush the TLB
+	asm(
+		"movl 	%0, 			%%eax;"		// move page directory into eax
+		"movl 	%%eax, 			%%cr3;"		// move page directory address into cr3
+
+		:						// not outputs yet
+		:"r"(page_directory) 	// input is page directory
+		:"%eax" 				// clobbered register
+
+	);
 }
