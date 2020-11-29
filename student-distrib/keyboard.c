@@ -347,6 +347,7 @@ void set_terminal_read_flag(int flag){
  * 		Return Value: none
  */
 void terminal_switch(int ter_num) {
+	int prev_screen = curr_screen;
 	/* Do nothing if its the same terminal*/
 	if (ter_num == curr_screen) { return; }
 
@@ -355,11 +356,11 @@ void terminal_switch(int ter_num) {
 	terminal_buf = ter_bufs[ter_num];
 
 	//saves current terminal's text screen and cursor position, then restores next terminal's
+	curr_screen = ter_num;								//update current terminal number
 	temp_map_phys_vid();
-	vid_switch(curr_screen, ter_num);
+	vid_switch(prev_screen, ter_num);
 	temp_map_switch_back();
 	
-	curr_screen = ter_num;								//update current terminal number
 }
 
 /* get_curr_screen
