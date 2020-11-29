@@ -349,24 +349,15 @@ void set_terminal_read_flag(int flag){
 void terminal_switch(int ter_num) {
 	/* Do nothing if its the same terminal*/
 	if (ter_num == curr_screen) { return; }
-	
-	// sti();
-	// while(get_curr_scheduled() != ter_num);
-	// cli();
 
 	//switch input buffer
 	buffer = input_bufs[ter_num];
 	terminal_buf = ter_bufs[ter_num];
 
-	input_indicies[curr_screen] = input_indicies[curr_screen];
-	terminal_indicies[curr_screen] = terminal_indicies[curr_screen];
-	input_indicies[curr_screen] = input_indicies[ter_num];
-	terminal_indicies[curr_screen] = terminal_indicies[ter_num];
-
-	// remember to change buffer indicies
-
 	//saves current terminal's text screen and cursor position, then restores next terminal's
+	temp_map_phys_vid();
 	vid_switch(curr_screen, ter_num);
+	temp_map_switch_back();
 	
 	curr_screen = ter_num;								//update current terminal number
 }

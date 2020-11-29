@@ -58,13 +58,11 @@ void switch_process(int curr_pid, int next_pid){
 			:"=g"(curr_pcb->curr_esp), "=g"(curr_pcb->curr_ebp) 						// outputs - temp vars to be used to set pcb values
 		);
 
-		if(setup_counter == 3){
+		if(setup_counter == MAX_TERMINALS){
 			base_shell_flag = 0;
-			text_screen_map_update(curr_scheduled, get_curr_screen());
 
-			temp_map_phys_vid();														// temporary switch vid memory mapping
 			terminal_switch(curr_scheduled);
-			temp_map_switch_back();														// switch back mapping 
+			text_screen_map_update(curr_scheduled, get_curr_screen());
 
 			exe_paging(next_pid, 1);													// change paging for next process
 
@@ -87,11 +85,9 @@ void switch_process(int curr_pid, int next_pid){
 		}
 
 		// store current kernel stack info - esp and ebp
+		terminal_switch(curr_scheduled);
 		text_screen_map_update(curr_scheduled, get_curr_screen());
 		clear();
-		temp_map_phys_vid();															// temporary switch vid memory mapping
-		terminal_switch(curr_scheduled);
-		temp_map_switch_back();															// switch back mapping 
 
 		send_eoi(PIT_IRQ);					        									// Enable interrupt for PIT on PIC
 		sti();
@@ -153,7 +149,7 @@ int is_active_process(int screen_num){
 
 /* get_curr_scheduled
  *      Inputs: none
- *      Return Value: curr_screen - the current screen we are on
+ *      Return Value: curr_screen - the current process we are on
  *      Function:
  *      Side Effects: none
  */

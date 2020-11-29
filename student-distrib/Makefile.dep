@@ -11,7 +11,7 @@ kernel.o: kernel.c multiboot.h types.h x86_desc.h lib.h i8259.h debug.h \
   pit.h scheduler.h
 keyboard.o: keyboard.c keyboard.h lib.h types.h i8259.h scheduler.h \
   paging.h
-lib.o: lib.c lib.h types.h paging.h
+lib.o: lib.c lib.h types.h keyboard.h scheduler.h
 paging.o: paging.c paging.h types.h x86_desc.h
 pit.o: pit.c pit.h lib.h types.h i8259.h tests.h scheduler.h
 rtc.o: rtc.c rtc.h lib.h types.h i8259.h tests.h
