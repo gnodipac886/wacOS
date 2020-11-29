@@ -9,6 +9,7 @@
 #define NUM_PAGE_DIR 		    1024    // total space for page directory
 #define NUM_PAGE_TB 		    1024    // total space for page table
 
+
 #define VIDEO_MEM_IDX		    0xB8    // video memory index
 #define BACKGROUND_BUF1_IDX     0xB9    // terminal 1's background buffer index in page table
 #define BACKGROUND_BUF2_IDX     0xBA    // terminal 2's background buffer index in page table
@@ -18,25 +19,16 @@
 #define VIDMAP_4MB_PAGE         33      // vidmap page memory location (page directory index)
 
 /* initializing paging */
-extern void __init_paging__();
+void __init_paging__();
 
 /* paging for execute */
-extern int exe_paging(int pid, int present);
+int exe_paging(int pid, int present);
 
 /* paging for vidmap */
-extern int vidmap_pte_setup(uint8_t** screen_start, uint8_t present);
-
-/* 4kB text-screen paging for scheduler */
-void text_screen_map_update(int curr_scheduled, int curr_screen);
+int vidmap_pte_setup(uint8_t** screen_start, uint8_t present);
 
 /* switch vidmap to the right video memory locaiton */
 void vidmap_update();
-
-/* temporary map virtual vid memory to physical video memory 0xb8000 */
-void temp_map_phys_vid();
-
-/* maps virtual vid memory back to the previous mapping */
-void temp_map_switch_back();
 
 /* flushes the tlb */
 void flush_tlb();

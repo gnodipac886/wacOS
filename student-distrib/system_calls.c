@@ -44,6 +44,7 @@ int32_t execute(const uint8_t* command){
 	char elf[] = {(char)0x7f,'E','L','F'};									// magic number at front of executable files
 	char ELF_check_buf[4];
 	dentry_t cur_dentry;
+
 	int* base_shell_flag = _get_base_shell_flag();
 	int* pid_tracker = _get_pid_tracker();
 
@@ -109,17 +110,22 @@ int32_t execute(const uint8_t* command){
 	strcpy(pcb->arg, task_arg); 											// move the args into pcb
 	pcb->vidmap_page_flag = 0;												// no vidmap paging set up for this pcb yet
 	pcb->pid = curr_avail_pid;	 											// set pid in the pcb
-	pcb->parent_pid = *base_shell_flag == 1 ? pcb->pid : _get_curr_pcb((int32_t*)&i)->pid;	// check for base shell, 1 = base shell, so pid == parent_pid
+	// pcb->parent_pid = *base_shell_flag == 1 ? pcb->pid : _get_curr_pcb((int32_t*)&i)->pid;	// check for base shell, 1 = base shell, so pid == parent_pid
+	pcb->parent_pid = *base_shell_flag == 1 ? pcb->pid : pid_tracker[get_curr_screen()];
+	pid_tracker[get_curr_screen()] = pcb->pid;
+	if(get_curr_screen() != _get_curr_pcb((int32_t*)&i)->pid && !(*base_shell_flag)){
+		printf("NANI, screen: %d, pcb: %d\n", get_curr_screen(), _get_curr_pcb((int32_t*)&i)->pid);
+	}
 
 	*base_shell_flag = 0;													// reset flag back to not base shell
 
 	// replace pid running on terminals
-	for(i = 0; i < MAX_TERMINALS; i++){
-		// new process running on top of a parent then replace pid
-		if(pcb->parent_pid == pid_tracker[i]){
-			pid_tracker[i] = pcb->pid;
-		}
-	}
+	// for(i = 0; i < MAX_TERMINALS; i++){
+	// 	// new process running on top of a parent then replace pid
+	// 	if(pcb->parent_pid == pid_tracker[i]){
+	// 		pid_tracker[i] = pcb->pid;
+	// 	}
+	// }
 
 	// store parent kernel stack info - esp and ebp
 	asm volatile(
@@ -249,8 +255,8 @@ int32_t halt(uint8_t status){
 	tss.esp0 = KER_BOTTOM - pcb->parent_pid * KER_STACK_SIZE - sizeof(unsigned long);
 	tss.ss0 = KERNEL_DS;
 
-	clear_terminal_buf();													// clear keyboard buffer to prevent deleting the shell prompt
-	clear_kb_buf();
+	clear_terminal_buf(get_curr_scheduled());								// clear keyboard buffer to prevent deleting the shell prompt
+	clear_kb_buf(get_curr_scheduled());
 
 	if(pcb->pid == pcb->parent_pid){										// base shell case
 		execute((uint8_t*)"shell");

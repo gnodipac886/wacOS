@@ -27,8 +27,12 @@ int8_t* strncpy(int8_t* dest, const int8_t*src, uint32_t n);
 void vid_backspace();
 void vid_enter();
 void vid_switch(int old_t_num, int new_t_num);
+void text_screen_map_update(int curr_scheduled, int curr_screen);
+void temp_map_phys_vid();
+void temp_map_switch_back();
 void update_cursor(int x, int y);
 void save_cursor(int terminal);
+int terminal_on_process();
 
 /* Userspace address-check functions */
 int32_t bad_userspace_addr(const void* addr, int32_t len);
