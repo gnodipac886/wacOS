@@ -16,8 +16,8 @@
 #define MAX_TERMINALS   3
 #define ATTRIB		  0x7
 
-static int screen_x[MAX_TERMINALS] = {0, 0, 0};								// updated cursor positions for all terminals
-static int screen_y[MAX_TERMINALS] = {0, 0, 0};
+static int screen_x[MAX_TERMINALS];// = {0, 0, 0};								// updated cursor positions for all terminals
+static int screen_y[MAX_TERMINALS];// = {0, 0, 0};
 //static int terminal_cursor_pos[MAX_TERMINALS][2] = {{0, 0}, {0, 0}, {0, 0}};   // stored cursor positions of terminals 1-3, 2 for x and y
 
 static char* video_mem = (char *)VIDEO;
@@ -184,6 +184,7 @@ void update_cursor(int x, int y) {
 
 	screen_x[get_curr_screen()] = x;
 	screen_y[get_curr_screen()] = y;
+
 	uint16_t pos = y*NUM_COLS + x;
 
 	*(uint8_t *)(video_mem + (pos << 1)) = ' ';
