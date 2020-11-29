@@ -172,20 +172,6 @@ int vidmap_pte_setup(uint8_t ** screen_start, uint8_t present) {
 
 }
 
-/*  text_screen_map_update
- * 		Inputs: curr_scheduled 	- current scheduling process
- 				curr_screen 	- current process that's on screen
- * 		Return Value: none
- * 		Function: switches the video mapping of the processes, check if screen is the same as scheduled too
- * 		Side Effects: Flushes TLB after mapping
- *  
- */
-void text_screen_map_update(int curr_scheduled, int curr_screen) {
-	page_table[VIDEO_MEM_IDX].addr = VIDEO_MEM_IDX + !(curr_screen == curr_scheduled) * (curr_scheduled + 1);// index of 4kB page of physical video memory
-
-	flush_tlb();
-}
-
 /*  vidmap_update
  * 		Inputs: none
  * 		Return Value: none

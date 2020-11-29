@@ -1,6 +1,7 @@
 #include "terminal.h"
 #include "keyboard.h"
 #include "lib.h"
+#include "scheduler.h"
 
 /* terminal_open
  *	  Description: initializes terminal
@@ -50,18 +51,19 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes){
 
 	// tell kb driver terminal read is in use
 	set_terminal_read_flag(1);
-
+	sti();
     // keeps checking until keyboard enters \n or filled buffer
 	while(1){
 		memset(kb_buf, '\0', BUF_SZ);
-		kb_buf_idx = get_kb_buf(kb_buf);	     // idx of last added char in keyboard buffer (copy keyboard buffer)
+		kb_buf_idx = get_kb_buf(kb_buf, get_curr_scheduled());	     // idx of last added char in keyboard buffer (copy keyboard buffer)
 		if(kb_buf[kb_buf_idx] == '\n') {
-			clear_terminal_buf();			     //clear terminal's keyboard handler buffer
+			clear_terminal_buf(get_curr_scheduled());			     //clear terminal's keyboard handler buffer
 			set_terminal_read_flag(0);
 			break;
 		}
 	}
 	memcpy(buf, (void*)kb_buf, kb_buf_idx + 1);	 //kb_buf_idx + 1 = number of bytes written to user space buffer
+	cli();
 	return kb_buf_idx + 1;                       // number of bytes read
 }
 

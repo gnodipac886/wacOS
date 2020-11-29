@@ -12,14 +12,14 @@ void __init_keyboard__();
 // takes in the input and display to screen
 void handle_keyboard_interrupt();
 // returns ptr to keyboard buffer
-int get_kb_buf(char* buf);
-void clear_terminal_buf();
-void clear_kb_buf();
+int get_kb_buf(char* buf, int ter_num);
+void clear_terminal_buf(int ter_num);
+void clear_kb_buf(int ter_num);
 
 void handle_backspace();
 void handle_enter();
 void set_terminal_read_flag(int flag);
-void terminal_switch(int terminal_num);
+void terminal_switch(int ter_num);
 int get_curr_screen();
 
 // #endif /* ASM */
