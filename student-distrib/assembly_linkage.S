@@ -94,7 +94,7 @@ valid_call_number:
 	pushl   %ebx 
 	
 call_syscall:
-	sti
+	// sti
 	call	*system_call_jmp(,%eax,4)			// 4 for 4 bytes of memory
 	movl	%eax,   sys_call_ret_val 			// save return value in the placeholder
 	popl	%ebx 								// pop off the arguments

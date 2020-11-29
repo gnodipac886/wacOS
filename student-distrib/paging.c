@@ -1,6 +1,8 @@
 #include "paging.h"
 #include "x86_desc.h"
 
+uint32_t temp_vid_addr;																		// temporary variable to store video address
+
 /* __init_paging__
  * 		Inputs: none
  * 		Return Value: none
@@ -10,6 +12,9 @@
 void __init_paging__(){
 	// counter for for loops
 	int i;
+
+	// init to video memory
+	temp_vid_addr = VIDEO_MEM_IDX;
 
 	// set the first page directory entry to have 4kb set up
 	page_directory[0].addr 				= 	(uint32_t)(page_table) >> ALIGN_4KB;			// address to the page_table
@@ -197,6 +202,43 @@ void vidmap_update(){
 	vidmap_page_table[0].addr 							= 	page_table[VIDEO_MEM_IDX].addr;					// address to the current 4kB text-screen page being edited
 
 	flush_tlb();
+}
+
+/*  temp_map_phys_vid
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: temporary switches video memory mapping to physical vid memory
+ * 		Side Effects: Flushes TLB after mapping
+ *  
+ */
+void temp_map_phys_vid(){
+	// switch mapping to video memory 
+	if(page_table[VIDEO_MEM_IDX].addr != VIDEO_MEM_IDX){
+		temp_vid_addr = page_table[VIDEO_MEM_IDX].addr;														// store current mapping in temp variable
+		page_table[VIDEO_MEM_IDX].addr = VIDEO_MEM_IDX;														// point to physical vid memory
+
+		flush_tlb();
+	}
+	
+	return;
+}
+
+/*  temp_map_switch_back
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: switches video memory mapping to previous mapping
+ * 		Side Effects: Flushes TLB after mapping
+ *  
+ */
+void temp_map_switch_back(){
+	// switch mapping back
+	if(page_table[VIDEO_MEM_IDX].addr != VIDEO_MEM_IDX){
+		page_table[VIDEO_MEM_IDX].addr = temp_vid_addr;
+
+		flush_tlb();
+	}
+	
+	return;
 }
 
 /*  flush_tlb
