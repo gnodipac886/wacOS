@@ -33,6 +33,7 @@ void temp_map_switch_back();
 void update_cursor(int x, int y);
 void save_cursor(int terminal);
 int terminal_on_process();
+char * get_video_mem();
 
 /* Userspace address-check functions */
 int32_t bad_userspace_addr(const void* addr, int32_t len);
