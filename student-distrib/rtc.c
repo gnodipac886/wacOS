@@ -24,17 +24,17 @@ void __init_rtc__(){
 	enable_irq(RTC_IRQ);					// Enable interrupt for RTC on PIC
 	/* Virtualizing the RTC */
 	int buf = 1024;							// RTC interrupt set to highest value = 1024 Hz.(Device interrupt rate will not change!)
-	_rtc_write((void*)(&buf));				
+	_rtc_write((void*)(&buf));
 	rtc_interrupt_occurred = 0;
 	// sti();
 }
 
-/* handle_rtc_interrupt 
+/* handle_rtc_interrupt
  *	  Inputs: None
  *	  Return Value: None
- *	  Function: Cleans up interrupt after its been processed, then 
+ *	  Function: Cleans up interrupt after its been processed, then
  *		  readies the RTC register for another interrupt.
- *	  Side Effects: none	 
+ *	  Side Effects: none
  */
 void handle_rtc_interrupt(){
 	// cli();
@@ -51,8 +51,8 @@ void handle_rtc_interrupt(){
 /* _rtc_open
  *	  Inputs: None
  *	  Return Value: 1
- *	  Function: Reset rtc frequency to 2. 
- *	  Side Effects: none	 
+ *	  Function: Reset rtc frequency to 2.
+ *	  Side Effects: none
  */
 int _rtc_open(){
 	/* int buf = 2;
@@ -65,8 +65,8 @@ int _rtc_open(){
 /* _rtc_close
  *	  Inputs: None
  *	  Return Value: 1
- *	  Function: returns constant 1. 
- *	  Side Effects: none	 
+ *	  Function: returns constant 1.
+ *	  Side Effects: none
  */
 int _rtc_close(){
 	return 0;
@@ -75,20 +75,20 @@ int _rtc_close(){
 /* rtc_read
  *	  Inputs: Reads data from rtc
  *	  Return Value: Always zero
- *	  Function: Read RTC, and after interrupt occurs, return 0. 
- *	  Side Effects: none	 
+ *	  Function: Read RTC, and after interrupt occurs, return 0.
+ *	  Side Effects: none
  */
 int _rtc_read(){
 	/* Wait until next rtc interrupt occurs.
 	 * RTC Virtualization: returns after the desired frequency met.
 	 * Ex: 512 Hz virtual frequency, for every 1024/512 = 2 interrupts,
-	 * 		_rtc_read returns, generating a 512 Hz rate. 
+	 * 		_rtc_read returns, generating a 512 Hz rate.
 	 */
 	 int i;
 	for(i = 0; i < (1024 / rtc_virtual_frequency); i++){
 
 		while(rtc_interrupt_occurred == 0);
-		
+
 		/* rtc interrupt has occured*/
 		rtc_interrupt_occurred = 0; // Reset the flag
 	}
@@ -98,8 +98,8 @@ int _rtc_read(){
 /* rtc_write
  *	  Inputs: 4 byte integer that specifies rtc interrupt rate
  *	  Return Value: -1 on failure, else other;
- *	  Function: Set rtc frequency. Range: 1-1024 Hz 
- *	  Side Effects: none	 
+ *	  Function: Set rtc frequency. Range: 1-1024 Hz
+ *	  Side Effects: none
  */
 int _rtc_write(void* buf){
 	cli();
@@ -116,7 +116,7 @@ int _rtc_write(void* buf){
 		return -1;
 	}
 
-	/* This loop checks which power of 2 the frequency is. 
+	/* This loop checks which power of 2 the frequency is.
 	// If frequency is not a power of 2, fail.
 	uint32_t exponent = 0;	//Start from 2^0
 	uint32_t pow_of_2 = 2;	//first power of 2 is 2 (ignore 1)
@@ -133,12 +133,12 @@ int _rtc_write(void* buf){
 	outb(RTC_STATUS_REG+0x0A, RTC_IO_PORT);	 						//Index to RTC status register A
 	uint8_t reg_value = inb(CMOS_IO_PORT);	  						//get initial register A value
 	outb(RTC_STATUS_REG+0x0A, RTC_IO_PORT);	 						//Index to RTC status register A (again)
-	// We're going to pass in rate as the lower 4 bits of register A and restore the other bits. 
-	// frequency = 32768 >> (rate-1), so rate  = 16 - exponent 
+	// We're going to pass in rate as the lower 4 bits of register A and restore the other bits.
+	// frequency = 32768 >> (rate-1), so rate  = 16 - exponent
 	outb((reg_value & 0xF0) | (16-exponent) , CMOS_IO_PORT);		// 0xF0 for upper 4 bits, write register A.
 	*/
 
 	sti();
 	return 0;
-	
+
 }

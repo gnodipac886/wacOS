@@ -25,7 +25,7 @@
 
 #define RELEASED_OFFSET		0x80		//'release' scan code offset from 'pressed'
 #define ROW0_OFFSET_MAP		0x2			//offset to map scan codes corresponding to row0 array
-#define ROW1_OFFSET_MAP		0x10		//offset to map scan codes corresponding to row1 array		
+#define ROW1_OFFSET_MAP		0x10		//offset to map scan codes corresponding to row1 array
 #define ROW2_OFFSET_MAP		0x1E		//offset to map scan codes corresponding to row2 array
 #define ROW3_OFFSET_MAP		0x2B		//offset to map scan codes corresponding to row3 array
 
@@ -38,7 +38,7 @@ int ctrl_flag = 0;
 int alt_flag = 0;
 
 /*other flags*/
-int terminal_read_flag = 0;
+int terminal_read_flag[MAX_TERMINALS] = {0, 0, 0};
 
 // 0x02 - 0x0D from 1 to =
 char kb_sc_row0_nums[] = {'1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '='};
@@ -104,7 +104,7 @@ void handle_keyboard_interrupt(){
 	temp_map_phys_vid();							// temporary switch vid memory mapping
 	char kb_char = '\0';
 	unsigned char keyboard_input = inb(KB_PORT);
-	
+
 	// conditions for different key presses
 	switch(keyboard_input) {
 		case TAB_PRESSED:
@@ -178,47 +178,47 @@ void handle_keyboard_interrupt(){
 			// between 0x35 = /, 0x01 = esc on keyboard
 
 				if(keyboard_input <= 0x0D && keyboard_input >= ROW0_OFFSET_MAP){
-					// between 0x02 = 1 and 0x0D = "="				
+					// between 0x02 = 1 and 0x0D = "="
 					if (shift_flag) {															//deal with shift-related chars
-						kb_char = kb_sc_row0_shift_chars[keyboard_input - ROW0_OFFSET_MAP]; 		
+						kb_char = kb_sc_row0_shift_chars[keyboard_input - ROW0_OFFSET_MAP];
 					} else {
-						kb_char = kb_sc_row0_nums[keyboard_input - ROW0_OFFSET_MAP];				
+						kb_char = kb_sc_row0_nums[keyboard_input - ROW0_OFFSET_MAP];
 					}
 				} else if(keyboard_input <= 0x1B && keyboard_input >= ROW1_OFFSET_MAP){
 					// between 0x10 = q and 0x1B = ]
 					if (shift_flag && capslock_flag) {
-						kb_char = kb_sc_row1_caps_shift[keyboard_input - ROW1_OFFSET_MAP]; 	
+						kb_char = kb_sc_row1_caps_shift[keyboard_input - ROW1_OFFSET_MAP];
 					} else if(shift_flag){														//deal with shift-related chars
-						kb_char = kb_sc_row1_shift_chars[keyboard_input - ROW1_OFFSET_MAP];	
+						kb_char = kb_sc_row1_shift_chars[keyboard_input - ROW1_OFFSET_MAP];
 					} else if(capslock_flag){
-						kb_char = kb_sc_row1_caps_chars[keyboard_input - ROW1_OFFSET_MAP];		
+						kb_char = kb_sc_row1_caps_chars[keyboard_input - ROW1_OFFSET_MAP];
 					} else {
-						kb_char = kb_sc_row1_let[keyboard_input - ROW1_OFFSET_MAP];			
+						kb_char = kb_sc_row1_let[keyboard_input - ROW1_OFFSET_MAP];
 					}
 				} else if(keyboard_input <= 0x29 && keyboard_input >= ROW2_OFFSET_MAP){
 					// between 0x1E = a and 0x29 =  `
 					if (shift_flag && capslock_flag) {											//deal with shift-related chars
-						kb_char = kb_sc_row2_caps_shift[keyboard_input - ROW2_OFFSET_MAP]; 	
+						kb_char = kb_sc_row2_caps_shift[keyboard_input - ROW2_OFFSET_MAP];
 					} else if (shift_flag) {													//deal with shift-related chars
-						kb_char = kb_sc_row2_shift_chars[keyboard_input - ROW2_OFFSET_MAP]; 	
+						kb_char = kb_sc_row2_shift_chars[keyboard_input - ROW2_OFFSET_MAP];
 					} else if(capslock_flag){
-						kb_char = kb_sc_row2_caps_chars[keyboard_input - ROW2_OFFSET_MAP];		
+						kb_char = kb_sc_row2_caps_chars[keyboard_input - ROW2_OFFSET_MAP];
 					} else {
-						kb_char = kb_sc_row2_let[keyboard_input - ROW2_OFFSET_MAP];			
+						kb_char = kb_sc_row2_let[keyboard_input - ROW2_OFFSET_MAP];
 					}
 				} else if(keyboard_input <= 0x35 && keyboard_input >= ROW3_OFFSET_MAP){
 					// between 0x2B = \ and 0x35 = /
 					if (shift_flag && capslock_flag) {
-						kb_char = kb_sc_row3_caps_shift[keyboard_input - ROW3_OFFSET_MAP]; 	
+						kb_char = kb_sc_row3_caps_shift[keyboard_input - ROW3_OFFSET_MAP];
 					} else if (shift_flag) {													//deal with shift-related chars
-						kb_char = kb_sc_row3_shift_chars[keyboard_input - ROW3_OFFSET_MAP]; 	
+						kb_char = kb_sc_row3_shift_chars[keyboard_input - ROW3_OFFSET_MAP];
 					} else if(capslock_flag){
-						kb_char = kb_sc_row3_caps_chars[keyboard_input - ROW3_OFFSET_MAP];		
+						kb_char = kb_sc_row3_caps_chars[keyboard_input - ROW3_OFFSET_MAP];
 					} else {
-						kb_char = kb_sc_row3_let[keyboard_input - ROW3_OFFSET_MAP];			
+						kb_char = kb_sc_row3_let[keyboard_input - ROW3_OFFSET_MAP];
 					}
-				} 
-			} 
+				}
+			}
 			break;
 	}
 
@@ -247,7 +247,7 @@ void handle_keyboard_interrupt(){
 	}
 
 	send_eoi(KB_IRQ);
-	temp_map_switch_back();												// switch back mapping 
+	temp_map_switch_back();												// switch back mapping
 	sti();
 	return;
 }
@@ -325,7 +325,7 @@ void handle_enter() {
 
 		vid_enter();
 		clear_kb_buf(curr_screen);
-		if(!terminal_read_flag){					// if keyboard interrupts not used by terminal read syscall,
+		if(!terminal_read_flag[curr_screen]){					// if keyboard interrupts not used by terminal read syscall,
 			clear_terminal_buf(curr_screen);		// clear terminal driver's temporary buf as well
 		}
 		buffer_accessed_flag = 0;					// reset flag
@@ -338,7 +338,7 @@ void handle_enter() {
  * 		Return Value: none
  */
 void set_terminal_read_flag(int flag){
-	terminal_read_flag = flag;
+	terminal_read_flag[get_curr_scheduled()] = flag;
 }
 
 /* terminal_switch
@@ -360,7 +360,7 @@ void terminal_switch(int ter_num) {
 	temp_map_phys_vid();
 	vid_switch(prev_screen, ter_num);
 	temp_map_switch_back();
-	
+
 }
 
 /* get_curr_screen
