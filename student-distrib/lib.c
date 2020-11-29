@@ -652,3 +652,7 @@ void test_interrupts(void) {
 int terminal_on_process(){
 	return (char*)(video_mem) == (char*)(VIDEO);
 }
+
+char * get_video_mem() {
+	return video_mem;
+}

@@ -20,6 +20,7 @@ void handle_backspace();
 void handle_enter();
 void set_terminal_read_flag(int flag);
 void terminal_switch(int ter_num);
+void terminal_switch_setup(int ter_num);
 int get_curr_screen();
 
 // #endif /* ASM */

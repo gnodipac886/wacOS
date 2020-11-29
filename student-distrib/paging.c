@@ -1,5 +1,6 @@
 #include "paging.h"
 #include "x86_desc.h"
+#include "lib.h"
 
 /* __init_paging__
  * 		Inputs: none
@@ -151,7 +152,7 @@ int vidmap_pte_setup(uint8_t ** screen_start, uint8_t present) {
 	page_directory[VIDMAP_4MB_PAGE].present 			= 	present; 										// all valid PDE needs to be set to 1
 
 	// set up the vidmap page table pointing to 4kb pages
-	vidmap_page_table[0].addr 							= 	page_table[VIDEO_MEM_IDX].addr;					// address to the current 4kB text-screen page being edited
+	vidmap_page_table[0].addr 							= 	page_table[(int)get_video_mem() >> 12].addr;					// address to the current 4kB text-screen page being edited
 	vidmap_page_table[0].accessed 						= 	0;												// not used, set to 0
 	vidmap_page_table[0].dirty 							= 	0;												// not used, set to 0
 	vidmap_page_table[0].global 						= 	0;												// we only set the page for kernel page
@@ -180,7 +181,7 @@ int vidmap_pte_setup(uint8_t ** screen_start, uint8_t present) {
  *  
  */
 void vidmap_update(){
-	vidmap_page_table[0].addr 							= 	page_table[VIDEO_MEM_IDX].addr;					// address to the current 4kB text-screen page being edited
+	vidmap_page_table[0].addr 							= 	page_table[(int)get_video_mem() >> 12].addr;					// address to the current 4kB text-screen page being edited
 
 	flush_tlb();
 }
