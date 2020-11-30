@@ -61,7 +61,7 @@ void switch_process(int curr_pid, int next_pid){
 		if(setup_counter == MAX_TERMINALS){
 			base_shell_flag = 0;
 
-			terminal_switch(curr_scheduled);
+			terminal_switch_setup(curr_scheduled);
 			text_screen_map_update(curr_scheduled, get_curr_screen());
 
 			exe_paging(next_pid, 1);													// change paging for next process
@@ -85,7 +85,7 @@ void switch_process(int curr_pid, int next_pid){
 		}
 
 		// store current kernel stack info - esp and ebp
-		terminal_switch(curr_scheduled);
+		terminal_switch_setup(curr_scheduled);
 		text_screen_map_update(curr_scheduled, get_curr_screen());
 		clear();
 
@@ -109,7 +109,7 @@ void switch_process(int curr_pid, int next_pid){
 	/*update text-screen 4kB paging*/
 	text_screen_map_update(curr_scheduled, get_curr_screen());
 
-	if(curr_pcb->vidmap_page_flag){														// update the vid map if the program is using it
+	if(next_pcb->vidmap_page_flag){														// update the vid map if the program is using it
 		vidmap_update();
 	}
 
