@@ -233,8 +233,8 @@ int32_t file_read(int32_t fd, void* buf, int32_t nbytes){
 
 	// determine the file length so we don't read too much
 	file_len = _get_file_length(fd);
+	fd_arr = _get_fd_arr();										// IF BUG, SWAP THIS LINE WITH NEXT
 	offset = fd_arr[fd].file_position;
-	fd_arr = _get_fd_arr();
 
 	// check if the offset is valied
 	if(offset < 0 || offset >= file_len){
