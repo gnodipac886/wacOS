@@ -356,8 +356,8 @@ void terminal_switch(int ter_num) {
 	buffer = input_bufs[ter_num];
 	terminal_buf = ter_bufs[ter_num];
 
+	text_screen_map_update(get_curr_scheduled(), ter_num);//........update video mem
 	if(_get_pcb_arr()[_get_pid_tracker()[ter_num]]->vidmap_page_flag) {
-		text_screen_map_update(get_curr_scheduled(), ter_num);//........update video mem
 		vidmap_update();
 	}
 

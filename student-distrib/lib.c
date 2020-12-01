@@ -206,7 +206,8 @@ void putc(uint8_t c) {
 	cli();
 	/* If putc is called by a background process, write to the process (Not shown on screen)
 	   If putc is called by keyboard or process on screen, write to the shown process (Shown on screen) */
-	int curr_sch = terminal_on_process() ? get_curr_screen(): get_curr_scheduled();
+	
+	int curr_sch = terminal_on_process() ? get_curr_screen(): get_curr_scheduled(); //........................................
 	
 	if(c == '\n' || c == '\r') {
 		screen_y[curr_sch]++;
@@ -248,8 +249,11 @@ void vid_backspace() {
 	} else {
 		screen_x[curr_scr]--;
 	}
+
+	temp_map_phys_vid();
 	*(uint8_t *)(video_mem + ((NUM_COLS * screen_y[curr_scr] + screen_x[curr_scr]) << 1)) = ' ';
 	update_cursor(screen_x[curr_scr], screen_y[curr_scr]);
+	temp_map_switch_back();
 }
 
 /* void vid_enter();
