@@ -12,7 +12,7 @@
 // global variables
 int32_t curr_avail_pid = 0;
 pcb_t* pcb_arr[MAX_TASKS];
-int8_t pid_avail[MAX_TASKS] = {0, 0, 0, 0, 0, 0};
+int8_t pid_avail[MAX_TASKS] = {0, 0, 0, 0, 0, 0};							// 0 - available, 1 - being used. index is the pid
 extern uint32_t is_exception;
 
 // fops table for each type of file possible
@@ -145,16 +145,19 @@ int32_t execute(const uint8_t* command){
 
 	if(read_dentry_by_name((uint8_t*)task_name, &cur_dentry) == -1){		// Find file in file system and copy func info to cur_dentry
 		pid_avail[curr_avail_pid] = 0; 										// remove task
+		pid_tracker[get_curr_screen()] = pcb->parent_pid;					// reset pid_tracker for bad inputs
 		return -1;
 	}
 
 	if (read_data(cur_dentry.inode, 0, (uint8_t*)ELF_check_buf, 4) != 4) {	// Error if cannot read starting three bytes into ELF_check_buf, 4 for elf length
 		pid_avail[curr_avail_pid] = 0;										// remove task
+		pid_tracker[get_curr_screen()] = pcb->parent_pid;					// reset pid_tracker for bad inputs
 		return -1;
 	}
 
 	if (strncmp((int8_t*)ELF_check_buf, (int8_t*)elf, 4) != 0) {			// compare starting three bytes of file with ELF, 4 for elf length
 		pid_avail[curr_avail_pid] = 0;										// remove task
+		pid_tracker[get_curr_screen()] = pcb->parent_pid;					// reset pid_tracker for bad inputs
 		return -1;
 	}
 
@@ -164,6 +167,7 @@ int32_t execute(const uint8_t* command){
 	if(exe_paging(pcb->pid, 1) != 0){										// try to do paging				
 		printf("Process ID invalid");
 		pid_avail[curr_avail_pid] = 0;
+		pid_tracker[get_curr_screen()] = pcb->parent_pid;					// reset pid_tracker for bad inputs
 		return -1;
 	}
 
@@ -290,6 +294,7 @@ int32_t open(const uint8_t* fname){
 	int i;
 	int fd = FIRST_FILE_IDX;
 	dentry_t dentry;
+	int curr_pid = _get_pid_tracker()[get_curr_scheduled()];
 
 	if(fname == NULL){														// check if the name is null
 		return -1;
@@ -310,7 +315,7 @@ int32_t open(const uint8_t* fname){
 		return -1;
 	}
 
-	while((pcb_arr[curr_avail_pid])->fd_arr[fd].flags){						// loop through the array to see which location in array is vacant
+	while((pcb_arr[curr_pid])->fd_arr[fd].flags){						// loop through the array to see which location in array is vacant
 		fd++;
 
 		if(fd >= MAX_FILES_OPEN){											// if the whole file array is full, return fail
@@ -321,26 +326,26 @@ int32_t open(const uint8_t* fname){
 
 	switch (dentry.type) {													// depending on the fine type, we set the fops table
 		case RTC_TYPE:
-			(pcb_arr[curr_avail_pid])->fd_arr[fd].jmp_table = rtc_file_ops;
+			(pcb_arr[curr_pid])->fd_arr[fd].jmp_table = rtc_file_ops;
 			break;
 
 		case DIR_TYPE:
-			(pcb_arr[curr_avail_pid])->fd_arr[fd].jmp_table = dir_file_ops;
+			(pcb_arr[curr_pid])->fd_arr[fd].jmp_table = dir_file_ops;
 			break;
 
 		case FILE_TYPE:
-			(pcb_arr[curr_avail_pid])->fd_arr[fd].jmp_table = file_file_ops;
+			(pcb_arr[curr_pid])->fd_arr[fd].jmp_table = file_file_ops;
 			break;
 
 		default:
 			return -1;
 	}
 
-	(pcb_arr[curr_avail_pid])->fd_arr[fd].inode = dentry.type == FILE_TYPE ? dentry.inode : 0;		// set the fd arr to support the file type
-	(pcb_arr[curr_avail_pid])->fd_arr[fd].file_position = 0;										// 0 since we want the beginning of the file
-	(pcb_arr[curr_avail_pid])->fd_arr[fd].flags = FILE_IN_USE;
+	(pcb_arr[curr_pid])->fd_arr[fd].inode = dentry.type == FILE_TYPE ? dentry.inode : 0;		// set the fd arr to support the file type
+	(pcb_arr[curr_pid])->fd_arr[fd].file_position = 0;										// 0 since we want the beginning of the file
+	(pcb_arr[curr_pid])->fd_arr[fd].flags = FILE_IN_USE;
 
-	if(((pcb_arr[curr_avail_pid])->fd_arr[fd].jmp_table.f_ops_open)(fname) == -1){	 				// call the filetype specific open function
+	if(((pcb_arr[curr_pid])->fd_arr[fd].jmp_table.f_ops_open)(fname) == -1){	 				// call the filetype specific open function
 		return -1;
 	}
 
@@ -356,22 +361,23 @@ int32_t open(const uint8_t* fname){
  *      Side Effects: none
  */
 int32_t read(int32_t fd, void* buf, int32_t nbytes){
+	int curr_pid;
 	// sanity checks
 	if(fd >= MAX_FILES_OPEN || fd < STDIN || fd == STDOUT || buf == NULL){
 		return -1;
 	}
 
 	memset(buf, '\0', nbytes);																		// make sure to clear the buffer before reading
-
+	curr_pid = _get_pid_tracker()[get_curr_scheduled()];
 	if(fd == STDIN){																				// if fd is 0, then we do terminal read
 		return (stdin_ops.f_ops_read)(fd, buf, nbytes);
 	}
 
-	if((pcb_arr[curr_avail_pid])->fd_arr[fd].flags == FILE_NOT_USE){								// if file is not in use, we return -1
+	if((pcb_arr[curr_pid])->fd_arr[fd].flags == FILE_NOT_USE){								// if file is not in use, we return -1
 		return -1;
 	}
 
-	return ((pcb_arr[curr_avail_pid])->fd_arr[fd].jmp_table.f_ops_read)(fd, buf, nbytes); 			// we call file type specific read
+	return ((pcb_arr[curr_pid])->fd_arr[fd].jmp_table.f_ops_read)(fd, buf, nbytes); 			// we call file type specific read
 }
 
 /* write
@@ -384,6 +390,7 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes){
  *      Side Effects: none
  */
 int32_t write(int32_t fd, void* buf, int32_t nbytes){
+	int curr_pid;
 	// sanity checks
 	if(fd >= MAX_FILES_OPEN || fd <= STDIN || buf == NULL){
 		return -1;
@@ -393,11 +400,13 @@ int32_t write(int32_t fd, void* buf, int32_t nbytes){
 		return (stdout_ops.f_ops_write)(fd, buf, nbytes);
 	}
 
-	if((pcb_arr[curr_avail_pid])->fd_arr[fd].flags == FILE_NOT_USE){								// if file not in use, then we return -1
+	curr_pid = _get_pid_tracker()[get_curr_scheduled()];
+
+	if((pcb_arr[curr_pid])->fd_arr[fd].flags == FILE_NOT_USE){								// if file not in use, then we return -1
 		return -1;
 	}
 
-	return ((pcb_arr[curr_avail_pid])->fd_arr[fd].jmp_table.f_ops_write)(fd, buf, nbytes);			// call the corresponding write function
+	return ((pcb_arr[curr_pid])->fd_arr[fd].jmp_table.f_ops_write)(fd, buf, nbytes);			// call the corresponding write function
 }
 
 /* close
@@ -407,20 +416,23 @@ int32_t write(int32_t fd, void* buf, int32_t nbytes){
  *      Side Effects: none
  */
 int32_t close(int32_t fd){
+	int curr_pid;
 	if(fd >= MAX_FILES_OPEN || fd < FIRST_FILE_IDX){												// see if the file descriptor index is valid
 		return -1;
 	}
+	
+	curr_pid = _get_pid_tracker()[get_curr_scheduled()];
 
-	if((pcb_arr[curr_avail_pid])->fd_arr[fd].flags == FILE_NOT_USE){ 								// check if the file is used at all
+	if((pcb_arr[curr_pid])->fd_arr[fd].flags == FILE_NOT_USE){ 								// check if the file is used at all
 		return -1;
 	}
 
 	// reset the file
-	(pcb_arr[curr_avail_pid])->fd_arr[fd].inode = -1;
-	(pcb_arr[curr_avail_pid])->fd_arr[fd].file_position = 0;										// 0 since we want the beginning of the file
-	(pcb_arr[curr_avail_pid])->fd_arr[fd].flags = FILE_NOT_USE;
+	(pcb_arr[curr_pid])->fd_arr[fd].inode = -1;
+	(pcb_arr[curr_pid])->fd_arr[fd].file_position = 0;										// 0 since we want the beginning of the file
+	(pcb_arr[curr_pid])->fd_arr[fd].flags = FILE_NOT_USE;
 
-	return ((pcb_arr[curr_avail_pid])->fd_arr[fd].jmp_table.f_ops_close)(fd);
+	return ((pcb_arr[curr_pid])->fd_arr[fd].jmp_table.f_ops_close)(fd);
 }
 
 /* getargs
@@ -484,7 +496,7 @@ int32_t invalid_func(){
  *      Side Effects: none
  */
 file_descriptor_t* _get_fd_arr(){
-	return (pcb_arr[curr_avail_pid])->fd_arr; 														// return the current fd array
+	return (pcb_arr[_get_pid_tracker()[get_curr_scheduled()]])->fd_arr; 							// return the current fd array
 }
 
 /* _get_curr_pcb

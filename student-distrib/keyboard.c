@@ -3,6 +3,7 @@
 #include "i8259.h"
 #include "scheduler.h"
 #include "paging.h"
+#include "system_calls.h"
 
 #define BUF_SIZE 			128			//buffer can contain 128 chars
 #define MAX_TERMINALS		3			//we support maximum of 3 terminals
@@ -355,9 +356,38 @@ void terminal_switch(int ter_num) {
 	buffer = input_bufs[ter_num];
 	terminal_buf = ter_bufs[ter_num];
 
+	text_screen_map_update(get_curr_scheduled(), ter_num);//........update video mem
+	if(_get_pcb_arr()[_get_pid_tracker()[ter_num]]->vidmap_page_flag) {
+		vidmap_update();
+	}
+
 	//saves current terminal's text screen and cursor position, then restores next terminal's
 	curr_screen = ter_num;								//update current terminal number
 	temp_map_phys_vid();
+
+	vid_switch(prev_screen, ter_num);
+	temp_map_switch_back();
+
+}
+
+/* terminal_switch_setup
+ *		Description: ..................................................................................
+ * 		Inputs: terminal_num - a terminal number 0-2
+ * 		Return Value: none
+ */
+void terminal_switch_setup(int ter_num) {
+	int prev_screen = curr_screen;
+	/* Do nothing if its the same terminal*/
+	if (ter_num == curr_screen) { return; }
+
+	//switch input buffer
+	buffer = input_bufs[ter_num];
+	terminal_buf = ter_bufs[ter_num];
+
+	//saves current terminal's text screen and cursor position, then restores next terminal's
+	curr_screen = ter_num;								//update current terminal number
+	temp_map_phys_vid();
+
 	vid_switch(prev_screen, ter_num);
 	temp_map_switch_back();
 
