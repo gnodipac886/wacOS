@@ -173,7 +173,7 @@ void entry(unsigned long magic, unsigned long addr) {
 	 * without showing you any output */
 	printf("Enabling Interrupts\n");
 	sti();
-	enable_irq(0x00);
+	//enable_irq(0x00);
 
 #ifdef RUN_TESTS
 	/* Run tests */
