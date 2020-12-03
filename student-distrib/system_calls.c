@@ -12,7 +12,7 @@
 // global variables
 int32_t curr_avail_pid = 0;
 pcb_t* pcb_arr[MAX_TASKS];
-int8_t pid_avail[MAX_TASKS] = {0, 0, 0, 0, 0, 0};
+int8_t pid_avail[MAX_TASKS] = {0, 0, 0, 0, 0, 0};							// 0 - available, 1 - being used. index is the pid
 extern uint32_t is_exception;
 
 // fops table for each type of file possible
@@ -145,16 +145,19 @@ int32_t execute(const uint8_t* command){
 
 	if(read_dentry_by_name((uint8_t*)task_name, &cur_dentry) == -1){		// Find file in file system and copy func info to cur_dentry
 		pid_avail[curr_avail_pid] = 0; 										// remove task
+		pid_tracker[get_curr_screen()] = pcb->parent_pid;					// reset pid_tracker for bad inputs
 		return -1;
 	}
 
 	if (read_data(cur_dentry.inode, 0, (uint8_t*)ELF_check_buf, 4) != 4) {	// Error if cannot read starting three bytes into ELF_check_buf, 4 for elf length
 		pid_avail[curr_avail_pid] = 0;										// remove task
+		pid_tracker[get_curr_screen()] = pcb->parent_pid;					// reset pid_tracker for bad inputs
 		return -1;
 	}
 
 	if (strncmp((int8_t*)ELF_check_buf, (int8_t*)elf, 4) != 0) {			// compare starting three bytes of file with ELF, 4 for elf length
 		pid_avail[curr_avail_pid] = 0;										// remove task
+		pid_tracker[get_curr_screen()] = pcb->parent_pid;					// reset pid_tracker for bad inputs
 		return -1;
 	}
 
@@ -164,6 +167,7 @@ int32_t execute(const uint8_t* command){
 	if(exe_paging(pcb->pid, 1) != 0){										// try to do paging				
 		printf("Process ID invalid");
 		pid_avail[curr_avail_pid] = 0;
+		pid_tracker[get_curr_screen()] = pcb->parent_pid;					// reset pid_tracker for bad inputs
 		return -1;
 	}
 
