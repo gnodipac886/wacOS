@@ -16,6 +16,8 @@ int setup_counter;
 int curr_scheduled;
 int base_shell_flag;
 
+int * vidmap_ptr = 0x8400000;
+
 void __init_scheduler__(){
 	int i;				// loop counter
 	setup_counter = -1;
@@ -110,6 +112,7 @@ void switch_process(int curr_pid, int next_pid){
 	text_screen_map_update(curr_scheduled, get_curr_screen());
 
 	if(next_pcb->vidmap_page_flag){														// update the vid map if the program is using it
+		vidmap_pte_setup((uint8_t **)&vidmap_ptr, 1);
 		vidmap_update();
 	}
 
