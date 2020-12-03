@@ -246,6 +246,7 @@ int32_t halt(uint8_t status){
 	for(i = 0; i < MAX_TERMINALS; i++){
 		if(pcb->pid == pid_tracker[i]){
 			pid_tracker[i] = pcb->parent_pid;
+			break;
 		}
 	}
 
@@ -253,7 +254,7 @@ int32_t halt(uint8_t status){
 	parent_k_ebp = pcb->parent_kernel_ebp;
 
 	pid_avail[pcb->pid] = 0; 												// reset the pid array
-	curr_avail_pid = pcb->parent_pid; 										// set global pid to parent's
+	// curr_avail_pid = pcb->parent_pid; 										// set global pid to parent's
 
 	// reset the tss
 	tss.esp0 = KER_BOTTOM - pcb->parent_pid * KER_STACK_SIZE - sizeof(unsigned long);
