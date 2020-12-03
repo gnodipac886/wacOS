@@ -392,6 +392,7 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes){
  */
 int32_t write(int32_t fd, void* buf, int32_t nbytes){
 	int curr_pid;
+	//printf("------------WRITE!!!!!---------------\n"); 
 	// sanity checks
 	if(fd >= MAX_FILES_OPEN || fd <= STDIN || buf == NULL){
 		return -1;
