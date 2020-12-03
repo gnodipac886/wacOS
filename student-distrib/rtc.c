@@ -85,7 +85,7 @@ int _rtc_read(){
 	 * 		_rtc_read returns, generating a 512 Hz rate.
 	 */
 	 int i;
-	for(i = 0; i < (1024 / rtc_virtual_frequency); i++){
+	for(i = 0; i < (1024 / rtc_virtual_frequency); i+=3){
 
 		while(rtc_interrupt_occurred == 0);
 
