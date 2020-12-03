@@ -53,6 +53,10 @@ int32_t execute(const uint8_t* command){
 		return -1;
 	}
 
+	while(command[0] == ' ') {												// ignore spaces at the front of command
+		command++;
+	}
+
 	while(1){ 																// find the location of the space character or null character
 		if(i == KB_BUF_SIZE){												// reached max, return -1 for failure
 			return -1;
