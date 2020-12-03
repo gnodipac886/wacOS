@@ -13,12 +13,12 @@
 void __init_pit__(){
 	// cli();
 	/* set PIT to mode to: Rate generater/real time counter */
-	uint16_t count = PIT_DEF_FREQ / PIT_FREQ ;	  // calculate divisor to send as command word
+	uint16_t count = PIT_DEF_FREQ / PIT_FREQ ;	  	// calculate divisor to send as command word
 	outb(PIT_CMD_BYTE, PIT_CMD_REG);				// Send command byte to command register
-	outb(count & 0xFF, PIT_DATA_REG_0);			 // Send lower 8 bytes first
-	outb(count >> 8, PIT_DATA_REG_0);			   // Send the upper 8 bytes
+	outb(count & 0xFF, PIT_DATA_REG_0);			 	// Send lower 8 bytes first
+	outb(count >> 8, PIT_DATA_REG_0);			   	// Send the upper 8 bytes
 
-	// enable_irq(PIT_IRQ);							// Enable interrupt for PIT on PIC
+	enable_irq(PIT_IRQ);							// Enable interrupt for PIT on PIC
 
 	// sti();
 }

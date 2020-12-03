@@ -113,9 +113,9 @@ int32_t execute(const uint8_t* command){
 	// pcb->parent_pid = *base_shell_flag == 1 ? pcb->pid : _get_curr_pcb((int32_t*)&i)->pid;	// check for base shell, 1 = base shell, so pid == parent_pid
 	pcb->parent_pid = *base_shell_flag == 1 ? pcb->pid : pid_tracker[get_curr_screen()];
 	pid_tracker[get_curr_screen()] = pcb->pid;
-	if(get_curr_screen() != _get_curr_pcb((int32_t*)&i)->pid && !(*base_shell_flag)){
+	/* if(get_curr_screen() != _get_curr_pcb((int32_t*)&i)->pid && !(*base_shell_flag)){
 		printf("NANI, screen: %d, pcb: %d\n", get_curr_screen(), _get_curr_pcb((int32_t*)&i)->pid);
-	}
+	} */
 
 	*base_shell_flag = 0;													// reset flag back to not base shell
 
