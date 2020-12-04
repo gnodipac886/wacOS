@@ -16,7 +16,7 @@ int setup_counter;
 int curr_scheduled;
 int base_shell_flag;
 
-int * vidmap_ptr = 0x8400000;
+uint8_t * vidmap_ptr = (uint8_t *)0x8400000;
 
 void __init_scheduler__(){
 	int i;				// loop counter
