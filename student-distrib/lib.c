@@ -203,7 +203,9 @@ void update_cursor(int x, int y) {
  *  Function: Output a character to the console 
  */
 void putc(uint8_t c) {
-	cli();
+	int flags = 0;
+	// cli();
+	cli_and_save(flags);
 	/* If putc is called by a background process, write to the process (Not shown on screen)
 	   If putc is called by keyboard or process on screen, write to the shown process (Shown on screen) */
 	int i;
@@ -234,7 +236,8 @@ void putc(uint8_t c) {
 	if (terminal_on_process()) {
 		update_cursor(screen_x[curr_sch],screen_y[curr_sch]);
 	} 
-	sti();
+	// sti();
+	restore_flags(flags);
 }
 
 /* void vid_backspace();
