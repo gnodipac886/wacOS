@@ -176,7 +176,7 @@ void handle_keyboard_interrupt(){
 			break;
 		default:
 			if((keyboard_input <= 0x35) && (keyboard_input > 0x01)){
-			// between 0x35 = /, 0x01 = esc on keyboard
+			// between 0x35 = "/", 0x01 = "esc" on keyboard
 
 				if(keyboard_input <= 0x0D && keyboard_input >= ROW0_OFFSET_MAP){
 					// between 0x02 = 1 and 0x0D = "="
@@ -225,20 +225,20 @@ void handle_keyboard_interrupt(){
 
 
 	if (kb_char != '\0') {
-		if ((kb_char == 'L' || kb_char == 'l') && ctrl_flag == 1) {			//check ctrl+l or ctrl+L
+		if ((kb_char == 'L' || kb_char == 'l') && ctrl_flag == 1) {								//check ctrl+l or ctrl+L
 			clear();
-			update_cursor(0,0);												// move cursor to the top left
+			update_cursor(0,0);																	// move cursor to the top left
 			int i;
-			for (i = 0; i < input_indicies[curr_screen]; i++) {							//print keyboard buffer to keep/maintain state before ctrl+l
+			for (i = 0; i < input_indicies[curr_screen]; i++) {									//print keyboard buffer to keep/maintain state before ctrl+l
 				putc(buffer[i]);
 			}
-		} else if ((kb_char == 'C' || kb_char == 'c') && ctrl_flag == 1) {	// check ctrl+c or ctrl+C
+		} else if ((kb_char == 'C' || kb_char == 'c') && ctrl_flag == 1) {						// check ctrl+c or ctrl+C
 			//send_eoi(KB_IRQ);
 			//squash_user_exception();		//.............................................
 		} else if (input_indicies[curr_screen] < BUF_SIZE -1 && buffer_accessed_flag == 0) {	//if keyboard buffer not filled (127 chars, last char is '\n')
-			putc(kb_char);												//prints char to screen and updates cursor
-			// while (buffer_accessed_flag == 1);						//wait till terminal finishes clearing buffer
-			buffer[input_indicies[curr_screen]] = kb_char;							//add char to keyboard buffer
+			putc(kb_char);																		//prints char to screen and updates cursor
+			// while (buffer_accessed_flag == 1);												//wait till terminal finishes clearing buffer
+			buffer[input_indicies[curr_screen]] = kb_char;										//add char to keyboard buffer
 			input_indicies[curr_screen]++;
 
 			// update the temporary buffer used by terminal driver
@@ -248,7 +248,7 @@ void handle_keyboard_interrupt(){
 	}
 
 	send_eoi(KB_IRQ);
-	temp_map_switch_back();												// switch back mapping
+	temp_map_switch_back();																		// switch back mapping
 	sti();
 	return;
 }
@@ -277,7 +277,7 @@ int get_kb_buf(char* buf, int ter_num){
  * 		Return Value: none
  */
 void clear_terminal_buf(int ter_num){
-	terminal_indicies[ter_num] = 0;						// reset the terminal index
+	terminal_indicies[ter_num] = 0;																// reset the terminal index
 	memset(ter_bufs[ter_num], '\0', BUF_SIZE);
 }
 
@@ -287,7 +287,7 @@ void clear_terminal_buf(int ter_num){
  * 		Return Value: none
  */
 void clear_kb_buf(int ter_num) {
-	input_indicies[ter_num] = 0;							// reset the terminal index
+	input_indicies[ter_num] = 0;																// reset the terminal index
 	memset(input_bufs[ter_num], '\0', BUF_SIZE);
 }
 
@@ -300,10 +300,10 @@ void handle_backspace() {
 	// check to see if buffer is not empty
 	if (input_indicies[curr_screen] > 0 && terminal_indicies[curr_screen] > 0) {
 		input_indicies[curr_screen]--;
-		buffer[input_indicies[curr_screen]] = '\0';						// backspace or null
+		buffer[input_indicies[curr_screen]] = '\0';												// backspace or null
 
 		terminal_indicies[curr_screen]--;
-		terminal_buf[terminal_indicies[curr_screen]] = '\0';				// backspace or null
+		terminal_buf[terminal_indicies[curr_screen]] = '\0';									// backspace or null
 
 		vid_backspace();
 	}
@@ -315,21 +315,21 @@ void handle_backspace() {
  * 		Return Value: none
  */
 void handle_enter() {
-	if (buffer_accessed_flag == 0) {				// ignore enters when handling enters
-		buffer_accessed_flag = 1;					// enable flag
+	if (buffer_accessed_flag == 0) {															// ignore enters when handling enters
+		buffer_accessed_flag = 1;																// enable flag
 
-		buffer[input_indicies[curr_screen]] = '\n';				// which may cause chars to be added while input_indicies[curr_screen] = 0
+		buffer[input_indicies[curr_screen]] = '\n';												// which may cause chars to be added while input_indicies[curr_screen] = 0
 		input_indicies[curr_screen]++;
 
-		terminal_buf[terminal_indicies[curr_screen]] = '\n';		// which may cause chars to be added while input_indicies[curr_screen] = 0
+		terminal_buf[terminal_indicies[curr_screen]] = '\n';									// which may cause chars to be added while input_indicies[curr_screen] = 0
 		terminal_indicies[curr_screen]++;
 
 		vid_enter();
 		clear_kb_buf(curr_screen);
-		if(!terminal_read_flag[curr_screen]){					// if keyboard interrupts not used by terminal read syscall,
-			clear_terminal_buf(curr_screen);		// clear terminal driver's temporary buf as well
+		if(!terminal_read_flag[curr_screen]){													// if keyboard interrupts not used by terminal read syscall,
+			clear_terminal_buf(curr_screen);													// clear terminal driver's temporary buf as well
 		}
-		buffer_accessed_flag = 0;					// reset flag
+		buffer_accessed_flag = 0;																// reset flag
 	}
 }
 
@@ -339,7 +339,7 @@ void handle_enter() {
  * 		Return Value: none
  */
 void set_terminal_read_flag(int flag){
-	terminal_read_flag[get_curr_scheduled()] = flag;
+	terminal_read_flag[get_curr_scheduled()] = flag;											// make sure to set the right terminal read flag
 }
 
 /* terminal_switch
@@ -356,13 +356,13 @@ void terminal_switch(int ter_num) {
 	buffer = input_bufs[ter_num];
 	terminal_buf = ter_bufs[ter_num];
 
-	text_screen_map_update(get_curr_scheduled(), ter_num);//........update video mem
+	text_screen_map_update(get_curr_scheduled(), ter_num);										// update video mem
 	if(_get_pcb_arr()[_get_pid_tracker()[ter_num]]->vidmap_page_flag) {
 		vidmap_update();
 	}
 
 	//saves current terminal's text screen and cursor position, then restores next terminal's
-	curr_screen = ter_num;								//update current terminal number
+	curr_screen = ter_num;																		//update current terminal number
 	temp_map_phys_vid();
 
 	vid_switch(prev_screen, ter_num);
@@ -371,7 +371,7 @@ void terminal_switch(int ter_num) {
 }
 
 /* terminal_switch_setup
- *		Description: ..................................................................................
+ *		Description: switch the terminal that's on the screen right now
  * 		Inputs: terminal_num - a terminal number 0-2
  * 		Return Value: none
  */
@@ -385,7 +385,7 @@ void terminal_switch_setup(int ter_num) {
 	terminal_buf = ter_bufs[ter_num];
 
 	//saves current terminal's text screen and cursor position, then restores next terminal's
-	curr_screen = ter_num;								//update current terminal number
+	curr_screen = ter_num;																		//update current terminal number
 	temp_map_phys_vid();
 
 	vid_switch(prev_screen, ter_num);

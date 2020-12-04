@@ -259,7 +259,7 @@ int32_t file_read(int32_t fd, void* buf, int32_t nbytes){
 int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry){
 	// initialize counter
 	int i;
-	char curr_file_name[MAX_NAME_LEN + 1];			// length +1 since we want to fir 33 characters here
+	char curr_file_name[MAX_NAME_LEN + 1];														// length +1 since we want to fir 33 characters here
 	char* file_name = (char*)fname;
 	dentry_t curr_dentry;
 
@@ -375,7 +375,7 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
 		memcpy((void*)(buf + num_copied), (void*)data_loc, num_mem2_cpy);
 
 		// update trackers
-		num_copied += num_mem2_cpy; 			// realized could just use one tracker instead... too late
+		num_copied += num_mem2_cpy; 							// realized could just use one tracker instead... too late
 		num_bytes_left -= num_mem2_cpy;
 		data_block_num = curr_inode.data_block[(offset + num_copied) / BLOCK_SIZE];
 		curr_data_block = &(data_ptr[1 + boot_block->num_inode + data_block_num]);

@@ -39,7 +39,7 @@
 
 #define INIT_MASK_ALL 		0xFF
 #define UNMASK_IRQ2			0xFB
-#define SLAVE_IRQ_NUM   0x08
+#define SLAVE_IRQ_NUM       0x08
 
 /* Externally-visible functions */
 

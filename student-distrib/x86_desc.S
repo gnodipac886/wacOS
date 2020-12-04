@@ -17,8 +17,8 @@
 # initializing GDT
 gdt_desc:
 	.word 0                       # padding
-	.word gdt_bottom - gdt - 1		# size of gdt
-	.long gdt 					        	# address of gdt
+	.word gdt_bottom - gdt - 1	  # size of gdt
+	.long gdt 					  # address of gdt
 
 tss_size:
 	.long tss_bottom - tss - 1

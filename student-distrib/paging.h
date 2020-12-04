@@ -4,6 +4,7 @@
 #include "types.h"
 
 #define ALIGN_4KB 			    12      // alignment for 4kb paging
+#define ALIGN_4MB 			    22      // alignment for 4kb paging
 #define SHFT_4MB_ADDR 		    10      // Memory address interval
 
 #define NUM_PAGE_DIR 		    1024    // total space for page directory
