@@ -6,7 +6,7 @@
 /* Interrupt Assembly Linkage
  * Description: x86 wrapper function that calls interrupt handlers;
 				stubs - pushes NOT(IRQ#) for calculating interrupt_handler_jump table offset
- *			  common_interrupt - saves/restores general purpose register values before/after interrupt
+ *			  	common_interrupt - saves/restores general purpose register values before/after calling interrupt
  * Input: None
  * Output: None
  * Side Effects: interrupt handler gets executed
@@ -34,7 +34,7 @@ common_interrupt:
 	iret									   	/*return from interrupt*/
 
 interrupt_handler_jump:
-	.long handle_pit_interrupt					/*handler ptrs for IR lines of Master PIC*/									/*handler ptrs for IR lines of Master PIC*/
+	.long handle_pit_interrupt					/*handler ptrs for IR lines of Master PIC*/
 	.long handle_keyboard_interrupt
 	.long 0
 	.long 0
@@ -71,7 +71,7 @@ squash_user_exception:
 /* System Call Assembly Linkage
  * Description: x86 wrapper function that calls interrupt handlers;
 				eax - holds system call number
- *			  system_call_interrupt - saves/restores general purpose register values before/after interrupt
+ *			  	system_call_interrupt - saves/restores general purpose register values before/after system call
  * Input: None
  * Output: None
  * Side Effects: system call gets handled
@@ -89,7 +89,7 @@ wrong_number:
 	jmp 	system_call_ret
 
 valid_call_number:
-	pushl   %edx 								// push system call arguents
+	pushl   %edx 								// push system call arguments
 	pushl   %ecx 
 	pushl   %ebx 
 	
@@ -117,8 +117,8 @@ system_call_jmp:
 	.long close 
 	.long getargs 
 	.long vidmap
-	.long 0				 //set_handler 
-	.long 0				 //sigreturn
+	.long set_handler 
+	.long sigreturn
 
 sys_call_ret_val:
 	.long 0 

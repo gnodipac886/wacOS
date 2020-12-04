@@ -16,14 +16,14 @@ int setup_counter;
 int curr_scheduled;
 int base_shell_flag;
 
-uint8_t * vidmap_ptr = (uint8_t *)0x8400000;
+uint8_t * vidmap_ptr = (uint8_t *)DEF_VIDMAP_PTR;	 						// pointer for vidmap page location 132MB
 
 void __init_scheduler__(){
 	int i;				// loop counter
 	setup_counter = -1;
 	curr_scheduled = -1;
 	base_shell_flag = 0;
-	// pcb_arr = _get_pcb_arr();
+
 	// init to pid i for all terminals
 	for(i = 0; i < MAX_TERMINALS; i++){
 		pid_tracker[i] = i;
@@ -36,7 +36,7 @@ void switch_process(int curr_pid, int next_pid){
 	pcb_t* curr_pcb = pcb_arr[curr_pid];
 	pcb_t* next_pcb = pcb_arr[next_pid];
 
-	if(setup_counter == -1){
+	if(setup_counter == -1){															// make the very first shell
 		setup_counter++;
 		curr_scheduled++;
 		base_shell_flag = 1;
@@ -46,7 +46,7 @@ void switch_process(int curr_pid, int next_pid){
 		return;
 	}
 
-	/* SETUP TERMINALS INITIALIZING*/
+	/* SETUP TERMINALS INITIALIZING, SHELLS 1 AND 2*/
 	if(setup_counter < MAX_TERMINALS && setup_counter >= 0){
 		pcb_arr[setup_counter] = (pcb_t*)(KER_BOTTOM - (setup_counter + 1) * KER_STACK_SIZE);
 		curr_pcb = pcb_arr[setup_counter];
@@ -60,7 +60,7 @@ void switch_process(int curr_pid, int next_pid){
 			:"=g"(curr_pcb->curr_esp), "=g"(curr_pcb->curr_ebp) 						// outputs - temp vars to be used to set pcb values
 		);
 
-		if(setup_counter == MAX_TERMINALS){
+		if(setup_counter == MAX_TERMINALS){												// special case for 4th pit interrupt
 			base_shell_flag = 0;
 
 			terminal_switch_setup(curr_scheduled);
@@ -104,9 +104,9 @@ void switch_process(int curr_pid, int next_pid){
 		:"=g"(curr_pcb->curr_esp), "=g"(curr_pcb->curr_ebp) 							// outputs - temp vars to be used to set pcb values
 	);
 
-	curr_scheduled = (curr_scheduled + 1) % 3;
+	curr_scheduled = (curr_scheduled + 1) % MAX_TERMINALS;								// make curr_scheduled for next process number
 
-	exe_paging(next_pid, 1);															// change paging for next process
+	exe_paging(next_pid, 1);															// change paging for next process, 1 for present
 
 	/*update text-screen 4kB paging*/
 	text_screen_map_update(curr_scheduled, get_curr_screen());

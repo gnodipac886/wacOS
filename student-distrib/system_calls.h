@@ -19,14 +19,14 @@
 #define KB_BUF_SIZE 		128					// buffer can contain 128 chars
 #define FAILURE				-1					// return value
 #define MAX_TERMINALS    	3          			// Max terminals supported
+#define ELF_MAGIC			0x7F
 
 typedef struct pcb{
-	char 	arg[128];
+	char 	arg[KB_BUF_SIZE];
 	int32_t pid;
 	int32_t parent_pid;
 	uint32_t curr_esp;
 	uint32_t curr_ebp;
-	uint32_t curr_eip;
     int32_t parent_kernel_esp;
     int32_t parent_kernel_ebp;
 	int8_t 	vidmap_page_flag;
@@ -41,6 +41,8 @@ int32_t write(int32_t fd, void* buf, int32_t nbytes);
 int32_t close(int32_t fd);
 int32_t getargs(uint8_t* buf, int32_t nbytes);
 int32_t vidmap(uint8_t ** screen_start);
+int32_t set_handler(int32_t signum, void* handler_address);
+int32_t sigreturn(void);
 
 
 int32_t invalid_func();
