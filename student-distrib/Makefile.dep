@@ -14,7 +14,7 @@ keyboard.o: keyboard.c keyboard.h lib.h types.h i8259.h scheduler.h \
 lib.o: lib.c lib.h types.h keyboard.h scheduler.h
 paging.o: paging.c paging.h types.h x86_desc.h lib.h
 pit.o: pit.c pit.h lib.h types.h i8259.h tests.h scheduler.h
-rtc.o: rtc.c rtc.h lib.h types.h i8259.h tests.h
+rtc.o: rtc.c rtc.h lib.h types.h i8259.h tests.h scheduler.h
 scheduler.o: scheduler.c scheduler.h system_calls.h types.h filesystem.h \
   lib.h pit.h keyboard.h paging.h x86_desc.h i8259.h
 system_calls.o: system_calls.c system_calls.h types.h filesystem.h \
