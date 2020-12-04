@@ -53,6 +53,10 @@ int32_t execute(const uint8_t* command){
 		return -1;
 	}
 
+	while(command[0] == ' ') {												// ignore spaces at the front of command
+		command++;
+	}
+
 	while(1){ 																// find the location of the space character or null character
 		if(i == KB_BUF_SIZE){												// reached max, return -1 for failure
 			return -1;
@@ -113,9 +117,9 @@ int32_t execute(const uint8_t* command){
 	// pcb->parent_pid = *base_shell_flag == 1 ? pcb->pid : _get_curr_pcb((int32_t*)&i)->pid;	// check for base shell, 1 = base shell, so pid == parent_pid
 	pcb->parent_pid = *base_shell_flag == 1 ? pcb->pid : pid_tracker[get_curr_screen()];
 	pid_tracker[get_curr_screen()] = pcb->pid;
-	if(get_curr_screen() != _get_curr_pcb((int32_t*)&i)->pid && !(*base_shell_flag)){
+	/* if(get_curr_screen() != _get_curr_pcb((int32_t*)&i)->pid && !(*base_shell_flag)){
 		printf("NANI, screen: %d, pcb: %d\n", get_curr_screen(), _get_curr_pcb((int32_t*)&i)->pid);
-	}
+	} */
 
 	*base_shell_flag = 0;													// reset flag back to not base shell
 
@@ -392,6 +396,7 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes){
  */
 int32_t write(int32_t fd, void* buf, int32_t nbytes){
 	int curr_pid;
+	//printf("------------WRITE!!!!!---------------\n"); 
 	// sanity checks
 	if(fd >= MAX_FILES_OPEN || fd <= STDIN || buf == NULL){
 		return -1;
