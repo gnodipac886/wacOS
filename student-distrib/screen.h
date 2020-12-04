@@ -20,6 +20,8 @@
 #define VGA_VIDEO       		0xA0000
 #define VGA_SCREEN_END 			VGA_VIDEO + 0x3E7F 			// last 4 pixels of the VGA screen
 
+#define FILE_MAX_LEN 			SCREEN_X_DIM * SCREEN_Y_DIM * 2
+
 // mouse related:
 #define VGA_CURSOR_SIZE 4
 #define FRAMES_PER_MOVE 7 			// how many mouse frames per movement
@@ -62,5 +64,6 @@ void show_screen();
 void draw_mouse_cursor(int * curr_x, int * curr_y, int dx, int dy, int frames, int sx, int sy);
 void draw_image_322(uint8_t * img);
 void draw_image_565(pixel_565_t * img);
+void draw_image_565_from_file(char * fname);
 
 #endif /* _SCREEN_H */

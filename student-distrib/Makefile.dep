@@ -3,6 +3,7 @@ boot.o: boot.S multiboot.h x86_desc.h types.h idt.h
 x86_desc.o: x86_desc.S x86_desc.h types.h
 filesystem.o: filesystem.c filesystem.h types.h system_calls.h lib.h \
   rtc.h
+gui.o: gui.c
 i8259.o: i8259.c i8259.h types.h lib.h
 idt.o: idt.c idt.h assembly_linkage.h x86_desc.h types.h lib.h keyboard.h \
   rtc.h
@@ -16,8 +17,7 @@ mouse.o: mouse.c lib.h types.h i8259.h mouse.h screen.h paging.h
 octree.o: octree.c octree.h types.h screen.h lib.h
 paging.o: paging.c paging.h types.h x86_desc.h
 rtc.o: rtc.c rtc.h lib.h types.h i8259.h tests.h
-screen.o: screen.c lib.h types.h screen.h paging.h octree.h \
-  ../images/big_sur.h
+screen.o: screen.c lib.h types.h screen.h paging.h octree.h filesystem.h
 system_calls.o: system_calls.c system_calls.h types.h filesystem.h \
   terminal.h paging.h x86_desc.h keyboard.h lib.h
 terminal.o: terminal.c terminal.h types.h keyboard.h lib.h

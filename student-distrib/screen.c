@@ -2,7 +2,8 @@
 #include "screen.h"
 #include "paging.h"
 #include "octree.h"
-#include "../images/big_sur.h"
+#include "filesystem.h"
+// #include "../images/big_sur.h"
 // #include "../images/bar.h"
 
 static unsigned short mode_X_CRTC[NUM_CRTC_REGS] = {
@@ -60,7 +61,10 @@ void __screen_init__(){
 	// draw_rectangle(100, 50, 3, 100, 100);
 	// draw_circle(160, 100, 100, 0xE0);
 	// draw_image_322((uint8_t*)bar_map);
-	draw_image_565((pixel_565_t*)((void*)big_sur_map));
+
+	// draw_image_565((pixel_565_t*)((void*)big_sur_map));
+	while(1)
+	draw_image_565_from_file("big_sur.bin");
 }
 
 /*
@@ -340,6 +344,7 @@ uint8_t get_pixel(int x, int y){
 	int idx = (y * SCREEN_X_DIM + x); 				// index of pixel row major form
 	int p_off = idx & 3; 						// which plane we are in
 	int p_idx = idx >> 2; 							// which index we are in within that plane
+	p_idx = p_idx;
 	// build_buf[p_off * PLANE_DIM + p_idx] = color; 	// plot pixel into buffer
 
 	SET_WRITE_MASK(1 << (p_off + 8));							// set the write mask
@@ -398,7 +403,7 @@ void show_screen(){
  */   
 void draw_mouse_cursor(int * curr_x, int * curr_y, int dx, int dy, int frames, int sx, int sy){
 	int i;
-	// int save_x, save_y;
+	int save_x, save_y;
 	int * prev_x;
 	int * prev_y;
 	uint8_t* save_buf;
@@ -411,12 +416,13 @@ void draw_mouse_cursor(int * curr_x, int * curr_y, int dx, int dy, int frames, i
 
 		// draw_rectangle(*prev_x, *prev_y, 0, VGA_CURSOR_SIZE, VGA_CURSOR_SIZE);
 
-		// // write original screen
-		// for(save_y = 0; save_y < VGA_CURSOR_SIZE; save_y++){
-		// 	for(save_x = 0; save_x < VGA_CURSOR_SIZE; save_x++){
-		// 		save_buf[save_y * VGA_CURSOR_SIZE + save_x] = get_pixel(curr_x + save_x, curr_y + save_y);
-		// 	}
-		// }
+		// write original screen
+		for(save_y = 0; save_y < VGA_CURSOR_SIZE; save_y++){
+			for(save_x = 0; save_x < VGA_CURSOR_SIZE; save_x++){
+				// save_buf[save_y * VGA_CURSOR_SIZE + save_x] = get_pixel(curr_x + save_x, curr_y + save_y);
+				plot_pixel(*prev_x + save_x, *prev_y + save_y, save_buf[save_y * VGA_CURSOR_SIZE + save_x]);
+			}
+		}
 
 		*curr_x += dx / frames == 0 ? sx : dx / frames;
 		*curr_y -= dy / frames == 0 ? sy : dy / frames;
@@ -427,12 +433,12 @@ void draw_mouse_cursor(int * curr_x, int * curr_y, int dx, int dy, int frames, i
 		*curr_x = *curr_x < 0 ? 0 : *curr_x;
 		*curr_y = *curr_y < 0 ? 0 : *curr_y;
 
-		// // save original screen
-		// for(save_y = 0; save_y < VGA_CURSOR_SIZE; save_y++){
-		// 	for(save_x = 0; save_x < VGA_CURSOR_SIZE; save_x++){
-		// 		save_buf[save_y * VGA_CURSOR_SIZE + save_x] = get_pixel(curr_x + save_x, curr_y + save_y);
-		// 	}
-		// }
+		// save new screen
+		for(save_y = 0; save_y < VGA_CURSOR_SIZE; save_y++){
+			for(save_x = 0; save_x < VGA_CURSOR_SIZE; save_x++){
+				save_buf[save_y * VGA_CURSOR_SIZE + save_x] = get_pixel(*curr_x + save_x, *curr_y + save_y);
+			}
+		}
 
 		draw_rectangle(*curr_x, *curr_y, 3, VGA_CURSOR_SIZE, VGA_CURSOR_SIZE);
 
@@ -444,11 +450,12 @@ void draw_mouse_cursor(int * curr_x, int * curr_y, int dx, int dy, int frames, i
 		if(!(dx / frames) && !(dy / frames)){
 			break;
 		}
-	}	
+	}
+	draw_rectangle(*curr_x, *curr_y, 3, VGA_CURSOR_SIZE, VGA_CURSOR_SIZE);
 }
 
 /*
- * draw_image
+ * draw_image_322
  *   DESCRIPTION: 	img - pointer to array of pixels
  *   INPUTS: none
  *   OUTPUTS: none
@@ -466,7 +473,7 @@ void draw_image_322(uint8_t * img){
 }
 
 /*
- * draw_image
+ * draw_image_565
  *   DESCRIPTION: 	img - pointer to array of pixels
  *   INPUTS: none
  *   OUTPUTS: none
@@ -483,4 +490,26 @@ void draw_image_565(pixel_565_t * img){
 			plot_pixel(x, y, (uint8_t)(img[y * SCREEN_Y_DIM + (x + y * 120)].pixel & 0x00FF));
 		}
 	}
+}
+
+/*
+ * draw_image_565_from_file
+ *   DESCRIPTION: 	img - pointer to array of pixels
+ *   INPUTS: none
+ *   OUTPUTS: none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: plots image on screen
+ */   
+void draw_image_565_from_file(char * fname){
+	dentry_t dentry;
+	pixel_565_t img[SCREEN_X_DIM * SCREEN_Y_DIM];
+
+	// get the dentry information
+	read_dentry_by_name((uint8_t*)fname, &dentry);
+
+	// read out the file into the buffer
+	read_data(dentry.inode, 0, (uint8_t*)img, FILE_MAX_LEN);
+
+	// draw the image
+	draw_image_565(img);
 }
