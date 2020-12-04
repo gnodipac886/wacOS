@@ -1,8 +1,8 @@
 #ifndef _SCHDULER_H
 #define _SCHDULER_H
 
-#define MAX_TERMINALS    3          // Max terminals supported
-
+#define MAX_TERMINALS       3          // Max terminals supported
+#define DEF_VIDMAP_PTR      0x8400000  // Vidmap pointer starts at 132MB     
 /* scheduler_init: Initializes scheduler*/
 void __init_scheduler__();
 /* switch_process: Switches to the next process on the queue*/

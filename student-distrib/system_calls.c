@@ -10,7 +10,7 @@
 
 
 // global variables
-int32_t curr_avail_pid = 0;
+int32_t curr_avail_pid = 0;													// init to 0, pid starts at 0
 pcb_t* pcb_arr[MAX_TASKS];
 int8_t pid_avail[MAX_TASKS] = {0, 0, 0, 0, 0, 0};							// 0 - available, 1 - being used. index is the pid
 extern uint32_t is_exception;
@@ -41,8 +41,8 @@ int32_t execute(const uint8_t* command){
 	char task_name[KB_BUF_SIZE];
 	char task_arg[KB_BUF_SIZE];
 	pcb_t* pcb;
-	char elf[] = {(char)0x7f,'E','L','F'};									// magic number at front of executable files
-	char ELF_check_buf[4];
+	char elf[] = {(char)ELF_MAGIC,'E','L','F'};									// magic number at front of executable files
+	char ELF_check_buf[4];														// ELF length is 4 bytes
 	dentry_t cur_dentry;
 
 	int* base_shell_flag = _get_base_shell_flag();
@@ -194,7 +194,7 @@ int32_t execute(const uint8_t* command){
 		"pushl		%0;"													// push the SS which we use here the DS
 		"pushl 		%2;"													// push address of the user stack
 		"pushfl;"															// push the flags
-		"orl 		$0x200, 	(%%esp);"									// or the IF bit so when we iret, it sti's
+		"orl 		$0x200, 	(%%esp);"									// or the IF bit so when we iret, it sti's, 0x200 for interrupt flag, in flag reg
 		"pushl		%1;"													// push the code segment
 		"pushl 		%3;"													// push the first line
 		"movl 		%0, 		%%eax;"										// move DS to eax
@@ -215,7 +215,7 @@ int32_t execute(const uint8_t* command){
  *      Inputs: status - executing status of the program
  *      Return Value: status variable; -1 on failure
  *      Function: - close associated files, turn off current paging, revert back to parent paging, 
- * 				  return to use old PCB, return to parent kernel stack
+ * 				  	return to use old PCB, return to parent kernel stack
  * 				  - reboots shell if necessary
  *      Side Effects: none
  */
@@ -378,12 +378,12 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes){
 		return (stdin_ops.f_ops_read)(fd, buf, nbytes);
 	}
 
-	if((pcb_arr[curr_pid])->fd_arr[fd].flags == FILE_NOT_USE){								// if file is not in use, we return -1
+	if((pcb_arr[curr_pid])->fd_arr[fd].flags == FILE_NOT_USE){										// if file is not in use, we return -1
 		return -1;
 	}
 
-	return ((pcb_arr[curr_pid])->fd_arr[fd].jmp_table.f_ops_read)(fd, buf, nbytes); 			// we call file type specific read
-}
+	return ((pcb_arr[curr_pid])->fd_arr[fd].jmp_table.f_ops_read)(fd, buf, nbytes); 				// we call file type specific read
+}	
 
 /* write
  *      Inputs: fd 		- file descriptor index value
@@ -396,7 +396,6 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes){
  */
 int32_t write(int32_t fd, void* buf, int32_t nbytes){
 	int curr_pid;
-	//printf("------------WRITE!!!!!---------------\n"); 
 	// sanity checks
 	if(fd >= MAX_FILES_OPEN || fd <= STDIN || buf == NULL){
 		return -1;
@@ -408,11 +407,11 @@ int32_t write(int32_t fd, void* buf, int32_t nbytes){
 
 	curr_pid = _get_pid_tracker()[get_curr_scheduled()];
 
-	if((pcb_arr[curr_pid])->fd_arr[fd].flags == FILE_NOT_USE){								// if file not in use, then we return -1
+	if((pcb_arr[curr_pid])->fd_arr[fd].flags == FILE_NOT_USE){										// if file not in use, then we return -1
 		return -1;
 	}
 
-	return ((pcb_arr[curr_pid])->fd_arr[fd].jmp_table.f_ops_write)(fd, buf, nbytes);			// call the corresponding write function
+	return ((pcb_arr[curr_pid])->fd_arr[fd].jmp_table.f_ops_write)(fd, buf, nbytes);				// call the corresponding write function
 }
 
 /* close
@@ -429,13 +428,13 @@ int32_t close(int32_t fd){
 	
 	curr_pid = _get_pid_tracker()[get_curr_scheduled()];
 
-	if((pcb_arr[curr_pid])->fd_arr[fd].flags == FILE_NOT_USE){ 								// check if the file is used at all
+	if((pcb_arr[curr_pid])->fd_arr[fd].flags == FILE_NOT_USE){ 										// check if the file is used at all
 		return -1;
 	}
 
 	// reset the file
 	(pcb_arr[curr_pid])->fd_arr[fd].inode = -1;
-	(pcb_arr[curr_pid])->fd_arr[fd].file_position = 0;										// 0 since we want the beginning of the file
+	(pcb_arr[curr_pid])->fd_arr[fd].file_position = 0;												// 0 since we want the beginning of the file
 	(pcb_arr[curr_pid])->fd_arr[fd].flags = FILE_NOT_USE;
 
 	return ((pcb_arr[curr_pid])->fd_arr[fd].jmp_table.f_ops_close)(fd);
@@ -533,4 +532,30 @@ pcb_t* _get_curr_pcb(int32_t* ptr) {
  */
 pcb_t** _get_pcb_arr(){
 	return pcb_arr;
+}
+
+
+/* set_handler
+ *		Description: signals system call
+ *      Inputs: signum - which signal's handler to change
+ * 				handler_address - addr of user-level function ot be run when signal is received
+ *      Return Value: FAILURE (if implemented: 0 if handler was succesfully set, -1 on failure)
+ *      Function: changes default action taken when signal is received
+ *      Side Effects: none
+ */
+int32_t set_handler(int32_t signum, void* handler_address) {
+	return -1;
+}
+
+
+
+/* sigreturn
+		Description: signals system call
+ *      Inputs: esp - user-level value of ESP (will be saved by system call handler)
+ *      Return Value: FAILURE
+ *      Function: copies hardware context that was on user-level stack back onto the processor
+ *      Side Effects: none
+ */
+int32_t sigreturn(void) {
+	return -1;
 }
