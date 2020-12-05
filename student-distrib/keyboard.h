@@ -21,6 +21,7 @@ void clear_kb_buf();
 
 void handle_backspace();
 void handle_enter();
+void handle_esc();
 
 void _init_shell_hist();
 void shift_cmds();

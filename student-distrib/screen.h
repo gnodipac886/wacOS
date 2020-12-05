@@ -12,6 +12,19 @@
 #define PLANE_Y_DIM				SCREEN_Y_DIM
 #define PLANE_DIM 				PLANE_X_DIM * PLANE_Y_DIM
 
+/* Mode X and general VGA parameters */
+#if !defined(NDEBUG)
+#define MEM_FENCE_WIDTH 256
+#else
+#define MEM_FENCE_WIDTH 0
+#endif
+#define VID_MEM_SIZE 			131072
+#define MEM_FENCE_MAGIC 		0xF3
+#define SCROLL_SIZE 			(SCREEN_X_DIM * SCREEN_Y_DIM)
+#define SCREEN_SIZE 			(SCROLL_SIZE * 4 + 1)
+#define BUILD_BUF_SIZE 			(SCREEN_SIZE + 20000)
+
+#define NUM_SEQUENCER_REGS      5
 #define NUM_GRAPHICS_REGS       9
 #define NUM_CRTC_REGS          	25
 #define NUM_ATTR_REGS			22
@@ -65,5 +78,11 @@ void draw_mouse_cursor(int * curr_x, int * curr_y, int dx, int dy, int frames, i
 void draw_image_322(uint8_t * img);
 void draw_image_565(pixel_565_t * img);
 void draw_image_565_from_file(char * fname);
+
+void set_seq_regs_and_reset (unsigned short table[NUM_SEQUENCER_REGS], unsigned char val);
+void fill_palette_text();
+void clear_mode_X();
+void set_text_mode_3(int clear_scr);
+void write_font_data();
 
 #endif /* _SCREEN_H */

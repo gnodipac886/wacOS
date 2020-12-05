@@ -16,7 +16,7 @@
 #define USER_PAGE           32 	   // user page memory location (page directory index)
 #define VIDMAP_4MB_PAGE     33     // vidmap page memory location (page directory index)
 
-#define GUI_ACTIVATE 		1
+#define GUI_ACTIVATE 		1      // 1 - activate, 0 - deactivate
 
 /* initializing paging */
 extern void __init_paging__();
