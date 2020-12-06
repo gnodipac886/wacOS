@@ -184,10 +184,7 @@ void entry(unsigned long magic, unsigned long addr) {
 	}
 	/* Execute the first program ("shell") ... */
 	play_sound("fish-bubbles.wav");
-	play_sound("buzzer.wav");
-	play_sound("buzzer.wav");
-	play_sound("buzzer.wav");
-	play_sound("buzzer.wav");
+	// play_sound("buzzer.wav");
 	execute((uint8_t*)"shell");
 
 	/* Spin (nicely, so we don't chew up cycles) */

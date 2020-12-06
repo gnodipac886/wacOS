@@ -58,7 +58,7 @@ static unsigned short text_graphics[NUM_GRAPHICS_REGS] = {
     0xFF08
 };
 
-unsigned char* mem_image = VGA_VIDEO;                     /* pointer to start of video memory */
+unsigned char* mem_image = (unsigned char*)VGA_VIDEO;                     /* pointer to start of video memory */
 unsigned char build[BUILD_BUF_SIZE + 2 * MEM_FENCE_WIDTH];
 
 uint32_t fb_addr = (uint32_t)VGA_VIDEO; 			// address of current frame buffer we are using (0 based, 0xA0000 = 0x0)

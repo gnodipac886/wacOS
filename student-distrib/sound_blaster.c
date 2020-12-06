@@ -5,6 +5,7 @@
 #include "paging.h"
 
 wave_head_t curr_wav;
+uint8_t* audio_addr = (uint8_t*)WAV_DATA_PG_ADDR;
 
 void __init_sb__(){
     reset_dsp();
@@ -25,7 +26,7 @@ void handle_sb_interrupt() {
     //Program DMA controller for next block............................................
     //Program DSP for next block...........................................................
     inb(DSP_READ_STATUS);
-    printf("SB got an interrupt lol\n");
+    // printf("SB got an interrupt lol\n");
 	//resume_playback();
     memset((uint8_t *)WAV_DATA_PG_ADDR, 0, curr_wav.subchunck2size);       // clear sound data in memory (wava data page)
     //speaker_off();
@@ -66,8 +67,14 @@ void read_wav_data(char * fname){
 
 	read_data(dentry.inode, 0, (uint8_t*)&curr_wav, WAV_DATA_OFFSET);
 
+	uint8_t wav_buf[curr_wav.subchunck2size];
+
 	// read out the file's sound data into the wav data page
-	read_data(dentry.inode, 0, (uint8_t *)WAV_DATA_PG_ADDR, curr_wav.subchunck2size);
+	read_data(dentry.inode, WAV_DATA_OFFSET, wav_buf, curr_wav.subchunck2size);
+
+	memcpy((void*)audio_addr, (void*)wav_buf, curr_wav.subchunck2size);
+
+	printf("%d, %d\n", wav_buf[0], ((uint8_t*)audio_addr)[0]);
 }
 
 void set_master_volume() {

@@ -12,14 +12,14 @@
 #define VIDEO_MEM_IDX		0xB8   // video memory index
 #define VGA_IDX_START       0xA0   // VGA video memory index
 #define VGA_IDX_END 		0xBF   // VGA video memory index
-#define SB_IDX_START        0xC0   // sound blaster video memory start index
-#define SB_IDX_END          0xFF   // sound blaster video memory end index
+#define SB_IDX_START        0x80   // sound blaster video memory start index
+#define SB_IDX_END          0x90   // sound blaster video memory end index
 
-#define WAV_PAGE            10
+#define WAV_PAGE            80
 #define USER_PAGE           32 	   // user page memory location (page directory index)
 #define VIDMAP_4MB_PAGE     33     // vidmap page memory location (page directory index)
 
-#define GUI_ACTIVATE 		1      // 1 - activate, 0 - deactivate
+#define GUI_ACTIVATE 		0      // 1 - activate, 0 - deactivate
 
 /* initializing paging */
 extern void __init_paging__();

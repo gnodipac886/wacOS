@@ -29,7 +29,7 @@
 
 #define SB_IRQ 					5
 
-#define WAV_DATA_PG_ADDR        0xC0000  // wav data page at physical/virtual 0xC0000    
+#define WAV_DATA_PG_ADDR        0x80000  // wav data page at physical/virtual 0xC0000    
 
 #define PHYS_PG_BDY             0x8000  // 64k physical page boundary for sound data buffer 
 
