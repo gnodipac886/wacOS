@@ -1,5 +1,5 @@
 #include "assembly_linkage.h"
-.globl keyboard_interrupt_stub, rtc_interrupt_stub, mouse_interrupt_stub
+.globl keyboard_interrupt_stub, rtc_interrupt_stub, mouse_interrupt_stub, sb_interrupt_stub
 .globl system_call_interrupt, system_call_ret
 .globl squash_user_exception, is_exception
 
@@ -14,6 +14,10 @@
 
 keyboard_interrupt_stub:
 	pushl $-2									/*Negative num for keyboard IRQ1*/
+	jmp common_interrupt
+
+sb_interrupt_stub:
+	pushl $-6									/*Negative num for sound blaster IRQ5*/
 	jmp common_interrupt
 
 rtc_interrupt_stub:
@@ -39,7 +43,7 @@ interrupt_handler_jump:
 	.long 0
 	.long 0
 	.long 0
-	.long 0
+	.long handle_sb_interrupt
 	.long 0
 	.long 0
 

@@ -3,13 +3,16 @@
 #include "x86_desc.h"
 #include "lib.h"
 #include "keyboard.h"
+#include "sound_blaster.h"
 #include "rtc.h"
 // functions from assembly_linkage
 extern void keyboard_interrupt_stub();
 extern void rtc_interrupt_stub();
+extern void sb_interrupt_stub();
 extern void mouse_interrupt_stub();
 extern void system_call_interrupt();
 extern void squash_user_exception();
+
 
 /* exception
  * 		Inputs: none
@@ -367,6 +370,7 @@ void __init_idt__(){
 	// SET_IDT_ENTRY(idt[XF], squash_user_exception); 		// SIMD Floating-Point Exception
 
 	SET_IDT_ENTRY(idt[IRQ1_IDT], keyboard_interrupt_stub); 		// handle keyboard interrupt
+	SET_IDT_ENTRY(idt[IRQ5_IDT], sb_interrupt_stub);		// handle sound blaster interrupt
 	SET_IDT_ENTRY(idt[IRQ8_IDT], rtc_interrupt_stub); 		// handle rtc interrupt
 	SET_IDT_ENTRY(idt[IRQ12_IDT], mouse_interrupt_stub);	//handle mouse
 	SET_IDT_ENTRY(idt[SYS_CALL], system_call_interrupt);	//handle system call

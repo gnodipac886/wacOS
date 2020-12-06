@@ -12,7 +12,7 @@ void __init_paging__(){
 	int i;
 
 	// set the first page directory entry to have 4kb set up
-	page_directory[0].addr 				= 	(uint32_t)(page_table) >> ALIGN_4KB;			// address to the page_table
+	page_directory[0].addr 				= 	(uint32_t)(page_table) >> ALIGN_4KB;			// physical address of the page_table
 	page_directory[0].accessed 			= 	0;												// not used, set to 0
 	page_directory[0].global 			= 	0;												// we only set the page for kernel page
 	page_directory[0].size 				= 	0;												// 0 for 4kB entry
@@ -25,7 +25,7 @@ void __init_paging__(){
 	page_directory[0].present 			= 	1; 												// all valid PDE needs to be set to 1
 
 	// set the second page directory entry for kernel usage
-	page_directory[1].addr 				= 	1 << SHFT_4MB_ADDR;								// address to the page_table
+	page_directory[1].addr 				= 	1 << SHFT_4MB_ADDR;								// physical address of kernel page
 	page_directory[1].accessed 			= 	0;												// not used, set to 0
 	page_directory[1].dirty 			= 	0;												// not used, set to 0
 	page_directory[1].global 			= 	1;												// we only set the page for kernel page
@@ -50,7 +50,7 @@ void __init_paging__(){
 		page_directory[i].user_supervisor 	= 	1; 											// user level memory
 		page_directory[i].read_write 		= 	1; 											// all pages are read write
 		page_directory[i].present 			= 	0; 											// all valid PDE needs to be set to 1
-	}
+	}	
 
 	// set up the page table
 	for(i = 0; i < NUM_PAGE_TB; i++){
@@ -70,6 +70,8 @@ void __init_paging__(){
 	if(GUI_ACTIVATE){
 		vga_mem_setup();
 	}
+
+	sb_mem_setup();
 
 	// set up CRX registers
 	asm(
@@ -206,6 +208,24 @@ void vga_mem_setup(){
 		page_table[i].size 				= 	0;												// 0 for page attribute table
 		page_table[i].available 		= 	0;												// not used, set to 0
 		page_table[i].cache_disable 	= 	1;   											// volatile for video mem mapped IO set to 0, otherwise 1
+		page_table[i].write_through		= 	0; 												// we always want write back
+		page_table[i].user_supervisor 	= 	1; 												// user level memory
+		page_table[i].read_write 		= 	1; 												// all pages are read write
+		page_table[i].present 			= 	1; 												// all valid PDE needs to be set to 1
+	}
+}
+
+
+void sb_mem_setup() {
+	int i;
+	for(i = SB_IDX_START; i <= SB_IDX_END; i++){
+		page_table[i].addr 				= 	i;												// address to the page_table
+		page_table[i].accessed 			= 	0;												// not used, set to 0
+		page_table[i].dirty 			= 	0;												// not used, set to 0
+		page_table[i].global 			= 	0;												// we only set the page for kernel page
+		page_table[i].size 				= 	0;												// 0 for page attribute table
+		page_table[i].available 		= 	0;												// not used, set to 0
+		page_table[i].cache_disable 	= 	0;   											// volatile for video mem mapped IO set to 0, otherwise 1
 		page_table[i].write_through		= 	0; 												// we always want write back
 		page_table[i].user_supervisor 	= 	1; 												// user level memory
 		page_table[i].read_write 		= 	1; 												// all pages are read write

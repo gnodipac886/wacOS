@@ -17,6 +17,7 @@
 #include "system_calls.h"
 
 #include "screen.h"
+#include "sound_blaster.h"
 
 #define RUN_TESTS
 
@@ -165,7 +166,7 @@ void entry(unsigned long magic, unsigned long addr) {
 	__mouse_init__();
 	__init_filesystem__((void*)(mod->mod_start)); 							// enable filesystem
 	__init_paging__();														// enable paging
-
+	__init_sb__();
 	/* Enable interrupts */
 	/* Do not enable the following until after you have set up your
 	 * IDT correctly otherwise QEMU will triple fault and simple close
@@ -182,6 +183,11 @@ void entry(unsigned long magic, unsigned long addr) {
 		__screen_init__();
 	}
 	/* Execute the first program ("shell") ... */
+	play_sound("fish-bubbles.wav");
+	play_sound("buzzer.wav");
+	play_sound("buzzer.wav");
+	play_sound("buzzer.wav");
+	play_sound("buzzer.wav");
 	execute((uint8_t*)"shell");
 
 	/* Spin (nicely, so we don't chew up cycles) */

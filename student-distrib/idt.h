@@ -25,8 +25,9 @@
 #define SYS_CALL 	0x80  /*system call interrupt*/
 #define IRQ0_IDT	0x20   /*IRQ0 port for IDT*/
 #define IRQ1_IDT	0x21   /* IRQ1 port for IDT*/
-#define IRQ8_IDT  0x28    /*rtc IR line*/
-#define IRQ12_IDT  0x2C    /*mouse IR line*/
+#define IRQ5_IDT    0x25
+#define IRQ8_IDT    0x28    /*rtc IR line*/
+#define IRQ12_IDT   0x2C    /*mouse IR line*/
 #define IRQ15_IDT 	0x2F /*IRQ15 port for IDT*/
 
 /*
