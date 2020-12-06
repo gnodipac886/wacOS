@@ -315,7 +315,14 @@ void handle_enter() {
  * 		Return Value: none
  */
 void handle_esc(){
-	clear_mode_X();
+	// clear_mode_X();
+	set_text_mode_3 (1);
+	
+	execute("shell");
+	printf("Hello?");
+	*(uint8_t *)(0xA0000 + ((80 * 1 + 1) << 1)) =  'H';
+	*(uint8_t *)(0xA0000 + ((80 * 1 + 1) << 1) + 1) = 0x7;
+
 }
 
 /* _init_shell_hist

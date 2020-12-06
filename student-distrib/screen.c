@@ -7,6 +7,10 @@
 // #include "../images/big_sur.h"
 // #include "../images/bar.h"
 
+static unsigned short mode_X_seq[NUM_SEQUENCER_REGS] = {
+    0x0100, 0x2101, 0x0F02, 0x0003, 0x0604
+};
+
 static unsigned short mode_X_CRTC[NUM_CRTC_REGS] = {
     0x5F00, 0x4F01, 0x5002, 0x8203, 0x5404, 0x8005, 0xBF06, 0x1F07,
     0x0008, 0x4109, 0x000A, 0x000B, 0x000C, 0x000D, 0x000E, 0x000F,
@@ -54,7 +58,7 @@ static unsigned short text_graphics[NUM_GRAPHICS_REGS] = {
     0xFF08
 };
 
-unsigned char* mem_image;                     /* pointer to start of video memory */
+unsigned char* mem_image = VGA_VIDEO;                     /* pointer to start of video memory */
 unsigned char build[BUILD_BUF_SIZE + 2 * MEM_FENCE_WIDTH];
 
 uint32_t fb_addr = (uint32_t)VGA_VIDEO; 			// address of current frame buffer we are using (0 based, 0xA0000 = 0x0)
@@ -81,6 +85,7 @@ int32_t fb2_mouse_y_prev = SCREEN_Y_DIM / 2;
  */
 void __screen_init__(){
 	VGA_blank (1);                               	/* blank the screen      */
+	set_seq_regs_and_reset (mode_X_seq, 0x63);   	/* sequencer registers   */
 	set_CRTC_registers (mode_X_CRTC);            	/* CRT control registers */
 	set_attr_registers (mode_X_attr);            	/* attribute registers   */
 	set_graphics_registers (mode_X_graphics);    	/* graphics registers    */
@@ -93,7 +98,7 @@ void __screen_init__(){
 	// draw_image_322((uint8_t*)bar_map);
 
 	// draw_image_565((pixel_565_t*)((void*)big_sur_map));
-	while(1)
+	// while(1)
 	draw_image_565_from_file("big_sur.bin");
 }
 
@@ -171,6 +176,43 @@ void VGA_blank(int blank_bit){
 	"movb $0x20,%%al                                               ;"
 	"outb %%al,(%%dx)                                               "
       : : "g" (blank_bit) : "eax", "edx", "memory");
+}
+
+/*
+ * fill_palette_text
+ *   DESCRIPTION: Fill VGA palette with default VGA colors.
+ *                Only the first 32 (of 256) colors are written.
+ *   INPUTS: none
+ *   OUTPUTS: none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: changes the first 32 palette colors
+ */   
+void fill_palette_text(){
+    /* 6-bit RGB (red, green, blue) values VGA colors and grey scale */
+    static unsigned char palette_RGB[32][3] = {
+	{0x00, 0x00, 0x00}, {0x00, 0x00, 0x2A},   /* palette 0x00 - 0x0F    */
+	{0x00, 0x2A, 0x00}, {0x00, 0x2A, 0x2A},   /* basic VGA colors       */
+	{0x2A, 0x00, 0x00}, {0x2A, 0x00, 0x2A},
+	{0x2A, 0x15, 0x00}, {0x2A, 0x2A, 0x2A},
+	{0x15, 0x15, 0x15}, {0x15, 0x15, 0x3F},
+	{0x15, 0x3F, 0x15}, {0x15, 0x3F, 0x3F},
+	{0x3F, 0x15, 0x15}, {0x3F, 0x15, 0x3F},
+	{0x3F, 0x3F, 0x15}, {0x3F, 0x3F, 0x3F},
+	{0x00, 0x00, 0x00}, {0x05, 0x05, 0x05},   /* palette 0x10 - 0x1F    */
+	{0x08, 0x08, 0x08}, {0x0B, 0x0B, 0x0B},   /* VGA grey scale         */
+	{0x0E, 0x0E, 0x0E}, {0x11, 0x11, 0x11},
+	{0x14, 0x14, 0x14}, {0x18, 0x18, 0x18},
+	{0x1C, 0x1C, 0x1C}, {0x20, 0x20, 0x20},
+	{0x24, 0x24, 0x24}, {0x28, 0x28, 0x28},
+	{0x2D, 0x2D, 0x2D}, {0x32, 0x32, 0x32},
+	{0x38, 0x38, 0x38}, {0x3F, 0x3F, 0x3F}
+    };
+
+    /* Start writing at color 0. */
+    outb (0x00, 0x03C8);
+
+    /* Write all 32 colors from array. */
+    REP_OUTSB (0x03C9, palette_RGB, 32 * 3);
 }
 
 /*
@@ -654,7 +696,7 @@ void set_text_mode_3(int clear_scr){
     unsigned long* txt_scr; /* pointer to text screens in video memory */
     int i;                  /* loop over text screen words             */
 
-    VGA_blank (1);                               /* blank the screen        */
+    //VGA_blank (1);                               /* blank the screen        */
     /*
      * The value here had been changed to 0x63, but seems to work
      * fine in QEMU (and VirtualPC, where I got it) with the 0x04
@@ -664,12 +706,13 @@ void set_text_mode_3(int clear_scr){
     set_CRTC_registers (text_CRTC);              /* CRT control registers   */
     set_attr_registers (text_attr);              /* attribute registers     */
     set_graphics_registers (text_graphics);      /* graphics registers      */
-    fill_palette_mode_x_basic();			     /* palette colors          */
+    fill_palette_text();			     		/* palette colors          */
     if (clear_scr) {				            /* clear screens if needed */
-	txt_scr = (unsigned long*)(mem_image + 0x18000);
-	for (i = 0; i < 8192; i++)
-	    *txt_scr++ = 0x07200720;
+		txt_scr = (unsigned long*)(mem_image + 0x18000);
+		for (i = 0; i < 8192; i++)
+		    *txt_scr++ = 0x07200720;
     }
+	// clear();
     write_font_data ();                          /* copy fonts to video mem */
-    VGA_blank (0);			                      /* unblank the screen      */
+    //VGA_blank (0);			                      /* unblank the screen      */
 }
