@@ -193,6 +193,7 @@ void update_cursor(int x, int y) {
  *  Function: Output a character to the console */
 void putc(uint8_t c) {
     int flags = 0;
+    int i;
 	cli_and_save(flags);
     if(c == '\n' || c == '\r') {
         screen_y++;
@@ -206,9 +207,13 @@ void putc(uint8_t c) {
     }
     // vertical scrolling
     if (screen_y >= NUM_ROWS) {
-        unsigned black = 0x2000;        // black background or clear
+        unsigned space = 0x20;       // space ascii character
         memcpy((uint8_t *)(video_mem), (uint8_t *)(video_mem + NUM_COLS*2), (NUM_ROWS - 1) * NUM_COLS * 2); // shift video memory up, 2 bytes for each char
-        memset((uint8_t *)(video_mem + (NUM_ROWS - 1) * NUM_COLS * 2), black, NUM_COLS * 2);                           // clears the last line, fill with spaces
+        for(i = 0; i < NUM_COLS; i++){
+            *(uint8_t *)(video_mem + (NUM_ROWS - 1) * NUM_COLS * 2 + (i << 1)) = space;                     // 1st byte is the ascii char
+            *(uint8_t *)(video_mem + (NUM_ROWS - 1) * NUM_COLS * 2 + (i << 1) + 1) = ATTRIB;                // 2nd byte is the background color
+        }
+        // memset((uint8_t *)(video_mem + (NUM_ROWS - 1) * NUM_COLS * 2), space, NUM_COLS * 2);     // clears the last line, fill with spaces
         screen_y = NUM_ROWS - 1; // set to last row of screen
     }
     update_cursor(screen_x,screen_y);

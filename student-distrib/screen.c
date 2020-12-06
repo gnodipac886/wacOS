@@ -3,8 +3,13 @@
 #include "paging.h"
 #include "octree.h"
 #include "filesystem.h"
+#include "text.h"
 // #include "../images/big_sur.h"
 // #include "../images/bar.h"
+
+static unsigned short mode_X_seq[NUM_SEQUENCER_REGS] = {
+    0x0100, 0x2101, 0x0F02, 0x0003, 0x0604
+};
 
 static unsigned short mode_X_CRTC[NUM_CRTC_REGS] = {
     0x5F00, 0x4F01, 0x5002, 0x8203, 0x5404, 0x8005, 0xBF06, 0x1F07,
@@ -14,9 +19,9 @@ static unsigned short mode_X_CRTC[NUM_CRTC_REGS] = {
 };
 
 static unsigned char mode_X_attr[NUM_ATTR_REGS * 2] = {
-    0x00, 0x00, 0x01, 0x01, 0x02, 0x02, 0x03, 0x03, 
-    0x04, 0x04, 0x05, 0x05, 0x06, 0x06, 0x07, 0x07, 
-    0x08, 0x08, 0x09, 0x09, 0x0A, 0x0A, 0x0B, 0x0B, 
+    0x00, 0x00, 0x01, 0x01, 0x02, 0x02, 0x03, 0x03,
+    0x04, 0x04, 0x05, 0x05, 0x06, 0x06, 0x07, 0x07,
+    0x08, 0x08, 0x09, 0x09, 0x0A, 0x0A, 0x0B, 0x0B,
     0x0C, 0x0C, 0x0D, 0x0D, 0x0E, 0x0E, 0x0F, 0x0F,
     0x10, 0x41, 0x11, 0x00, 0x12, 0x0F, 0x13, 0x00,
     0x14, 0x00, 0x15, 0x00
@@ -26,6 +31,35 @@ static unsigned short mode_X_graphics[NUM_GRAPHICS_REGS] = {
     0x0000, 0x0001, 0x0002, 0x0003, 0x0004, 0x4005, 0x0506, 0x0F07,
     0xFF08
 };
+
+/* VGA register settings for text mode 3 (color text) */
+static unsigned short text_seq[NUM_SEQUENCER_REGS] = {
+    0x0100, 0x2001, 0x0302, 0x0003, 0x0204
+};
+
+static unsigned short text_CRTC[NUM_CRTC_REGS] = {
+    0x5F00, 0x4F01, 0x5002, 0x8203, 0x5504, 0x8105, 0xBF06, 0x1F07,
+    0x0008, 0x4F09, 0x0D0A, 0x0E0B, 0x000C, 0x000D, 0x000E, 0x000F,
+    0x9C10, 0x8E11, 0x8F12, 0x2813, 0x1F14, 0x9615, 0xB916, 0xA317,
+    0xFF18
+};
+
+static unsigned char text_attr[NUM_ATTR_REGS * 2] = {
+    0x00, 0x00, 0x01, 0x01, 0x02, 0x02, 0x03, 0x03,
+    0x04, 0x04, 0x05, 0x05, 0x06, 0x06, 0x07, 0x07,
+    0x08, 0x08, 0x09, 0x09, 0x0A, 0x0A, 0x0B, 0x0B,
+    0x0C, 0x0C, 0x0D, 0x0D, 0x0E, 0x0E, 0x0F, 0x0F,
+    0x10, 0x0C, 0x11, 0x00, 0x12, 0x0F, 0x13, 0x08,
+    0x14, 0x00, 0x15, 0x00
+};
+
+static unsigned short text_graphics[NUM_GRAPHICS_REGS] = {
+    0x0000, 0x0001, 0x0002, 0x0003, 0x0004, 0x1005, 0x0E06, 0x0007,
+    0xFF08
+};
+
+unsigned char* mem_image = VGA_VIDEO;                     /* pointer to start of video memory */
+unsigned char build[BUILD_BUF_SIZE + 2 * MEM_FENCE_WIDTH];
 
 uint32_t fb_addr = (uint32_t)VGA_VIDEO; 			// address of current frame buffer we are using (0 based, 0xA0000 = 0x0)
 uint8_t build_buf[320 * 200];
@@ -48,9 +82,10 @@ int32_t fb2_mouse_y_prev = SCREEN_Y_DIM / 2;
  *   OUTPUTS: none
  *   RETURN VALUE: none
  *   SIDE EFFECTS: goes into vga mode
- */   
+ */
 void __screen_init__(){
 	VGA_blank (1);                               	/* blank the screen      */
+	set_seq_regs_and_reset (mode_X_seq, 0x63);   	/* sequencer registers   */
 	set_CRTC_registers (mode_X_CRTC);            	/* CRT control registers */
 	set_attr_registers (mode_X_attr);            	/* attribute registers   */
 	set_graphics_registers (mode_X_graphics);    	/* graphics registers    */
@@ -63,7 +98,7 @@ void __screen_init__(){
 	// draw_image_322((uint8_t*)bar_map);
 
 	// draw_image_565((pixel_565_t*)((void*)big_sur_map));
-	while(1)
+	// while(1)
 	draw_image_565_from_file("big_sur.bin");
 }
 
@@ -74,7 +109,7 @@ void __screen_init__(){
  *   OUTPUTS: none
  *   RETURN VALUE: none
  *   SIDE EFFECTS: none
- */   
+ */
 void set_graphics_registers(unsigned short table[NUM_GRAPHICS_REGS]){
     REP_OUTSW (0x03CE, table, NUM_GRAPHICS_REGS);
 }
@@ -86,10 +121,10 @@ void set_graphics_registers(unsigned short table[NUM_GRAPHICS_REGS]){
  *   OUTPUTS: none
  *   RETURN VALUE: none
  *   SIDE EFFECTS: none
- */   
+ */
 void set_CRTC_registers(unsigned short table[NUM_CRTC_REGS]){
     /* clear protection bit to enable write access to first few registers */
-    outw (0x0011, 0x03D4); 
+    outw (0x0011, 0x03D4);
     REP_OUTSW (0x03D4, table, NUM_CRTC_REGS);
 }
 
@@ -102,7 +137,7 @@ void set_CRTC_registers(unsigned short table[NUM_CRTC_REGS]){
  *   OUTPUTS: none
  *   RETURN VALUE: none
  *   SIDE EFFECTS: none
- */   
+ */
 void set_attr_registers(unsigned char table[NUM_ATTR_REGS * 2]){
     /* Reset attribute register to write index next rather than data. */
     asm volatile (
@@ -118,11 +153,11 @@ void set_attr_registers(unsigned char table[NUM_ATTR_REGS * 2]){
  *   OUTPUTS: none
  *   RETURN VALUE: none
  *   SIDE EFFECTS: none
- */   
+ */
 void VGA_blank(int blank_bit){
-    /* 
-     * Move blanking bit into position for VGA sequencer register 
-     * (index 1). 
+    /*
+     * Move blanking bit into position for VGA sequencer register
+     * (index 1).
      */
     blank_bit = ((blank_bit & 1) << 5);
 
@@ -144,14 +179,51 @@ void VGA_blank(int blank_bit){
 }
 
 /*
+ * fill_palette_text
+ *   DESCRIPTION: Fill VGA palette with default VGA colors.
+ *                Only the first 32 (of 256) colors are written.
+ *   INPUTS: none
+ *   OUTPUTS: none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: changes the first 32 palette colors
+ */   
+void fill_palette_text(){
+    /* 6-bit RGB (red, green, blue) values VGA colors and grey scale */
+    static unsigned char palette_RGB[32][3] = {
+	{0x00, 0x00, 0x00}, {0x00, 0x00, 0x2A},   /* palette 0x00 - 0x0F    */
+	{0x00, 0x2A, 0x00}, {0x00, 0x2A, 0x2A},   /* basic VGA colors       */
+	{0x2A, 0x00, 0x00}, {0x2A, 0x00, 0x2A},
+	{0x2A, 0x15, 0x00}, {0x2A, 0x2A, 0x2A},
+	{0x15, 0x15, 0x15}, {0x15, 0x15, 0x3F},
+	{0x15, 0x3F, 0x15}, {0x15, 0x3F, 0x3F},
+	{0x3F, 0x15, 0x15}, {0x3F, 0x15, 0x3F},
+	{0x3F, 0x3F, 0x15}, {0x3F, 0x3F, 0x3F},
+	{0x00, 0x00, 0x00}, {0x05, 0x05, 0x05},   /* palette 0x10 - 0x1F    */
+	{0x08, 0x08, 0x08}, {0x0B, 0x0B, 0x0B},   /* VGA grey scale         */
+	{0x0E, 0x0E, 0x0E}, {0x11, 0x11, 0x11},
+	{0x14, 0x14, 0x14}, {0x18, 0x18, 0x18},
+	{0x1C, 0x1C, 0x1C}, {0x20, 0x20, 0x20},
+	{0x24, 0x24, 0x24}, {0x28, 0x28, 0x28},
+	{0x2D, 0x2D, 0x2D}, {0x32, 0x32, 0x32},
+	{0x38, 0x38, 0x38}, {0x3F, 0x3F, 0x3F}
+    };
+
+    /* Start writing at color 0. */
+    outb (0x00, 0x03C8);
+
+    /* Write all 32 colors from array. */
+    REP_OUTSB (0x03C9, palette_RGB, 32 * 3);
+}
+
+/*
  * fill_palette_mode_x_basic
- *   DESCRIPTION: Fill VGA palette with necessary colors for the adventure 
+ *   DESCRIPTION: Fill VGA palette with necessary colors for the adventure
  *                game.  Only the first 64 (of 256) colors are written.
  *   INPUTS: none
  *   OUTPUTS: none
  *   RETURN VALUE: none
  *   SIDE EFFECTS: changes the first 64 palette colors
- */   
+ */
 void fill_palette_mode_x_basic(){
 	    /* 6-bit RGB (red, green, blue) values for first 64 colors */
     /* these are coded for 2 bits red, 2 bits green, 2 bits blue */
@@ -199,13 +271,13 @@ void fill_palette_mode_x_basic(){
 
 /*
  * fill_palette_mode_x_332
- *   DESCRIPTION: Fill VGA palette with necessary colors for the adventure 
+ *   DESCRIPTION: Fill VGA palette with necessary colors for the adventure
  *                game.  Only the first 64 (of 256) colors are written.
  *   INPUTS: none
  *   OUTPUTS: none
  *   RETURN VALUE: none
  *   SIDE EFFECTS: changes the first 64 palette colors
- */   
+ */
 void fill_palette_mode_x_332(){
 	int i;
 	uint8_t r, g, b;
@@ -229,13 +301,13 @@ void fill_palette_mode_x_332(){
 
 /*
  * fill_palette_mode_x_custom
- *   DESCRIPTION: Fill VGA palette with necessary colors for the custom photo for 
- *                game.  
+ *   DESCRIPTION: Fill VGA palette with necessary colors for the custom photo for
+ *                game.
  *   INPUTS: none
  *   OUTPUTS: none
  *   RETURN VALUE: none
  *   SIDE EFFECTS: changes the palette colors for the rest of the colors
- */   
+ */
 void fill_palette_mode_x_custom(uint8_t * palette){
     /* Start writing at color 64. */
     outb (0x40, 0x03C8);
@@ -246,14 +318,14 @@ void fill_palette_mode_x_custom(uint8_t * palette){
 
 /*
  * clear_screens
- *   DESCRIPTION: Fills the video memory with zeroes. 
+ *   DESCRIPTION: Fills the video memory with zeroes.
  *   INPUTS: none
  *   OUTPUTS: none
  *   RETURN VALUE: none
  *   SIDE EFFECTS: fills all 256kB of VGA video memory with zeroes
- */   
+ */
 void clear_screens(){
-    /* Write to all four planes at once. */ 
+    /* Write to all four planes at once. */
     SET_WRITE_MASK (0x0F00);
 
     /* Set 64kB to zero (times four planes = 256kB). */
@@ -272,7 +344,7 @@ void clear_screens(){
  *   OUTPUTS: none
  *   RETURN VALUE: none
  *   SIDE EFFECTS: draws rectangle on screen
- */   
+ */
 void draw_rectangle(int screen_x, int screen_y, uint8_t color, int rect_x, int rect_y){
 	int i, j;
 
@@ -295,7 +367,7 @@ void draw_rectangle(int screen_x, int screen_y, uint8_t color, int rect_x, int r
  *   OUTPUTS: none
  *   RETURN VALUE: none
  *   SIDE EFFECTS: plots circle on screen
- */ 
+ */
 void draw_circle(int x, int y, int r, int color){
 	int i, j;
 
@@ -319,7 +391,7 @@ void draw_circle(int x, int y, int r, int color){
  *   OUTPUTS: none
  *   RETURN VALUE: none
  *   SIDE EFFECTS: none
- */  
+ */
 void plot_pixel(int x, int y, uint8_t color){
 	int idx = (y * SCREEN_X_DIM + x); 				// index of pixel row major form
 	int p_off = idx & 3; 						// which plane we are in
@@ -327,7 +399,7 @@ void plot_pixel(int x, int y, uint8_t color){
 	// build_buf[p_off * PLANE_DIM + p_idx] = color; 	// plot pixel into buffer
 
 	SET_WRITE_MASK(1 << (p_off + 8));							// set the write mask
-	memcpy((void*)(fb_addr + p_idx), (void*)&color, 1); 		// p_off * PLANE_DIM + 
+	memcpy((void*)(fb_addr + p_idx), (void*)&color, 1); 		// p_off * PLANE_DIM +
 	// build_buf[p_off * PLANE_DIM + p_idx] = color; 	// plot pixel into buffer
 }
 
@@ -339,7 +411,7 @@ void plot_pixel(int x, int y, uint8_t color){
  *   OUTPUTS: color - color at the screen location
  *   RETURN VALUE: none
  *   SIDE EFFECTS: none
- */  
+ */
 uint8_t get_pixel(int x, int y){
 	int idx = (y * SCREEN_X_DIM + x); 				// index of pixel row major form
 	int p_off = idx & 3; 						// which plane we are in
@@ -361,7 +433,7 @@ uint8_t get_pixel(int x, int y){
  *   RETURN VALUE: none
  *   SIDE EFFECTS: copies from the build buffer to video memory;
  *                 shifts the VGA display source to point to the new image
- */   
+ */
 void show_screen(){
     // int p_off;            /* plane offset of first display plane */
     // int i;		  /* loop index over video planes        */
@@ -376,7 +448,7 @@ void show_screen(){
 	// SET_WRITE_MASK (0x0F00);
 	// memcpy((void*)fb_addr, (void*)build_buf, SCREEN_DIM);
 
-	/* 
+	/*
 	 * Change the VGA registers to point the top left of the screen
 	 * to the video memory that we just filled.
 	 */
@@ -400,7 +472,7 @@ void show_screen(){
  *   OUTPUTS: none
  *   RETURN VALUE: none
  *   SIDE EFFECTS: moves the cursor to next location
- */   
+ */
 void draw_mouse_cursor(int * curr_x, int * curr_y, int dx, int dy, int frames, int sx, int sy){
 	int i;
 	int save_x, save_y;
@@ -461,7 +533,7 @@ void draw_mouse_cursor(int * curr_x, int * curr_y, int dx, int dy, int frames, i
  *   OUTPUTS: none
  *   RETURN VALUE: none
  *   SIDE EFFECTS: plots image on screen
- */   
+ */
 void draw_image_322(uint8_t * img){
 	int y, x;
 
@@ -479,7 +551,7 @@ void draw_image_322(uint8_t * img){
  *   OUTPUTS: none
  *   RETURN VALUE: none
  *   SIDE EFFECTS: plots image on screen
- */   
+ */
 void draw_image_565(pixel_565_t * img){
 	int y, x;
 
@@ -499,7 +571,7 @@ void draw_image_565(pixel_565_t * img){
  *   OUTPUTS: none
  *   RETURN VALUE: none
  *   SIDE EFFECTS: plots image on screen
- */   
+ */
 void draw_image_565_from_file(char * fname){
 	dentry_t dentry;
 	pixel_565_t img[SCREEN_X_DIM * SCREEN_Y_DIM];
@@ -512,4 +584,135 @@ void draw_image_565_from_file(char * fname){
 
 	// draw the image
 	draw_image_565(img);
+}
+
+/*
+ * set_seq_regs_and_reset
+ *   DESCRIPTION: Set VGA sequencer registers and miscellaneous output
+ *                register; array of registers should force a reset of
+ *                the VGA sequencer, which is restored to normal operation
+ *                after a brief delay.
+ *   INPUTS: table -- table of sequencer register values to use
+ *           val -- value to which miscellaneous output register should be set
+ *   OUTPUTS: none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: none
+ */
+void set_seq_regs_and_reset (unsigned short table[NUM_SEQUENCER_REGS], unsigned char val){
+    /*
+     * Dump table of values to sequencer registers.  Includes forced reset
+     * as well as video blanking.
+     */
+    REP_OUTSW (0x03C4, table, NUM_SEQUENCER_REGS);
+
+    /* Delay a bit... */
+    {volatile int ii; for (ii = 0; ii < 10000; ii++);}
+
+    /* Set VGA miscellaneous output register. */
+    outb (val, 0x03C2);
+
+    /* Turn sequencer on (array values above should always force reset). */
+    outw (0x0300, 0x03C4);
+}
+
+/*
+ * clear_mode_X
+ *   DESCRIPTION: Puts the VGA into text mode 3 (color text).
+ *   INPUTS: none
+ *   OUTPUTS: none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: restores font data to video memory; clears screens;
+ *                 unmaps video memory; checks memory fence integrity
+ */
+void clear_mode_X(){
+    int i;   /* loop index for checking memory fence */
+
+    /* Put VGA into text mode, restore font data, and clear screens. */
+    set_text_mode_3 (1);
+
+    /* Unmap video memory. */
+    //(void)munmap (mem_image, VID_MEM_SIZE);
+
+    /* Check validity of build buffer memory fence.  Report breakage. */
+    for (i = 0; i < MEM_FENCE_WIDTH; i++) {
+	if (build[i] != MEM_FENCE_MAGIC) {
+	    puts ("lower build fence was broken");
+	    break;
+	}
+    }
+    for (i = 0; i < MEM_FENCE_WIDTH; i++) {
+        if (build[BUILD_BUF_SIZE + MEM_FENCE_WIDTH + i] != MEM_FENCE_MAGIC) {
+	    puts ("upper build fence was broken");
+	    break;
+	}
+    }
+}
+
+/*
+ * write_font_data
+ *   DESCRIPTION: Copy font data into VGA memory, changing and restoring
+ *                VGA register values in order to do so.
+ *   INPUTS: none
+ *   OUTPUTS: none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: leaves VGA registers in final text mode state
+ */
+void write_font_data(){
+    int i;                /* loop index over characters                   */
+    int j;                /* loop index over font bytes within characters */
+    unsigned char* fonts; /* pointer into video memory                    */
+
+    /* Prepare VGA to write font data into video memory. */
+    outw (0x0402, 0x3C4);
+    outw (0x0704, 0x3C4);
+    outw (0x0005, 0x3CE);
+    outw (0x0406, 0x3CE);
+    outw (0x0204, 0x3CE);
+
+    /* Copy font data from array into video memory. */
+    for (i = 0, fonts = mem_image; i < 256; i++) {
+	       for (j = 0; j < 16; j++)
+	          fonts[j] = font_data[i][j];
+	       fonts += 32; /* skip 16 bytes between characters */
+    }
+
+    /* Prepare VGA for text mode. */
+    outw (0x0302, 0x3C4);
+    outw (0x0304, 0x3C4);
+    outw (0x1005, 0x3CE);
+    outw (0x0E06, 0x3CE);
+    outw (0x0004, 0x3CE);
+}
+
+/*
+ * set_text_mode_3
+ *   DESCRIPTION: Put VGA into text mode 3 (color text).
+ *   INPUTS: clear_scr -- if non-zero, clear screens; otherwise, do not
+ *   OUTPUTS: none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: may clear screens; writes font data to video memory
+ */
+void set_text_mode_3(int clear_scr){
+    unsigned long* txt_scr; /* pointer to text screens in video memory */
+    int i;                  /* loop over text screen words             */
+
+    //VGA_blank (1);                               /* blank the screen        */
+    /*
+     * The value here had been changed to 0x63, but seems to work
+     * fine in QEMU (and VirtualPC, where I got it) with the 0x04
+     * bit set (VGA_MIS_DCLK_28322_720).
+     */
+    set_seq_regs_and_reset (text_seq, 0x67);     /* sequencer registers     */
+    set_CRTC_registers (text_CRTC);              /* CRT control registers   */
+    set_attr_registers (text_attr);              /* attribute registers     */
+    set_graphics_registers (text_graphics);      /* graphics registers      */
+    fill_palette_text();			     		/* palette colors          */
+    if (clear_scr) {				            /* clear screens if needed */
+		txt_scr = (unsigned long*)(mem_image + 0x18000);
+		for (i = 0; i < 8192; i++)
+		    *txt_scr++ = 0x07200720;
+    }
+	// clear();
+    write_font_data ();                          /* copy fonts to video mem */
+    //VGA_blank (0);			                      /* unblank the screen      */
 }

@@ -3,6 +3,7 @@
 #include "i8259.h"
 #include "system_calls.h"
 #include "terminal.h"
+#include "screen.h"
 
 #define BUF_SIZE 			128			//buffer can contain 128 chars
 /*Scan Code Set 1*/
@@ -15,6 +16,7 @@
 #define ALT_PRESSED			0x38		//scan codee for left alt key; also right alt's second byte
 #define CAPSLOCK_PRESSED	0x3A		//scan code for capslock key
 #define RIGHT_KEY_BYTE		0xE0		//RCTRL, RALT first byte
+#define ESC_PRESSED			0x01		//scan code for esc key
 
 #define SPACE_PRESSED		0x39		//scan code for space key
 #define UP_PRESSED			0x48		//scan code for up arrow
@@ -96,7 +98,9 @@ void handle_keyboard_interrupt(){
 	unsigned char keyboard_input = inb(KB_PORT);
 
 	// conditions for different key presses
-	if (keyboard_input == TAB_PRESSED) {
+	if(keyboard_input == ESC_PRESSED){
+		handle_esc();
+	} else if (keyboard_input == TAB_PRESSED) {
 		kb_char = ' ';
 	} else if (keyboard_input == UP_PRESSED){
 		shell_prev_cmds(-1); // previous commands
@@ -303,6 +307,22 @@ void handle_enter() {
 		}
 		buffer_accessed_flag = 0;					// reset flag
 	}
+}
+
+/* handle_esc
+ *		Description: Switches video mode to text mode
+ * 		Inputs: none
+ * 		Return Value: none
+ */
+void handle_esc(){
+	// clear_mode_X();
+	set_text_mode_3 (1);
+	
+	execute("shell");
+	printf("Hello?");
+	*(uint8_t *)(0xA0000 + ((80 * 1 + 1) << 1)) =  'H';
+	*(uint8_t *)(0xA0000 + ((80 * 1 + 1) << 1) + 1) = 0x7;
+
 }
 
 /* _init_shell_hist
