@@ -262,7 +262,7 @@ void handle_keyboard_interrupt(){
 int get_kb_buf(char* buf, int ter_num){
 	int idx = terminal_indicies[ter_num];
 	char * ter_buf = ter_bufs[ter_num];
-	if(idx < 0 || idx >= BUF_SIZE){
+	if(idx < 0 || idx > BUF_SIZE){
 		clear_terminal_buf(ter_num);
 	}
 	memcpy((void*)buf, (void*)ter_buf, idx);
