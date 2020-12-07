@@ -5,23 +5,19 @@
 #include "keyboard.h"
 #include "scheduler.h"
 
-#define VIDEO		   0xB8000		 // holds current video memory (text screen)
+#define VIDEO		    0xB8000		 	// holds current video memory (text screen)
 #define PAGE_TB_SIZE 	4096
 #define NUM_COLS		80
 #define NUM_ROWS		25
-#define VIDEO_SIZE	  4096			// NUM_COLS*NUM_ROWS*2 <= 4096; num of bytes of 4kB page
-//#define TERM1_VIDEO	 0xB9000		 // background buffer for terminal 1's video memory (text screen)   
-//#define TERM2_VIDEO	 0xBA000		 // background buffer for terminal 2's video memory (text screen)
-//#define TERM3_VIDEO	 0xBB000		 // background buffer for terminal 3's video memory (text screen)
+#define VIDEO_SIZE	    4096			// NUM_COLS*NUM_ROWS*2 <= 4096; num of bytes of 4kB page
 #define MAX_TERMINALS   3
-#define ATTRIB		  0x7
+#define ATTRIB		    0x7
 
-static int screen_x[MAX_TERMINALS];// = {0, 0, 0};								// updated cursor positions for all terminals
-static int screen_y[MAX_TERMINALS];// = {0, 0, 0};
-//static int terminal_cursor_pos[MAX_TERMINALS][2] = {{0, 0}, {0, 0}, {0, 0}};   // stored cursor positions of terminals 1-3, 2 for x and y
+static int screen_x[MAX_TERMINALS];								// updated cursor positions for all terminals
+static int screen_y[MAX_TERMINALS];
 
 static char* video_mem = (char *)VIDEO;
-static char* temp_vid_addr;																		// temporary variable to store video address
+static char* temp_vid_addr;										// temporary variable to store video address
 
 /* void clear(void);
  * Inputs: void
@@ -187,8 +183,8 @@ void update_cursor(int x, int y) {
 
 	uint16_t pos = y*NUM_COLS + x;
 
-	*(uint8_t *)(video_mem + (pos << 1)) = ' ';
-	*(uint8_t *)(video_mem + (pos << 1) + 1) = ATTRIB;
+	*(uint8_t *)(video_mem + (pos << 1)) = ' ';														// 1st byte is ascii char
+	*(uint8_t *)(video_mem + (pos << 1) + 1) = ATTRIB;												// 2nd byte is the background color
 
 	outb(0x0F, 0x3D4);
 	outb((uint8_t) (pos & 0xFF), 0x3D5);
@@ -223,14 +219,14 @@ void putc(uint8_t c) {
 	}
 	// vertical scrolling
 	if (screen_y[curr_sch] >= NUM_ROWS) {
-		unsigned space = 0x20;		// black background or clear
+		unsigned space = 0x20;		// space ascii character
 		memcpy((uint8_t *)(video_mem), (uint8_t *)(video_mem + NUM_COLS*2), (NUM_ROWS - 1) * NUM_COLS * 2); // shift video memory up, 2 bytes for each char
 		for(i = 0; i < NUM_COLS; i++){
-			*(uint8_t *)(video_mem + (NUM_ROWS - 1) * NUM_COLS * 2 + (i << 1)) = space;
-			*(uint8_t *)(video_mem + (NUM_ROWS - 1) * NUM_COLS * 2 + (i << 1) + 1) = ATTRIB;
+			*(uint8_t *)(video_mem + (NUM_ROWS - 1) * NUM_COLS * 2 + (i << 1)) = space;						// 1st byte is the ascii char
+			*(uint8_t *)(video_mem + (NUM_ROWS - 1) * NUM_COLS * 2 + (i << 1) + 1) = ATTRIB;				// 2nd byte is the background color
 		}
 		// memset((uint8_t *)(video_mem + (NUM_ROWS - 1) * NUM_COLS * 2), space, NUM_COLS * 2);		// clears the last line, fill with spaces
-		screen_y[curr_sch] = NUM_ROWS - 1; // set to last row of screen
+		screen_y[curr_sch] = NUM_ROWS - 1; 																	// set to last row of screen
 	}
 
 	if (terminal_on_process()) {
@@ -248,7 +244,7 @@ void putc(uint8_t c) {
  */
 void vid_backspace() {
 	int curr_scr = get_curr_screen();
-	if (screen_x[curr_scr] == 0) {														//calculate new cursor position
+	if (screen_x[curr_scr] == 0) {				 //calculate new cursor position
 		if (screen_y[curr_scr] > 0) {			 //deletes the '\n'
 			screen_y[curr_scr]--;
 			screen_x[curr_scr] = NUM_COLS-1;
@@ -316,7 +312,6 @@ void text_screen_map_update(int curr_scheduled, int curr_screen) {
  * 		Return Value: none
  * 		Function: temporary switches video memory mapping to physical vid memory
  * 		Side Effects: Flushes TLB after mapping
- *  
  */
 void temp_map_phys_vid(){
 	// switch mapping to video memory 
@@ -333,7 +328,6 @@ void temp_map_phys_vid(){
  * 		Return Value: none
  * 		Function: switches video memory mapping to previous mapping
  * 		Side Effects: Flushes TLB after mapping
- *  
  */
 void temp_map_switch_back(){
 	// switch mapping back
@@ -664,6 +658,12 @@ int terminal_on_process(){
 	return (char*)(video_mem) == (char*)(VIDEO);
 }
 
+/*  get_video_mem()
+ * 		Inputs: none
+ * 		Return Value: none
+ * 		Function: helper function to return the video_mem address
+ * 		Side Effects: none
+ */
 char * get_video_mem() {
 	return video_mem;
 }

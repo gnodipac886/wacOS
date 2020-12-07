@@ -1,10 +1,10 @@
 #ifndef _KEYBOARD_H
 #define _KEYBOARD_H
 
-#define KB_PORT 0x60 // IO port for keyboard
-#define KB_IRQ 	0x01 // keyboard interrupt
+#define KB_PORT     0x60 // IO port for keyboard
+#define KB_IRQ 	    0x01 // keyboard interrupt
 
-#define BUFFER_RS 0xFF // keyboard buffer overrun
+#define BUFFER_RS   0xFF // keyboard buffer overrun
 
 // #ifndef ASM
 // initialization of the keyboard for interrupt

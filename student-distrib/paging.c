@@ -167,7 +167,7 @@ int vidmap_pte_setup(uint8_t ** screen_start, uint8_t present) {
 	flush_tlb();
 
 	if (screen_start != NULL && present) {																	// check if screen_start argument is valid
-		*screen_start = (uint8_t*)(VIDMAP_4MB_PAGE<<22);													// page 33 shift up 22 times/bits to align to 4MB
+		*screen_start = (uint8_t*)(VIDMAP_4MB_PAGE << ALIGN_4MB);											// page 33 shift up 22 times/bits to align to 4MB
 	}
 	return 0;
 
@@ -178,10 +178,9 @@ int vidmap_pte_setup(uint8_t ** screen_start, uint8_t present) {
  * 		Return Value: none
  * 		Function: switch vidmap to the right video memory locaiton
  * 		Side Effects: Flushes TLB after mapping
- *  
  */
 void vidmap_update(){
-	vidmap_page_table[0].addr 							= 	page_table[(int)get_video_mem() >> 12].addr;					// address to the current 4kB text-screen page being edited
+	vidmap_page_table[0].addr = page_table[(int)get_video_mem() >> ALIGN_4KB].addr;							// address to the current 4kB text-screen page being edited
 
 	flush_tlb();
 }
@@ -191,7 +190,6 @@ void vidmap_update(){
  * 		Return Value: none
  * 		Function: Flushes TLB
  * 		Side Effects: Flushes TLB
- *  
  */
 void flush_tlb(){
 	// flush the TLB
@@ -199,9 +197,9 @@ void flush_tlb(){
 		"movl 	%0, 			%%eax;"		// move page directory into eax
 		"movl 	%%eax, 			%%cr3;"		// move page directory address into cr3
 
-		:						// not outputs yet
-		:"r"(page_directory) 	// input is page directory
-		:"%eax" 				// clobbered register
+		:									// not outputs yet
+		:"r"(page_directory) 				// input is page directory
+		:"%eax" 							// clobbered register
 
 	);
 }

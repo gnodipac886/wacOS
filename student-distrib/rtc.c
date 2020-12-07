@@ -7,8 +7,8 @@
 #define MAX_TERMINALS   3
 
 /* Flag to for rtc_read to determine if the next interrupt has occured */
-int rtc_interrupt_occurred[MAX_TERMINALS] = {0, 0, 0};
-int _rtc_virtual_frequency[MAX_TERMINALS] = {2, 2, 2};				// default Virtual RTC interrupt frequency = 2 Hz
+int rtc_interrupt_occurred[MAX_TERMINALS] = {0, 0, 0};				// init to 0 for all three terminals
+int _rtc_virtual_frequency[MAX_TERMINALS] = {VIRT_DEFAULT_FREQ, VIRT_DEFAULT_FREQ, VIRT_DEFAULT_FREQ};	
 
 /* _rtc_init
  * 		Inputs: none
@@ -17,7 +17,6 @@ int _rtc_virtual_frequency[MAX_TERMINALS] = {2, 2, 2};				// default Virtual RTC
  *		Side Effects: enables interrupt on PIC
  */
 void __init_rtc__(){
-	// cli();
 	/*set IRQ8 */
 	outb(RTC_STATUS_REG + 0xB, RTC_IO_PORT);  // Select RTC status register B (offset = 0xB)
 	uint8_t reg_value = inb(CMOS_IO_PORT);  // Read register B value
@@ -25,7 +24,6 @@ void __init_rtc__(){
 	outb(reg_value | 0x40, CMOS_IO_PORT);   // Turn on Register B bit 6
 
 	enable_irq(RTC_IRQ);					// Enable interrupt for RTC on PIC
-	// sti();
 }
 
 /* handle_rtc_interrupt
@@ -36,7 +34,6 @@ void __init_rtc__(){
  *	  Side Effects: none
  */
 void handle_rtc_interrupt(){
-	// cli();
 	send_eoi(RTC_IRQ);
 
 	/* Clear register C to allow another interrupt.*/
@@ -44,7 +41,7 @@ void handle_rtc_interrupt(){
 	inb(CMOS_IO_PORT);										 			// Dump the content
 
 	// test_interrupts();
-	rtc_interrupt_occurred[get_curr_scheduled()] = 1;	  				//flag for rtc_read
+rtc_interrupt_occurred[get_curr_scheduled()] = 1;	  					//flag for rtc_read
 	sti();
 }
 /* _rtc_open
@@ -54,7 +51,7 @@ void handle_rtc_interrupt(){
  *	  Side Effects: none
  */
 int _rtc_open(){
-	int buf = 2;														// default RTC interrupt frequency = 2 Hz
+	int buf = VIRT_DEFAULT_FREQ;										// default RTC interrupt frequency = 2 Hz
 	_rtc_write((void*)(&buf));						   
 	return 1;
 }
@@ -82,9 +79,9 @@ int _rtc_read(){
 	 * 		_rtc_read returns, generating a 512 Hz rate.
 	 */
 	 int i;
-	for(i = 0; i < (1024 / _rtc_virtual_frequency[get_curr_scheduled()]); i+=3){
+	for(i = 0; i < (DEVICE_MAX_FREQ / _rtc_virtual_frequency[get_curr_scheduled()]); i+=3){
 
-		while(rtc_interrupt_occurred[get_curr_scheduled()] == 0);
+		while(rtc_interrupt_occurred[get_curr_scheduled()] == 0);	// checks for interrupts
 
 		/* rtc interrupt has occured*/
 		rtc_interrupt_occurred[get_curr_scheduled()] = 0; // Reset the flag
@@ -101,8 +98,8 @@ int _rtc_read(){
 int _rtc_write(void* buf){
 	cli();
 	int freq = *((int*)buf);
-	/* if frequency is out of range 2-1024 (magic number)Hz, fail */
-	if(freq > 1024 || freq < 2){
+	/* if frequency is out of range 2-1024 Hz, fail */
+	if(freq > DEVICE_MAX_FREQ || freq < VIRT_DEFAULT_FREQ){
 		return -1;
 	}
 	/* if freq is power of 2, set rtc to this frequency, else fail */

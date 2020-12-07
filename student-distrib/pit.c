@@ -11,16 +11,13 @@
  *		Side Effects: Enables interrupt on PIC IRQ0
  */
 void __init_pit__(){
-	// cli();
 	/* set PIT to mode to: Rate generater/real time counter */
 	uint16_t count = PIT_DEF_FREQ / PIT_FREQ ;	  	// calculate divisor to send as command word
 	outb(PIT_CMD_BYTE, PIT_CMD_REG);				// Send command byte to command register
-	outb(count & 0xFF, PIT_DATA_REG_0);			 	// Send lower 8 bytes first
-	outb(count >> 8, PIT_DATA_REG_0);			   	// Send the upper 8 bytes
+	outb(count & LOW_8_MASK, PIT_DATA_REG_0);		// Send lower 8 bytes first
+	outb(count >> SHFT_8_DOWN, PIT_DATA_REG_0);		// Send the upper 8 bytes
 
 	enable_irq(PIT_IRQ);							// Enable interrupt for PIT on PIC
-
-	// sti();
 }
 
 /* handle_pit_interrupt 
@@ -30,9 +27,7 @@ void __init_pit__(){
  *	  Side Effects: none	 
  */
 void handle_pit_interrupt(){
-	// cli();
 	int* curr_pid = _get_pid_tracker();
-	// printf("PITINT %d\n", get_curr_scheduled());
 
 	if(get_curr_scheduled() == -1){
 		switch_process(0, 1);
@@ -44,9 +39,3 @@ void handle_pit_interrupt(){
 	sti();
 
 }
-
-
-
-
-
-
