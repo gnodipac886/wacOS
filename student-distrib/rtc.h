@@ -3,14 +3,16 @@
 
 
 /* rtc.h - Defines RTC structures and functions. */
-#define RTC_IO_PORT     0x70
-#define CMOS_IO_PORT    0x71
-#define RTC_STATUS_REG  0x80
-#define RTC_IRQ         0x08
-#define RTC_RATE_MAX    0x10    // Max rate for frequency is 16.
+#define RTC_IO_PORT         0x70        // RTC Port
+#define CMOS_IO_PORT        0x71        // CMOS Port
+#define RTC_STATUS_REG      0x80        // RTC register
+#define RTC_IRQ             0x08        // RTC IRQ number
+#define RTC_RATE_MAX        0x10        // Max rate for frequency is 16.
+#define DEVICE_MAX_FREQ     1024        // RTC Device Max Frequency = 1024 Hz (Device is always set to this)
+#define VIRT_DEFAULT_FREQ   2           // All programs are by default set to 2Hz (Virtualized RTC)
 
 /* rtc_init: Initializes RTC */
-void __rtc_init__();
+void __init_rtc__();
 /* handle_rtc_interrupt: processes rtc interrupt.*/
 void handle_rtc_interrupt();
 /* rtc_open: Opens rtc file */

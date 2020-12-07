@@ -1,6 +1,7 @@
 #include "terminal.h"
 #include "keyboard.h"
 #include "lib.h"
+#include "scheduler.h"
 
 /* terminal_open
  *	  Description: initializes terminal
@@ -44,25 +45,26 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes){
 		return 0;
 	}
 
-	memset(buf, '\0', BUF_SZ);                    // clear buf
+	memset(buf, '\0', BUF_SZ);                    					// clear buf
 	char kb_buf[BUF_SZ];
 	int kb_buf_idx;
 
 	// tell kb driver terminal read is in use
 	set_terminal_read_flag(1);
-
+	sti();
     // keeps checking until keyboard enters \n or filled buffer
 	while(1){
 		memset(kb_buf, '\0', BUF_SZ);
-		kb_buf_idx = get_kb_buf(kb_buf);	     // idx of last added char in keyboard buffer (copy keyboard buffer)
+		kb_buf_idx = get_kb_buf(kb_buf, get_curr_scheduled());	     // idx of last added char in keyboard buffer (copy keyboard buffer)
 		if(kb_buf[kb_buf_idx] == '\n') {
-			clear_terminal_buf();			     //clear terminal's keyboard handler buffer
+			clear_terminal_buf(get_curr_scheduled());			     //clear terminal's keyboard handler buffer
 			set_terminal_read_flag(0);
 			break;
 		}
 	}
-	memcpy(buf, (void*)kb_buf, kb_buf_idx + 1);	 //kb_buf_idx + 1 = number of bytes written to user space buffer
-	return kb_buf_idx + 1;                       // number of bytes read
+	memcpy(buf, (void*)kb_buf, kb_buf_idx + 1);	 					//kb_buf_idx + 1 = number of bytes written to user space buffer
+	cli();
+	return kb_buf_idx + 1;                       					// number of bytes read
 }
 
 /* terminal_write
@@ -76,15 +78,15 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes){
  *		Side Effects: none
  */
 int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes){
-	// check for valid buf and correct fd for writing
+	/* check for valid buf and correct fd for writing */
 	if((buf == NULL) | (fd != 1)){
 		return -1;
 	}
-	int32_t i;					  // counter
+	int32_t i;					 // counter
 	int32_t bytes_written = 0;
-	// loop through buf until all nbytes are written to the screen
+	/* loop through buf until all nbytes are written to the screen */
 	for(i = 0; i < nbytes; i++){
-        // check for null terminating char, if not print it
+        /* check for null terminating char, if not print it */
 		if(((char*)buf)[i] != '\0'){
 			putc(((char*)buf)[i]);
 			bytes_written++;

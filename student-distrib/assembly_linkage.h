@@ -4,6 +4,7 @@
 #ifndef ASM
   // void keyboard_interrupt_stub();
   // void rtc_interrupt_stub();
+  // void pit_interrupt_stub();
 #endif /* ASM */
 
 

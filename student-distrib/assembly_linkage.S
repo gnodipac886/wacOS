@@ -1,12 +1,12 @@
 #include "assembly_linkage.h"
-.globl keyboard_interrupt_stub, rtc_interrupt_stub
+.globl keyboard_interrupt_stub, rtc_interrupt_stub, pit_interrupt_stub
 .globl system_call_interrupt, system_call_ret
 .globl squash_user_exception, is_exception
 
 /* Interrupt Assembly Linkage
  * Description: x86 wrapper function that calls interrupt handlers;
 				stubs - pushes NOT(IRQ#) for calculating interrupt_handler_jump table offset
- *			  common_interrupt - saves/restores general purpose register values before/after interrupt
+ *			  	common_interrupt - saves/restores general purpose register values before/after calling interrupt
  * Input: None
  * Output: None
  * Side Effects: interrupt handler gets executed
@@ -20,6 +20,10 @@ rtc_interrupt_stub:
 	pushl $-9									/*Negative num for rtc IRQ8*/
 	jmp common_interrupt
 
+pit_interrupt_stub:
+	pushl $-1									/*Negative num for pit IRQ0*/
+	jmp common_interrupt
+
 common_interrupt:
 	pushal									  	/*save all register values before interrupt*/
 	movl 32(%esp), %eax							/*Get neg IRQ num on Kernel stack*/
@@ -30,7 +34,7 @@ common_interrupt:
 	iret									   	/*return from interrupt*/
 
 interrupt_handler_jump:
-	.long 0										/*handler ptrs for IR lines of Master PIC*/
+	.long handle_pit_interrupt					/*handler ptrs for IR lines of Master PIC*/
 	.long handle_keyboard_interrupt
 	.long 0
 	.long 0
@@ -47,7 +51,6 @@ interrupt_handler_jump:
 	.long 0
 	.long 0
 	.long 0
-
 
 
 
@@ -68,7 +71,7 @@ squash_user_exception:
 /* System Call Assembly Linkage
  * Description: x86 wrapper function that calls interrupt handlers;
 				eax - holds system call number
- *			  system_call_interrupt - saves/restores general purpose register values before/after interrupt
+ *			  	system_call_interrupt - saves/restores general purpose register values before/after system call
  * Input: None
  * Output: None
  * Side Effects: system call gets handled
@@ -86,12 +89,12 @@ wrong_number:
 	jmp 	system_call_ret
 
 valid_call_number:
-	pushl   %edx 								// push system call arguents
+	pushl   %edx 								// push system call arguments
 	pushl   %ecx 
 	pushl   %ebx 
 	
 call_syscall:
-	sti
+	// sti
 	call	*system_call_jmp(,%eax,4)			// 4 for 4 bytes of memory
 	movl	%eax,   sys_call_ret_val 			// save return value in the placeholder
 	popl	%ebx 								// pop off the arguments
@@ -114,8 +117,8 @@ system_call_jmp:
 	.long close 
 	.long getargs 
 	.long vidmap
-	.long 0				 //set_handler 
-	.long 0				 //sigreturn
+	.long set_handler 
+	.long sigreturn
 
 sys_call_ret_val:
 	.long 0 

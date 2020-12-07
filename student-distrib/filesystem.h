@@ -33,7 +33,7 @@ typedef struct dentry{
 	char 		name[MAX_NAME_LEN];
 	uint32_t 	type;
 	uint32_t 	inode;
-	uint8_t 	reserved[24];
+	uint8_t 	reserved[24];										// 24 for 24 reserved bytes
 } dentry_t;
 
 // data structure for inode
@@ -47,7 +47,7 @@ typedef struct boot_block{
 	uint32_t 	num_entries;
 	uint32_t 	num_inode;
 	uint32_t 	num_data_block;
-	uint8_t 	reserved[52];
+	uint8_t 	reserved[52];										// 52 for 52 reserved bytes
 	dentry_t 	files[MAX_DIR_ENTRY];
 } boot_block_t;
 
