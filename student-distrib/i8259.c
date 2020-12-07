@@ -1,4 +1,4 @@
-		  /* i8259.c - Functions to interact with the 8259 interrupt controller
+/* i8259.c - Functions to interact with the 8259 interrupt controller
  * vim:ts=4 noexpandtab
  */
 
@@ -21,20 +21,20 @@ void __init_i8259__(void) {
 	// uint32_t _master_mask_save, _slave_mask_save;
 	// _master_mask_save = inb(MASTER_DATA);
 	// _slave_mask_save = inb(SLAVE_DATA);
-	master_mask = INIT_MASK_ALL;		  // Initialize mask to 0xFF
-	slave_mask = INIT_MASK_ALL;		   // Initialize mask to 0xFF
+	master_mask = INIT_MASK_ALL;		  	// Initialize mask to 0xFF
+	slave_mask = INIT_MASK_ALL;		   		// Initialize mask to 0xFF
 
-	outb(ICW1, MASTER_CMD);   // Starts initialization ICW1 (cascade mode)
+	outb(ICW1, MASTER_CMD);   				// Starts initialization ICW1 (cascade mode)
 	outb(ICW1, SLAVE_CMD);
 
-	outb(ICW2_MASTER, MASTER_DATA); // ICW2_MASTER: Master PIC vector offset
-	outb(ICW2_SLAVE, SLAVE_DATA);   // ICW2_SLAVE: SLAVE PIC vector offset
+	outb(ICW2_MASTER, MASTER_DATA); 		// ICW2_MASTER: Master PIC vector offset
+	outb(ICW2_SLAVE, SLAVE_DATA);   		// ICW2_SLAVE: SLAVE PIC vector offset
 
-	outb(ICW3_MASTER, MASTER_DATA);  // ICW3_MASTER: Tell Master PIC the slave PIC is on IRQ2_PIC
-	outb(ICW3_SLAVE, SLAVE_DATA);   // ICW3_SLAVE: Tell Slave PIC its a slave on the Master PIC IRQ2_PIC.
+	outb(ICW3_MASTER, MASTER_DATA);  		// ICW3_MASTER: Tell Master PIC the slave PIC is on IRQ2_PIC
+	outb(ICW3_SLAVE, SLAVE_DATA);   		// ICW3_SLAVE: Tell Slave PIC its a slave on the Master PIC IRQ2_PIC.
 
 	/* ICW4:
-	 *  Special fully nested mode or non special fully nested mod
+	 *  Special fully nested mode or non special fully nested mode
 	 *  Buffered mode or non buffered mode
 	 *  Automatic EOI or Normal EOI
 	 */
@@ -59,16 +59,16 @@ void enable_irq(uint32_t irq_num) {
 	}
 	/* bit "x" is set to 0 if pin "x" (master or slave PIC) is enabled*/
 	uint8_t x;
-	if(irq_num>=SLAVE_IRQ_NUM){ //irq is 8~15, which is a slave mask.
+	if(irq_num >= SLAVE_IRQ_NUM){ 		//irq is 8~15, which is a slave mask.
 		x = irq_num-SLAVE_IRQ_NUM;
-		slave_mask &= ~(0x1<<x);
+		slave_mask &= ~(0x1 << x);
 		outb(slave_mask, SLAVE_DATA);
 
 		master_mask &= UNMASK_IRQ2;
 		outb(master_mask, MASTER_DATA);
-	}else{	  //irq is 0~8, which is a master mask
+	}else{	  							//irq is 0~8, which is a master mask
 		x = irq_num;
-		master_mask &= ~(0x1<<x);
+		master_mask &= ~(0x1 << x);
 		outb(master_mask, MASTER_DATA);
 	}
 }
@@ -85,7 +85,7 @@ void disable_irq(uint32_t irq_num) {
 	}
 	/* bit "x" is set to 1 if pin "x" (master or slave PIC) is enabled*/
 	uint8_t x;
-	if(irq_num>=SLAVE_IRQ_NUM){ 		//irq is 8~15, which is a slave mask.
+	if(irq_num>=SLAVE_IRQ_NUM){ 		// irq is 8~15, which is a slave mask.
 		x = irq_num-SLAVE_IRQ_NUM;
 		slave_mask |= (0x1<<x);			// left shift 1 bit to mask that IRQ
 		outb(slave_mask, SLAVE_DATA);
@@ -111,7 +111,7 @@ void send_eoi(uint32_t irq_num) {
 	}
 	/*if IRQ came from slave, then send EOI signal to both master and slave.
 	  else only send EOI to master.*/
-	if(irq_num >= SLAVE_IRQ_NUM){ // if IRQ came from slave, then send EOI signal to slave.
+	if(irq_num >= SLAVE_IRQ_NUM){ 		// if IRQ came from slave, then send EOI signal to slave.
 		outb((irq_num - SLAVE_IRQ_NUM) | EOI, SLAVE_CMD);
 		outb(IRQ2_PIC | EOI, MASTER_CMD);
 	}

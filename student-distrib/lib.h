@@ -32,7 +32,7 @@ void temp_map_phys_vid();
 void temp_map_switch_back();
 void update_cursor(int x, int y);
 void save_cursor(int terminal);
-int terminal_on_process();
+int video_mapped_to_phys_screen();
 char * get_video_mem();
 
 /* Userspace address-check functions */
