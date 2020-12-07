@@ -6,6 +6,7 @@
 #include "x86_desc.h"
 #include "keyboard.h"
 #include "lib.h"
+#include "sound_blaster.h"
 
 // global variables
 int32_t curr_avail_pid = 0;
@@ -86,6 +87,11 @@ int32_t execute(const uint8_t* command){
 		}
 
 		i++;																// increment until we find a space or null
+	}
+
+	if(strncmp(task_name, "play", 5) == 0){
+		play_sound(task_arg);
+		return 0;
 	}
 
 	// try to allocate a task

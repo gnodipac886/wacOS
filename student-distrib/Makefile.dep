@@ -22,7 +22,7 @@ screen.o: screen.c lib.h types.h screen.h paging.h octree.h filesystem.h \
 sound_blaster.o: sound_blaster.c sound_blaster.h types.h i8259.h lib.h \
   filesystem.h paging.h
 system_calls.o: system_calls.c system_calls.h types.h filesystem.h \
-  terminal.h paging.h x86_desc.h keyboard.h lib.h
+  terminal.h paging.h x86_desc.h keyboard.h lib.h sound_blaster.h
 terminal.o: terminal.c terminal.h types.h keyboard.h lib.h
 tests.o: tests.c tests.h x86_desc.h types.h lib.h filesystem.h terminal.h \
   system_calls.h

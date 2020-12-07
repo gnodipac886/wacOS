@@ -21,17 +21,24 @@
 #define STOP_PLAY_16			0xD5	// Stop playing 16 bit channel	
 #define RESUME_PLAY_16 			0xD6	// Resume playback of 16 bit channel	
 #define GET_DSP_VER 			0xE1	// Get DSP version	major version/minor version
+#define MONO 					0x00 
+#define STEREO 					0x20
+#define UNSIGNED	 			0x00
+#define SIGNED 					0x10
+#define TRANSFER_16 			0xB0
+#define TRANSFER_8 				0xC0
 
 // MIXER PORT COMMANDS
 #define MASTER_VOL 				0x22	// Master volume	0xLR L=left volume R=right volume min=0x0 max=0xF (default value is 0xCC or 0x11)
 #define SET_IRQ 				0x80	// Set IRQ	See below
 #define SB_IRQ5 				0x02
 
+// OTHERS
 #define SB_IRQ 					5
 
 #define WAV_DATA_PG_ADDR        0x80000  // wav data page at physical/virtual 0xC0000    
 
-#define PHYS_PG_BDY             0x8000  // 64k physical page boundary for sound data buffer 
+#define MAX_CHUNK_SIZE			0x10000  // 64k physical page boundary for sound data buffer 
 
 #define WAV_SAMPLE_RATE_OFFSET  24      // 24 bytes to sample rate
 #define WAV_DATA_SIZE_OFFSET    40      // 40 bytes to data size in bytes
@@ -64,10 +71,11 @@ void set_irq();
 void speaker_on();
 void speaker_off();
 void resume_playback();
-void read_wav_data(char * fname);
+int read_wav_data(char * fname);
 void set_master_volume();
 void dma_transfer();
 void program_sb();
 void set_sampling_rate();
+void stop_playback();
 
 #endif /* _SOUNDER_BLASTER_H */
