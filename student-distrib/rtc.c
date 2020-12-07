@@ -18,12 +18,12 @@ int _rtc_virtual_frequency[MAX_TERMINALS] = {VIRT_DEFAULT_FREQ, VIRT_DEFAULT_FRE
  */
 void __init_rtc__(){
 	/*set IRQ8 */
-	outb(RTC_STATUS_REG + 0xB, RTC_IO_PORT);  // Select RTC status register B (offset = 0xB)
-	uint8_t reg_value = inb(CMOS_IO_PORT);  // Read register B value
-	outb(RTC_STATUS_REG + 0xB, RTC_IO_PORT);  // Select RTC status register B
-	outb(reg_value | 0x40, CMOS_IO_PORT);   // Turn on Register B bit 6
+	outb(RTC_STATUS_REG + 0xB, RTC_IO_PORT);  							// Select RTC status register B (offset = 0xB)
+	uint8_t reg_value = inb(CMOS_IO_PORT);  							// Read register B value
+	outb(RTC_STATUS_REG + 0xB, RTC_IO_PORT);  							// Select RTC status register B
+	outb(reg_value | 0x40, CMOS_IO_PORT);   							// Turn on Register B bit 6
 
-	enable_irq(RTC_IRQ);					// Enable interrupt for RTC on PIC
+	enable_irq(RTC_IRQ);												// Enable interrupt for RTC on PIC
 }
 
 /* handle_rtc_interrupt
@@ -36,12 +36,12 @@ void __init_rtc__(){
 void handle_rtc_interrupt(){
 	send_eoi(RTC_IRQ);
 
-	/* Clear register C to allow another interrupt.*/
+	/* Clear rtc register C to allow another interrupt.*/
 	outb(RTC_STATUS_REG + 0x0C, RTC_IO_PORT);				 			// Select RTC status register C
 	inb(CMOS_IO_PORT);										 			// Dump the content
 
 	// test_interrupts();
-rtc_interrupt_occurred[get_curr_scheduled()] = 1;	  					//flag for rtc_read
+	rtc_interrupt_occurred[get_curr_scheduled()] = 1;	  				//flag for rtc_read
 	sti();
 }
 /* _rtc_open
@@ -58,8 +58,8 @@ int _rtc_open(){
 
 /* _rtc_close
  *	  Inputs: None
- *	  Return Value: 1
- *	  Function: returns constant 1.
+ *	  Return Value: 0
+ *	  Function: returns constant 0.
  *	  Side Effects: none
  */
 int _rtc_close(){
@@ -78,13 +78,13 @@ int _rtc_read(){
 	 * Ex: 512 Hz virtual frequency, for every 1024/512 = 2 interrupts,
 	 * 		_rtc_read returns, generating a 512 Hz rate.
 	 */
-	 int i;
+	int i;
 	for(i = 0; i < (DEVICE_MAX_FREQ / _rtc_virtual_frequency[get_curr_scheduled()]); i+=3){
 
-		while(rtc_interrupt_occurred[get_curr_scheduled()] == 0);	// checks for interrupts
+		while(rtc_interrupt_occurred[get_curr_scheduled()] == 0);		// checks for interrupts
 
 		/* rtc interrupt has occured*/
-		rtc_interrupt_occurred[get_curr_scheduled()] = 0; // Reset the flag
+		rtc_interrupt_occurred[get_curr_scheduled()] = 0; 				// Reset the flag
 	}
 	return 0;
 }
