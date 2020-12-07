@@ -201,11 +201,11 @@ void update_cursor(int x, int y) {
 void putc(uint8_t c) {
 	int flags = 0;
 	// cli();
-	cli_and_save(flags);
+	cli_and_save(flags);		// avoid double faults
 	/* If putc is called by a background process, write to the process (Not shown on screen)
 	   If putc is called by keyboard or process on screen, write to the shown process (Shown on screen) */
 	int i;
-	int curr_sch = terminal_on_process() ? get_curr_screen(): get_curr_scheduled(); //........................................
+	int curr_sch = video_mapped_to_phys_screen() ? get_curr_screen(): get_curr_scheduled();
 	
 	if(c == '\n' || c == '\r') {
 		screen_y[curr_sch]++;
@@ -228,8 +228,8 @@ void putc(uint8_t c) {
 		// memset((uint8_t *)(video_mem + (NUM_ROWS - 1) * NUM_COLS * 2), space, NUM_COLS * 2);		// clears the last line, fill with spaces
 		screen_y[curr_sch] = NUM_ROWS - 1; 																	// set to last row of screen
 	}
-
-	if (terminal_on_process()) {
+																							 
+	if (video_mapped_to_phys_screen()) {
 		update_cursor(screen_x[curr_sch],screen_y[curr_sch]);
 	} 
 	// sti();
@@ -255,6 +255,7 @@ void vid_backspace() {
 
 	temp_map_phys_vid();
 	*(uint8_t *)(video_mem + ((NUM_COLS * screen_y[curr_scr] + screen_x[curr_scr]) << 1)) = ' ';
+	*(uint8_t *)(video_mem + ((NUM_COLS * screen_y[curr_scr] + screen_x[curr_scr]) << 1) + 1) = ATTRIB;
 	update_cursor(screen_x[curr_scr], screen_y[curr_scr]);
 	temp_map_switch_back();
 }
@@ -654,7 +655,7 @@ void test_interrupts(void) {
  * Inputs: void
  * Return Value: 1 for video_mem = Video memory
  * Function: Determines if terminal screen is showing the processing pcb */
-int terminal_on_process(){
+int video_mapped_to_phys_screen(){
 	return (char*)(video_mem) == (char*)(VIDEO);
 }
 
