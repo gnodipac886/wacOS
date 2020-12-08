@@ -45,7 +45,7 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes){
 		return 0;
 	}
 
-	memset(buf, '\0', BUF_SZ);                    // clear buf
+	memset(buf, '\0', BUF_SZ);                    					// clear buf
 	char kb_buf[BUF_SZ];
 	int kb_buf_idx;
 
@@ -62,9 +62,9 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes){
 			break;
 		}
 	}
-	memcpy(buf, (void*)kb_buf, kb_buf_idx + 1);	 //kb_buf_idx + 1 = number of bytes written to user space buffer
+	memcpy(buf, (void*)kb_buf, kb_buf_idx + 1);	 					//kb_buf_idx + 1 = number of bytes written to user space buffer
 	cli();
-	return kb_buf_idx + 1;                       // number of bytes read
+	return kb_buf_idx + 1;                       					// number of bytes read
 }
 
 /* terminal_write
@@ -78,16 +78,15 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes){
  *		Side Effects: none
  */
 int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes){
-	// check for valid buf and correct fd for writing
+	/* check for valid buf and correct fd for writing */
 	if((buf == NULL) | (fd != 1)){
-		//printf("------------DIDN'T WRITE!!!!!---------------\n");  		//This doesn't print during skipped lines!
 		return -1;
 	}
-	int32_t i;					  // counter
+	int32_t i;					 // counter
 	int32_t bytes_written = 0;
-	// loop through buf until all nbytes are written to the screen
+	/* loop through buf until all nbytes are written to the screen */
 	for(i = 0; i < nbytes; i++){
-        // check for null terminating char, if not print it
+        /* check for null terminating char, if not print it */
 		if(((char*)buf)[i] != '\0'){
 			putc(((char*)buf)[i]);
 			bytes_written++;
