@@ -33,7 +33,7 @@ void make_rectangle(int window_id, int width, int height, int x, int y, int colo
     
     rectangle_t* new_rectangle; 
     new_rectangle->window_id = window_id;
-    new_rectangle->id = rectangle_arr_size;
+    new_rectangle->id = rectangle_arr_count;
     new_rectangle->x = x;
     new_rectangle->y = y;
     new_rectangle->color = color;
@@ -57,7 +57,7 @@ void make_rectangle(int window_id, int width, int height, int x, int y, int colo
 void make_circle(int window_id, int radius, int x, int y, int color){
     circle_t* new_circle;
     new_circle->window_id = window_id;
-    new_circle->id = circle_arr_size;
+    new_circle->id = circle_arr_count;
     new_circle->x = x;
     new_circle->y = y;
     new_circle->color = color;
