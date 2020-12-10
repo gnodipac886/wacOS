@@ -1,21 +1,37 @@
 #ifndef _GUI_H
 #define _GUI_H
 
-#include "types.h"
+#define MAX_WINDOW          3           // Maximum windows = 3
+#define RECT_NUM            2           // 2 Rectangles per window
+#define CIRC_NUM            3           // 3 Circles (button) per window
+
+#define RED                 48          // Palette index for Red
+#define YELLOW              60          // Palette index for Yellow
+#define GREEN               12          // Palette index for Green
+#define BUTTON_RAD          3           // Window button radius = 4 pixel
+#define BUTTON_OFFSET       6           // Button center = 6 pixels from the top and side of the window
+#define BUTTON_GAP          10          // Button center to center  = 10 pixel    
+#define TOGGLE_BAR_HEIGHT   12          // Window toggle bar height  = 12 pixels 
+#define TOGGLE_BAR_COLOR    21          // Palette index Window toggle bar color
+#define WINDOW_COLOR        42          // Palette index Main Window 
 
 typedef struct rectangle{
-    uint16_t width;         // Dimension of the rectangle
-    uint16_t height;        
-    uint16_t x;             // x location on the screen 
-    uint16_t y;             // y location on the screen
-    uint16_t color;         // r5g6b5
+    int window_id;
+    int id;
+    int width;         // Dimension of the rectangle
+    int height;        
+    int x;             // x location on the screen 
+    int y;             // y location on the screen
+    int color;         // r5g6b5
 }rectangle_t;
 
-typedef struct circle{
-    uint16_t radius;
-    uint16_t x;             //center = x + y*screenwidth
-    uint16_t y;
-    uint16_t color;         // r5g6b5
+typedef struct circle{    
+    int window_id;
+    int id;
+    int radius;
+    int x;             //center = x + y*screenwidth
+    int y;
+    int color;         // r5g6b5
 }circle_t;
 
 typedef struct window{
@@ -24,7 +40,12 @@ typedef struct window{
     circle_t button1, button2, button3;
 }window_t;
 
-int make_rectangle(int x, int y, uint16_t color, int width, int height); 
-int make_circle(int x, int y, uint16_t color, int radius);
-int make_window(int x, int y, uint16_t color, int width, int height);
+void make_rectangle(int window_id, int width, int height, int x, int y, int color); 
+void make_circle(int window_id, int radius, int x, int y, int color);
+int make_window(int x, int y, int width, int height);
+
+void __init_gui__();
+void gui_draw_rectangle(rectangle_t rect);
+void gui_draw_circle(circle_t circle);
+void gui_draw_window(int idx);
 #endif /* _GUI_H */

@@ -16,6 +16,7 @@
 #include "filesystem.h"
 #include "system_calls.h"
 
+#include "gui.h"
 #include "screen.h"
 #include "sound_blaster.h"
 
@@ -166,7 +167,8 @@ void entry(unsigned long magic, unsigned long addr) {
 	__mouse_init__();
 	__init_filesystem__((void*)(mod->mod_start)); 							// enable filesystem
 	__init_paging__();														// enable paging
-	__init_sb__();
+	//__init_sb__();
+	
 	/* Enable interrupts */
 	/* Do not enable the following until after you have set up your
 	 * IDT correctly otherwise QEMU will triple fault and simple close
@@ -181,6 +183,7 @@ void entry(unsigned long magic, unsigned long addr) {
 #endif
 	if(GUI_ACTIVATE){
 		__screen_init__();
+		__init_gui__();
 	}
 	/* Execute the first program ("shell") ... */
 
