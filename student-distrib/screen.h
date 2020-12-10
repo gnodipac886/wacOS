@@ -36,8 +36,12 @@
 #define FILE_MAX_LEN 			SCREEN_X_DIM * SCREEN_Y_DIM * 2
 
 // mouse related:
-#define VGA_CURSOR_SIZE 4
-#define FRAMES_PER_MOVE 7 			// how many mouse frames per movement
+#define VGA_CURSOR_SIZE 		6
+#define FRAMES_PER_MOVE 		7 			// how many mouse frames per movement
+#define BLACK_COL 				0
+#define WHITE_COL				63
+#define BLACK_PIX 				0x0000
+#define WHITE_PIX 				0xFFFF
 
 // pixel related
 typedef struct pixel_565{
@@ -78,6 +82,9 @@ void draw_mouse_cursor(int * curr_x, int * curr_y, int dx, int dy, int frames, i
 void draw_image_322(uint8_t * img);
 void draw_image_565(pixel_565_t * img);
 void draw_image_565_from_file(char * fname);
+void get_cursor_image(pixel_565_t * buf);
+void plot_cursor(int x, int y);
+void save_cursor_background();
 
 void set_seq_regs_and_reset (unsigned short table[NUM_SEQUENCER_REGS], unsigned char val);
 void fill_palette_text();

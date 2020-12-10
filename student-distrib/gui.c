@@ -20,6 +20,7 @@ window_t window_arr[MAX_WINDOW];
 void __init_gui__(){
     make_window(80, 40, 160, 120);
     gui_draw_window(0);
+    save_cursor_background();
 }
 
 /*
