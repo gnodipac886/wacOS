@@ -1,5 +1,7 @@
 #include "gui.h"
+#include "screen.h"
 #include "lib.h"
+#include "types.h"
 
 /* Shape storage: 
  * Maximum of 3 windows, stored inside a window_t array
@@ -8,9 +10,9 @@
  *      Second rectangle is the strip occupying the top of the window
  *      Three buttons, RGB, whill be drawn on the top left of the screen inside the second rectangle.
  */
-uint16_t rectangle_arr_count = 0;
-uint16_t circle_arr_count = 0;
-uint16_t window_count=0;
+int rectangle_arr_count = 0;
+int circle_arr_count = 0;
+int window_count=0;
 rectangle_t* rectangle_arr[MAX_WINDOW][RECT_NUM];
 circle_t* circle_arr[MAX_WINDOW][CIRC_NUM];
 window_t* window_arr[MAX_WINDOW];
@@ -27,9 +29,9 @@ window_t* window_arr[MAX_WINDOW];
  *   RETURN VALUE: 0
  *   SIDE EFFECTS: none
  */   
-void make_rectangle(uint16_t window_id, uint16_t x, inuint16_tt y, uint16_t color, uint16_t width, uint16_t height){
+void make_rectangle(int window_id,  int width, int height, int x, int y, int color){
     
-    rectangle_t new_rectangle; 
+    rectangle_t* new_rectangle; 
     new_rectangle->window_id = window_id;
     new_rectangle->id = rectangle_arr_size;
     new_rectangle->x = x;
@@ -37,9 +39,8 @@ void make_rectangle(uint16_t window_id, uint16_t x, inuint16_tt y, uint16_t colo
     new_rectangle->color = color;
     new_rectangle->width = width;
     new_rectangle->height = height;
-    rectangle_arr[window_id][rectangle_arr_size[window_id]] = new_rectangle;
+    rectangle_arr[window_id][rectangle_arr_count] = new_rectangle;
     rectangle_arr_count ++;
-    //rectangle_arr_size[window_id]++;
 } 
 
 /*
@@ -53,16 +54,16 @@ void make_rectangle(uint16_t window_id, uint16_t x, inuint16_tt y, uint16_t colo
  *   RETURN VALUE: none
  *   SIDE EFFECTS: none
  */   
-void make_circle(uint16_t window_id, uint16_t x, uint16_t y, uint16_t color, uint16_t radius){
-    circle_t new_circle;
+void make_circle(int window_id, int radius, int x, int y, int color){
+    circle_t* new_circle;
     new_circle->window_id = window_id;
     new_circle->id = circle_arr_size;
     new_circle->x = x;
     new_circle->y = y;
     new_circle->color = color;
     new_circle->radius = radius;
+    circle_arr[window_id][circle_arr_count] = new_circle;
     circle_arr_count ++;
-    //circle_arr[window_id][circle_arr_size[window_id]] = new_circle;
 }
 
 
@@ -78,17 +79,17 @@ void make_circle(uint16_t window_id, uint16_t x, uint16_t y, uint16_t color, uin
  *   RETURN VALUE: 0 on successful. -1 on already maxed window count
  *   SIDE EFFECTS: none
  */   
-int make_window(uint16_t x, uint16_t y, uint16_t color, uint16_t width, uint16_t height){
+int make_window(int x, int y, int color, int width, int height){
 
     // Sanity check: If 3 windows already created, return -1;
     if(window_count>2){
-        return -1
+        return -1;
     }
-    make_rectangle(window_count, x, y, TOGGLE_BAR_COLOR, width, TOGGLE_BAR_HEIGHT); // Create toggle bar
-    make_rectangle(window_count, x, y, WINDOW_COLOR, width, height);                // Create main window
-    make_circle(window_count, x + BUTTON_OFFSET, y + BUTTON_OFFSET, RED, BUTTON_RAD);                               // Create Red button
-    make_circle(window_count, x + BUTTON_OFFSET + BUTTON_GAP, y + BUTTON_OFFSET, YELLOW, BUTTON_RAD);               // Create Yellow button 
-    make_circle(window_count, x + BUTTON_OFFSET + BUTTON_GAP + BUTTON_GAP, y + BUTTON_OFFSET, GREEN, BUTTON_RAD);   // Create Green button.
+    make_rectangle(window_count, width, TOGGLE_BAR_HEIGHT, x, y, TOGGLE_BAR_COLOR); // Create toggle bar
+    make_rectangle(window_count, width, height, x, y, WINDOW_COLOR);                // Create main window
+    make_circle(window_count, BUTTON_RAD, x + BUTTON_OFFSET, y + BUTTON_OFFSET, RED);                               // Create Red button
+    make_circle(window_count, BUTTON_RAD, x + BUTTON_OFFSET + BUTTON_GAP, y + BUTTON_OFFSET, YELLOW);               // Create Yellow button 
+    make_circle(window_count, BUTTON_RAD, x + BUTTON_OFFSET + BUTTON_GAP + BUTTON_GAP, y + BUTTON_OFFSET, GREEN);   // Create Green button.
     window_count++;
     // reset rectangle and circle counter for the next window.
     rectangle_arr_count = 0;                                                        
@@ -152,7 +153,7 @@ void gui_draw_circle(circle_t* circle){
  *   SIDE EFFECTS: plots window on screen
  */   
 
-void gui_draw_window(uint16_t idx){
+void gui_draw_window(int idx){
     /* Draw all the circle and rectangles in the window */
     int i, j;
     for(i = 0; i< RECT_NUM; i++){

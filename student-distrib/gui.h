@@ -1,7 +1,6 @@
 #ifndef _GUI_H
 #define _GUI_H
-#include "screen.h"
-#include "types.h"
+
 #define MAX_WINDOW          3           // Maximum windows = 3
 #define RECT_NUM            2           // 2 Rectangles per window
 #define CIRC_NUM            3           // 3 Circles (button) per window
@@ -18,22 +17,22 @@
 
 
 typedef struct rectangle{
-    uint16_t window_id = -1;
-    uint16_t id = -1;
-    uint16_t width = 0;         // Dimension of the rectangle
-    uint16_t height =0;        
-    uint16_t x = 0;             // x location on the screen 
-    uint16_t y = 0;             // y location on the screen
-    uint16_t color = 0;         // r5g6b5
+    int window_id = -1;
+    int id = -1;
+    int width = 0;         // Dimension of the rectangle
+    int height =0;        
+    int x = 0;             // x location on the screen 
+    int y = 0;             // y location on the screen
+    int color = 0;         // r5g6b5
 }rectangle_t;
 
 typedef struct circle{    
-    uint16_t window_id = -1;
-    uint16_t id = -1;
-    uint16_t radius = 0;
-    uint16_t x = 0;             //center = x + y*screenwidth
-    uint16_t y = 0;
-    uint16_t color = 0;         // r5g6b5
+    int window_id = -1;
+    int id = -1;
+    int radius = 0;
+    int x = 0;             //center = x + y*screenwidth
+    int y = 0;
+    int color = 0;         // r5g6b5
 }circle_t;
 
 typedef struct window{
@@ -42,11 +41,11 @@ typedef struct window{
     circle_t button1, button2, button3;
 }window_t;
 
-void make_rectangle(uint16_t window_id, uint16_t width, uint16_t height, uint16_t x, uint16_t y, uint16_t color); 
-void make_circle(uint16_t window_id, uint16_t radius, uint16_t x, uint16_t y, uint16_t color);
-int make_window(uint16_t x, uint16_t y, uint16_t color, uint16_t width, uint16_t height);
+void make_rectangle(int window_id, int width, int height, int x, int y, int color); 
+void make_circle(int window_id, int radius, int x, int y, int color);
+int make_window(int x, int y, int color, int width, int height);
 
 void gui_draw_rectangle(rectangle_t* rect);
 void gui_draw_circle(circle_t* circle);
-void gui_draw_window(uint16_t idx);
+void gui_draw_window(int idx);
 #endif /* _GUI_H */
