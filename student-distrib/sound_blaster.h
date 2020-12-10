@@ -27,6 +27,9 @@
 #define SIGNED 					0x10
 #define TRANSFER_16 			0xB0
 #define TRANSFER_8 				0xC0
+#define RECORD_8 				0xC8
+#define RECORD_16 				0xB8
+#define RECORD_SAMP_RATE 		11025
 
 // MIXER PORT COMMANDS
 #define MASTER_VOL 				0x22	// Master volume	0xLR L=left volume R=right volume min=0x0 max=0xF (default value is 0xCC or 0x11)
@@ -64,6 +67,7 @@ void __init_sb__();
 void handle_sb_interrupt();
 
 void play_sound();
+void record_sound();
 void reset_dsp();
 void set_sb_irq();
 

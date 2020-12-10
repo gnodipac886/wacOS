@@ -8,6 +8,7 @@ wave_head_t curr_wav;
 dentry_t wav_dentry;
 uint8_t* audio_addr = (uint8_t*)WAV_DATA_PG_ADDR;
 uint8_t interrupt_count;
+uint8_t recording;
 int32_t offset;
 int32_t curr_chunk_size;
 
@@ -18,6 +19,7 @@ void __init_sb__(){
 	interrupt_count = 0;
 	offset = 0;
 	curr_chunk_size = 0;
+	recording = 0;
 }
 
 void play_sound(char * fname) {
@@ -31,10 +33,80 @@ void play_sound(char * fname) {
 	program_sb();
 }
 
+void record_sound(){
+	uint8_t count_high_byte = (uint8_t)(((MAX_CHUNK_SIZE - 1) >> 8) & 0x000000FF);
+	uint8_t count_low_byte = (uint8_t)((MAX_CHUNK_SIZE - 1) & 0x000000FF);
+	uint8_t audio_type = MONO | UNSIGNED;
+	uint8_t transfer_mode = RECORD_8;
+	uint8_t rate_high_byte = (uint8_t)((RECORD_SAMP_RATE >> 8) & 0x000000FF);
+	uint8_t rate_low_byte = (uint8_t)(RECORD_SAMP_RATE & 0x000000FF);
+	uint8_t length_high_byte = (uint8_t)((MAX_CHUNK_SIZE >> 8) & 0x000000FF);
+	uint8_t length_low_byte = (uint8_t)(MAX_CHUNK_SIZE & 0x000000FF);
+	recording = 0;
+
+	reset_dsp();
+	// set_master_volume();
+	// speaker_on();
+
+	// DMA channel 1
+	outb(0x05,  0x0A);									// disable channel 1 (number of channel + 0x04)
+	outb(1,	 	0x0C);									// flip flop port
+	outb(0x55,  0x0B);									// set transfer mode (0x48 for single mode + channel number)
+	outb((uint8_t)(WAV_DATA_PG_ADDR & 0x00FF),	0x02);	// send POSITION LOW BIT (WAV DATA POSITION IN MEMORY 0x0C00[00])
+	outb((uint8_t)(WAV_DATA_PG_ADDR >> 8),  	0x02);	// send POSITON HIGH BIT (WAV DATA POSITION IN MEMORY 0x0C[00]00)
+	outb(1,	 	0x0C);									// debug....................................................................................................
+	outb(length_low_byte,  	0x03);						// send low byte of length of data (Example: size of 4MB page 0x04[00] bytes)
+	outb(length_high_byte,  0x03);						// send high byte of length of data (Example: size of 4MB page 0x[04]00 bytes) 
+	outb((uint8_t)(WAV_DATA_PG_ADDR >> 16),  	0x83);	// send page number to page port of channel 1 (WAV DATA POSITION IN wav_data_page addr 0x[0C]0000)
+	outb(1,	 	0x0A);									// enable channel 1
+
+	outb(0x41,  DSP_WRITE);
+	outb(rate_high_byte, DSP_WRITE);
+	outb(rate_low_byte, DSP_WRITE);
+	outb(transfer_mode,		DSP_WRITE);		// write 8 bit transfer mode
+	outb(audio_type,		DSP_WRITE);		// write type of sound data - mono and unsigned sound data
+	outb(count_low_byte,	DSP_WRITE);		// COUNT LOW BYTE (Example: wav data length-1 = 0x03[FF])
+	outb(count_high_byte,	DSP_WRITE);		// COUNT HIGH BYTE (Example: wav data length-1 = 0x[03]FF)
+
+	while(recording);
+	reset_dsp();
+	set_master_volume();
+	speaker_on();
+
+	// DMA channel 1
+	outb(0x05,  0x0A);									// disable channel 1 (number of channel + 0x04)
+	outb(1,	 	0x0C);									// flip flop port
+	outb(0x59,  0x0B);									// set transfer mode (0x48 for single mode + channel number)
+	outb((uint8_t)(WAV_DATA_PG_ADDR & 0x00FF),	0x02);	// send POSITION LOW BIT (WAV DATA POSITION IN MEMORY 0x0C00[00])
+	outb((uint8_t)(WAV_DATA_PG_ADDR >> 8),  	0x02);	// send POSITON HIGH BIT (WAV DATA POSITION IN MEMORY 0x0C[00]00)
+	outb(1,	 	0x0C);									// debug....................................................................................................
+	outb(length_low_byte,  	0x03);						// send low byte of length of data (Example: size of 4MB page 0x04[00] bytes)
+	outb(length_high_byte,  0x03);						// send high byte of length of data (Example: size of 4MB page 0x[04]00 bytes) 
+	outb((uint8_t)(WAV_DATA_PG_ADDR >> 16),  	0x83);	// send page number to page port of channel 1 (WAV DATA POSITION IN wav_data_page addr 0x[0C]0000)
+	outb(1,	 	0x0A);									// enable channel 1
+
+	outb(0x41,  DSP_WRITE);
+	outb(rate_high_byte, DSP_WRITE);
+	outb(rate_low_byte, DSP_WRITE);
+	outb(TRANSFER_8,		DSP_WRITE);		// write 8 bit transfer mode
+	outb(audio_type,		DSP_WRITE);		// write type of sound data - mono and unsigned sound data
+	outb(count_low_byte,	DSP_WRITE);		// COUNT LOW BYTE (Example: wav data length-1 = 0x03[FF])
+	outb(count_high_byte,	DSP_WRITE);		// COUNT HIGH BYTE (Example: wav data length-1 = 0x[03]FF)
+}
+
 void handle_sb_interrupt() {
 	inb(DSP_READ_STATUS);
-	printf("SB got an interrupt lol\n");
+	// printf("SB got an interrupt lol\n");
 	//resume_playback();
+
+	if(recording){
+		printf("RECORDING!!!???\n");
+		recording = 0;
+		send_eoi(SB_IRQ);
+		sti();
+		return;
+	}
+
 	memset((uint8_t*)WAV_DATA_PG_ADDR, 0, MAX_CHUNK_SIZE);	// clear sound data in memory (wava data page)
 	if(offset == curr_wav.subchunck2size){
 		stop_playback();
@@ -123,7 +195,6 @@ void dma_transfer() {
 		outb((uint8_t)(WAV_DATA_PG_ADDR >> 16),  	0x8B);	// send page number to page port of channel 1 (WAV DATA POSITION IN wav_data_page addr 0x[0C]0000)
 		outb(1,	 	0xD4);									// enable channel 1
 	}
- 
 }
 
 void program_sb() {
