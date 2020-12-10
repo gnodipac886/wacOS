@@ -187,7 +187,7 @@ void entry(unsigned long magic, unsigned long addr) {
 	}
 	/* Execute the first program ("shell") ... */
 
-	//play_sound("mac.wav");
+	play_sound("mac.wav");
 	// record_sound();
 	execute((uint8_t*)"shell");
 

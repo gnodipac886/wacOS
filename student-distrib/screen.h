@@ -84,6 +84,7 @@ void draw_image_565(pixel_565_t * img);
 void draw_image_565_from_file(char * fname);
 void get_cursor_image(pixel_565_t * buf);
 void plot_cursor(int x, int y);
+void save_cursor_background();
 
 void set_seq_regs_and_reset (unsigned short table[NUM_SEQUENCER_REGS], unsigned char val);
 void fill_palette_text();

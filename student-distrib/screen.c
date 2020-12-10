@@ -86,7 +86,6 @@ int32_t fb2_mouse_y_prev = SCREEN_Y_DIM / 2;
  *   SIDE EFFECTS: goes into vga mode
  */
 void __screen_init__(){
-	int save_x, save_y;
 	VGA_blank (1);                               	/* blank the screen      */
 	set_seq_regs_and_reset (mode_X_seq, 0x63);   	/* sequencer registers   */
 	set_CRTC_registers (mode_X_CRTC);            	/* CRT control registers */
@@ -104,13 +103,7 @@ void __screen_init__(){
 	// while(1)
 	get_cursor_image(cursor_img);
 	draw_image_565_from_file("big_sur.bin");
-
-	// save the middle mouse frame
-	for(save_y = 0; save_y < VGA_CURSOR_SIZE; save_y++){
-		for(save_x = 0; save_x < VGA_CURSOR_SIZE; save_x++){
-			cursor_save1[save_y * VGA_CURSOR_SIZE + save_x] = get_pixel(fb1_mouse_x_prev + save_x, fb1_mouse_y_prev + save_y);
-		}
-	}
+	save_cursor_background();
 }
 
 /*
@@ -630,7 +623,7 @@ void plot_cursor(int x, int y){
 		for(j = 0; j < VGA_CURSOR_SIZE; j++){
 			switch(cursor_img[i * VGA_CURSOR_SIZE + j].pixel){
 				case WHITE_PIX:
-					plot_pixel(x + j, y + i, WHITE_PIX);
+					plot_pixel(x + j, y + i, WHITE_COL);
 					break;
 
 				case BLACK_PIX:
@@ -639,6 +632,24 @@ void plot_cursor(int x, int y){
 
 				default:;
 			}
+		}
+	}
+}
+
+/*
+ * save_cursor_background
+ *   DESCRIPTION: 	none
+ *   INPUTS: none
+ *   OUTPUTS: none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: saves background
+ */
+void save_cursor_background(){
+	int save_x, save_y;
+	// save the middle mouse frame
+	for(save_y = 0; save_y < VGA_CURSOR_SIZE; save_y++){
+		for(save_x = 0; save_x < VGA_CURSOR_SIZE; save_x++){
+			cursor_save1[save_y * VGA_CURSOR_SIZE + save_x] = get_pixel(fb1_mouse_x_prev + save_x, fb1_mouse_y_prev + save_y);
 		}
 	}
 }
