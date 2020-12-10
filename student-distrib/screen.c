@@ -84,6 +84,7 @@ int32_t fb2_mouse_y_prev = SCREEN_Y_DIM / 2;
  *   SIDE EFFECTS: goes into vga mode
  */
 void __screen_init__(){
+	int save_x, save_y;
 	VGA_blank (1);                               	/* blank the screen      */
 	set_seq_regs_and_reset (mode_X_seq, 0x63);   	/* sequencer registers   */
 	set_CRTC_registers (mode_X_CRTC);            	/* CRT control registers */
@@ -420,8 +421,8 @@ uint8_t get_pixel(int x, int y){
 	// build_buf[p_off * PLANE_DIM + p_idx] = color; 	// plot pixel into buffer
 
 	SET_WRITE_MASK(1 << (p_off + 8));							// set the write mask
-	// return (fb_addr)[p_idx] & (0xFF << (p_off << 3));
-	return 0;
+	return (((uint8_t*)fb_addr)[p_idx] & (0xFF << (p_off << 3)));
+	// return 0;
 	// build_buf[p_off * PLANE_DIM + p_idx] = color; 	// plot pixel into buffer
 }
 
@@ -486,12 +487,12 @@ void draw_mouse_cursor(int * curr_x, int * curr_y, int dx, int dy, int frames, i
 		prev_x = (fb_addr == VGA_VIDEO) ? &fb1_mouse_x_prev : &fb2_mouse_x_prev;
 		prev_y = (fb_addr == VGA_VIDEO) ? &fb1_mouse_y_prev : &fb2_mouse_y_prev;
 
-		// draw_rectangle(*prev_x, *prev_y, 0, VGA_CURSOR_SIZE, VGA_CURSOR_SIZE);
+		draw_rectangle(*prev_x, *prev_y, 0, VGA_CURSOR_SIZE, VGA_CURSOR_SIZE);
 
 		// write original screen
 		for(save_y = 0; save_y < VGA_CURSOR_SIZE; save_y++){
 			for(save_x = 0; save_x < VGA_CURSOR_SIZE; save_x++){
-				// save_buf[save_y * VGA_CURSOR_SIZE + save_x] = get_pixel(curr_x + save_x, curr_y + save_y);
+				// save_buf[save_y * VGA_CURSOR_SIZE + save_x] = get_pixel(*curr_x + save_x, *curr_y + save_y);
 				plot_pixel(*prev_x + save_x, *prev_y + save_y, save_buf[save_y * VGA_CURSOR_SIZE + save_x]);
 			}
 		}
