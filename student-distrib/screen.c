@@ -4,7 +4,8 @@
 #include "octree.h"
 #include "filesystem.h"
 #include "text.h"
-// #include "../images/big_sur.h"
+#include "sound_blaster.h"
+#include "../images/big_sur.h"
 // #include "../images/bar.h"
 
 static unsigned short mode_X_seq[NUM_SEQUENCER_REGS] = {
@@ -101,8 +102,11 @@ void __screen_init__(){
 
 	// draw_image_565((pixel_565_t*)((void*)big_sur_map));
 	// while(1)
+	play_sound("mac.wav");
+	play_loading_screen();
 	get_cursor_image(cursor_img);
-	draw_image_565_from_file("big_sur.bin");
+	// draw_image_565_from_file("big_sur.bin");
+	draw_image_565((pixel_565_t *)((void *)big_sur_map));
 	save_cursor_background();
 }
 
@@ -485,7 +489,7 @@ void draw_mouse_cursor(int * curr_x, int * curr_y, int dx, int dy, int frames, i
 	int * prev_y;
 	uint8_t* save_buf;
 	frames = frames == 0 ? 1 : frames;
-
+	frames = frames / 2 == 0 ? 1 : frames / 2;
 	for(i = 0; i < frames; i++){
 		save_buf = (fb_addr == VGA_VIDEO) ? cursor_save1 : cursor_save2;
 		prev_x = (fb_addr == VGA_VIDEO) ? &fb1_mouse_x_prev : &fb2_mouse_x_prev;
@@ -528,6 +532,35 @@ void draw_mouse_cursor(int * curr_x, int * curr_y, int dx, int dy, int frames, i
 		}
 	}
 	// draw_rectangle(*curr_x, *curr_y, 3, VGA_CURSOR_SIZE, VGA_CURSOR_SIZE);
+}
+
+/*
+ * play_loading_screen
+ *   DESCRIPTION: none
+ *   INPUTS: none
+ *   OUTPUTS: none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: plays the splash screen
+ */
+void play_loading_screen(){
+	int i, j, k, screen_x, screen_y, rect_x, rect_y, counter;
+	draw_image_565_from_file("apple_50.bin");
+	for (k = 0; k < 110; k++){
+		counter = 0;
+		while (counter < 10000000){
+			counter++;
+		}
+		screen_x = 215;
+		screen_y = 60;
+		rect_x = k;
+		rect_y = 3;
+		// put the colors into the build buffer
+		for (i = 0; i < rect_y; i++){
+			for (j = 0; j < rect_x; j++){
+				plot_pixel(screen_x - j, screen_y + i, WHITE_COL);
+			}
+		}
+	}
 }
 
 /*

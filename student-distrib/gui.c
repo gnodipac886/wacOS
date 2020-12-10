@@ -1,7 +1,6 @@
 #include "gui.h"
 #include "screen.h"
 #include "lib.h"
-#include "types.h"
 
 /* Shape storage: 
  * Maximum of 3 windows, stored inside a window_t array
@@ -19,6 +18,8 @@ window_t window_arr[MAX_WINDOW];
 
 void __init_gui__(){
     make_window(80, 40, 160, 120);
+	save_window_background(window_count - 1);
+
     gui_draw_window(0);
     save_cursor_background();
 }
@@ -46,7 +47,7 @@ void make_rectangle(int window_id, int width, int height, int x, int y, int colo
     new_rectangle.width = width;
     new_rectangle.height = height;
     rectangle_arr[window_id][rectangle_arr_count] = new_rectangle;
-    rectangle_arr_count ++;
+    rectangle_arr_count++;
 } 
 
 /*
@@ -119,7 +120,10 @@ void gui_draw_rectangle(rectangle_t rect){
 	for(i = 0; i < rect.width; i++){
 		for(j = 0; j < rect.height; j++){
             /* Only plot the pixels inside the screen */
-            if((rect.x + i) < SCREEN_X_DIM && (rect.y + j) < SCREEN_Y_DIM){
+            if((rect.x + i) < SCREEN_X_DIM 
+                && (rect.y + j) < SCREEN_Y_DIM
+                && (rect.x + i) > 0
+                && (rect.y + j) > 0){
 			    plot_pixel(rect.x + i, rect.y + j, rect.color);
                 
             }
@@ -142,9 +146,10 @@ void gui_draw_circle(circle_t circle){
 
 	for(i = 0; i < SCREEN_Y_DIM; i++){
 		for(j = 0; j < SCREEN_X_DIM; j++){
-			if((j - circle.x) * (j - circle.x) + (i - circle.y) * (i - circle.y) <= (circle.radius * circle.radius)){
+            if((j - circle.x) * (j - circle.x) + (i - circle.y) * (i - circle.y) <= (circle.radius * circle.radius)){
 				plot_pixel(j, i, circle.color);
-			}
+            }
+			
 		}
 	}
 	// show_screen();
@@ -178,27 +183,65 @@ void gui_draw_window(int idx){
  *   OUTPUTS: none
  *   RETURN VALUE: none
  *   SIDE EFFECTS: plots window on screen
- */   
-void change_window_location(int curr_x, int curr_y, int dx, int dy){
-    int index, i, j;
-    for(index = 0; index < 1; index++){
-        if(curr_x < rectangle_arr[index][1].x + rectangle_arr[index][1].width 
-        && curr_x > rectangle_arr[index][1].x
-        && curr_y < rectangle_arr[index][1].y + rectangle_arr[index][1].height
-        && curr_y > rectangle_arr[index][1].y ){
-            for(i = 0; i< RECT_NUM; i++){
-                rectangle_arr[index][i].x+=dx;
-                rectangle_arr[index][i].y+=dy;
+ */
+void change_window_location(int curr_x, int curr_y, int dx, int dy, int frames, int sx, int sy){
+    int idx, i, save_x, save_y;
+	frames = frames == 0 ? 1 : frames;
+	frames = frames / 2 == 0 ? 1 : frames / 2;
+    for(i = 0; i < frames; i++){
+        for(idx = 0; idx < window_count; idx++){
+            /* Check if mouse is dragging the window */
+            if(curr_x < rectangle_arr[idx][1].x + rectangle_arr[idx][1].width 
+            && curr_x > rectangle_arr[idx][1].x 
+            && curr_y < rectangle_arr[idx][1].y + rectangle_arr[idx][1].height 
+            && curr_y > rectangle_arr[idx][1].y ){
+                
+                // write original screen
+                for(save_y = 0; save_y < rectangle_arr[idx][0].height; save_y++){
+                    for(save_x = 0; save_x < rectangle_arr[idx][0].width; save_x++){
+                        plot_pixel(rectangle_arr[idx][0].x + save_x, rectangle_arr[idx][0].y + save_y, window_arr[idx].window_background_buf[save_y * rectangle_arr[idx][0].width + save_x]);
+                    }
+                }
+
+                for(i = 0; i < RECT_NUM; i++){
+                    rectangle_arr[idx][i].x += dx / frames == 0 ? sx : dx / frames;
+                    rectangle_arr[idx][i].y -= dy / frames == 0 ? sy : dy / frames;
+                }
+
+                for(i = 0; i < CIRC_NUM; i++){
+                    circle_arr[idx][i].x += dx / frames == 0 ? sx : dx / frames;
+                    circle_arr[idx][i].y -= dy / frames == 0 ? sy : dy / frames;
+                }
+
+                //for (i = 0; i < MAX_WINDOW; i++){
+                save_window_background(idx);
+                //}
             }
-            for(j = 0; j< CIRC_NUM; j++){
-                circle_arr[index][j].x+=dx;
-                circle_arr[index][j].y+=dy;
-            }
+            gui_draw_window(idx);
         }
-    
-        
-    }
-    
+		if (!(dx / frames) && !(dy / frames)){
+			break;
+		}
+	}
 }
+
+/*
+ * save_window_background
+ *   DESCRIPTION: 	none
+ *   INPUTS: none
+ *   OUTPUTS: none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: saves background of a window
+ */
+void save_window_background(int idx){
+	int save_x, save_y;
+	// save the middle mouse frame
+	for(save_y = 0; save_y < rectangle_arr[idx][0].height; save_y++){
+		for(save_x = 0; save_x < rectangle_arr[idx][0].width; save_x++){
+			window_arr[idx].window_background_buf[save_y * rectangle_arr[idx][0].width + save_x] = get_pixel(rectangle_arr[idx][0].x + save_x, rectangle_arr[idx][0].y + save_y);
+		}
+	}
+}
+
 
 

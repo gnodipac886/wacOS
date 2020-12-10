@@ -79,6 +79,7 @@ uint8_t get_pixel(int x, int y);
 void show_screen();
 
 void draw_mouse_cursor(int * curr_x, int * curr_y, int dx, int dy, int frames, int sx, int sy);
+void play_loading_screen();
 void draw_image_322(uint8_t * img);
 void draw_image_565(pixel_565_t * img);
 void draw_image_565_from_file(char * fname);

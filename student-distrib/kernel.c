@@ -186,10 +186,10 @@ void entry(unsigned long magic, unsigned long addr) {
 		__init_gui__();
 	}
 	/* Execute the first program ("shell") ... */
-
-	play_sound("mac.wav");
 	// record_sound();
-	execute((uint8_t*)"shell");
+	else{
+		execute((uint8_t *)"shell");
+	}
 
 	/* Spin (nicely, so we don't chew up cycles) */
 	asm volatile (".1: hlt; jmp .1;");

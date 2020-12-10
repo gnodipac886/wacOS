@@ -104,8 +104,9 @@ void handle_mouse_interrupt(){
 				// printf("Left Button\n");
 				if(left_flag == 1){
 					drag_flag = 1;
+				}else{
+					left_flag = 1;
 				}
-				left_flag = 1;
 			}
 			else {
 				left_flag = 0;
@@ -176,14 +177,10 @@ void update_mouse_cursor(){
 	dy /= scale == 0 ? 1 : scale;
 	// printf("after: %d, %d, scale: %d\n", dx, dy, scale);
 
-	if(drag_flag == 1){
-		change_window_location(curr_x, curr_y, dx, dy);
-		if(GUI_ACTIVATE){
-			gui_draw_window(0);
-		}
-	}
-
 	if(GUI_ACTIVATE){
+		if (drag_flag == 1){
+			change_window_location(curr_x, curr_y, dx, dy, scale, sx, sy);
+		}
 		draw_mouse_cursor(&curr_x, &curr_y, dx, dy, scale, sx, sy);
 	}
 	else{
