@@ -17,6 +17,11 @@ rectangle_t* rectangle_arr[MAX_WINDOW][RECT_NUM];
 circle_t* circle_arr[MAX_WINDOW][CIRC_NUM];
 window_t* window_arr[MAX_WINDOW];
 
+void __init_gui__(){
+    make_window(80, 40, 160, 120);
+    gui_draw_window(0);
+}
+
 /*
  * make_rectangle
  *   DESCRIPTION: 	Creates a rectangle using rectangle_t struct
@@ -79,7 +84,7 @@ void make_circle(int window_id, int radius, int x, int y, int color){
  *   RETURN VALUE: 0 on successful. -1 on already maxed window count
  *   SIDE EFFECTS: none
  */   
-int make_window(int x, int y, int color, int width, int height){
+int make_window(int x, int y, int width, int height){
 
     // Sanity check: If 3 windows already created, return -1;
     if(window_count>2){

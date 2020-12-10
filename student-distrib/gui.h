@@ -42,8 +42,9 @@ typedef struct window{
 
 void make_rectangle(int window_id, int width, int height, int x, int y, int color); 
 void make_circle(int window_id, int radius, int x, int y, int color);
-int make_window(int x, int y, int color, int width, int height);
+int make_window(int x, int y, int width, int height);
 
+void __init_gui__();
 void gui_draw_rectangle(rectangle_t* rect);
 void gui_draw_circle(circle_t* circle);
 void gui_draw_window(int idx);
