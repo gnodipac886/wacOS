@@ -48,4 +48,5 @@ void __init_gui__();
 void gui_draw_rectangle(rectangle_t rect);
 void gui_draw_circle(circle_t circle);
 void gui_draw_window(int idx);
+void change_window_location(int curr_x, int curr_y, int dx, int dy);
 #endif /* _GUI_H */

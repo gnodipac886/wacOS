@@ -3,6 +3,7 @@
 #include "mouse.h"
 #include "screen.h"
 #include "paging.h"
+#include "gui.h"
 
 #define SCREEN_X    	80
 #define SCREEN_Y    	25
@@ -17,6 +18,8 @@
 ms_packet_t packet;
 uint8_t 	state; 					// there are 3 states for each byte of interrupt
 
+int32_t left_flag = 0;
+int32_t drag_flag = 0;
 int32_t curr_x;
 int32_t curr_y;
 
@@ -95,12 +98,18 @@ void handle_mouse_interrupt(){
 		case 2:
 			packet.y_move = inb(MS_PORT);
 
-			update_mouse_cursor();
-
-			state = 0;
+			
 			// printf("%d, %d\n", curr_x, curr_y);
 			if(packet.l_btn){
 				// printf("Left Button\n");
+				if(left_flag == 1){
+					drag_flag = 1;
+				}
+				left_flag = 1;
+			}
+			else {
+				left_flag = 0;
+				drag_flag = 0;
 			}
 			if(packet.r_btn){
 				// printf("Right Button\n");
@@ -108,6 +117,10 @@ void handle_mouse_interrupt(){
 			if(packet.m_btn){
 				// printf("Middle Button\n");
 			}
+			
+			update_mouse_cursor();
+
+			state = 0;
 			break;
 
 		default:
@@ -162,6 +175,13 @@ void update_mouse_cursor(){
 	dx /= scale == 0 ? 1 : scale;			// configure the scaling for movement	
 	dy /= scale == 0 ? 1 : scale;
 	// printf("after: %d, %d, scale: %d\n", dx, dy, scale);
+
+	if(drag_flag == 1){
+		change_window_location(curr_x, curr_y, dx, dy);
+		if(GUI_ACTIVATE){
+			gui_draw_window(0);
+		}
+	}
 
 	if(GUI_ACTIVATE){
 		draw_mouse_cursor(&curr_x, &curr_y, dx, dy, scale, sx, sy);

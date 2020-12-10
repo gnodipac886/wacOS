@@ -119,10 +119,10 @@ void gui_draw_rectangle(rectangle_t rect){
 	for(i = 0; i < rect.width; i++){
 		for(j = 0; j < rect.height; j++){
             /* Only plot the pixels inside the screen */
-            //if((rect.x + rect.width) < SCREEN_X_DIM && (rect.y + rect.height) < SCREEN_Y_DIM){
+            if((rect.x + i) < SCREEN_X_DIM && (rect.y + j) < SCREEN_Y_DIM){
 			    plot_pixel(rect.x + i, rect.y + j, rect.color);
                 
-            //}
+            }
 		}
 	}
 	// show_screen();
@@ -170,4 +170,35 @@ void gui_draw_window(int idx){
     }
     //show_screen();
 }
+
+/*
+ * change_window_location
+ *   DESCRIPTION: 	If mouse is dragging window, changes the location of the window
+ *   INPUTS:        Window id, dx, dy
+ *   OUTPUTS: none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: plots window on screen
+ */   
+void change_window_location(int curr_x, int curr_y, int dx, int dy){
+    int index, i, j;
+    for(index = 0; index < 1; index++){
+        if(curr_x < rectangle_arr[index][1].x + rectangle_arr[index][1].width 
+        && curr_x > rectangle_arr[index][1].x
+        && curr_y < rectangle_arr[index][1].y + rectangle_arr[index][1].height
+        && curr_y > rectangle_arr[index][1].y ){
+            for(i = 0; i< RECT_NUM; i++){
+                rectangle_arr[index][i].x+=dx;
+                rectangle_arr[index][i].y+=dy;
+            }
+            for(j = 0; j< CIRC_NUM; j++){
+                circle_arr[index][j].x+=dx;
+                circle_arr[index][j].y+=dy;
+            }
+        }
+    
+        
+    }
+    
+}
+
 
