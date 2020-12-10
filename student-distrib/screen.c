@@ -420,8 +420,8 @@ uint8_t get_pixel(int x, int y){
 	p_idx = p_idx;
 	// build_buf[p_off * PLANE_DIM + p_idx] = color; 	// plot pixel into buffer
 
-	// SET_WRITE_MASK(1 << (p_off + 8));							// set the write mask
-	return ((uint8_t*)fb_addr)[p_idx] & (0xFF << (p_off << 3));
+	SET_WRITE_MASK(1 << (p_off + 8));							// set the write mask
+	return (((uint8_t*)fb_addr)[p_idx] & (0xFF << (p_off << 3)));
 	// return 0;
 	// build_buf[p_off * PLANE_DIM + p_idx] = color; 	// plot pixel into buffer
 }
