@@ -3,7 +3,7 @@ boot.o: boot.S multiboot.h x86_desc.h types.h idt.h
 x86_desc.o: x86_desc.S x86_desc.h types.h
 filesystem.o: filesystem.c filesystem.h types.h system_calls.h lib.h \
   rtc.h
-gui.o: gui.c
+gui.o: gui.c gui.h screen.h types.h lib.h
 i8259.o: i8259.c i8259.h types.h lib.h
 idt.o: idt.c idt.h assembly_linkage.h x86_desc.h types.h lib.h keyboard.h \
   sound_blaster.h rtc.h
