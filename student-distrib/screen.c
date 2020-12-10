@@ -63,9 +63,11 @@ unsigned char build[BUILD_BUF_SIZE + 2 * MEM_FENCE_WIDTH];
 
 uint32_t fb_addr = (uint32_t)VGA_VIDEO; 			// address of current frame buffer we are using (0 based, 0xA0000 = 0x0)
 uint8_t build_buf[320 * 200];
+uint8_t screen_buf[320 * 200];
 
 uint8_t cursor_save1[VGA_CURSOR_SIZE * VGA_CURSOR_SIZE];
 uint8_t cursor_save2[VGA_CURSOR_SIZE * VGA_CURSOR_SIZE];
+pixel_565_t cursor_img[VGA_CURSOR_SIZE * VGA_CURSOR_SIZE];
 
 // int32_t curr_mouse_x = SCREEN_X_DIM / 2;
 // int32_t curr_mouse_y = SCREEN_Y_DIM / 2;
@@ -100,7 +102,15 @@ void __screen_init__(){
 
 	// draw_image_565((pixel_565_t*)((void*)big_sur_map));
 	// while(1)
+	get_cursor_image(cursor_img);
 	draw_image_565_from_file("big_sur.bin");
+
+	// save the middle mouse frame
+	for(save_y = 0; save_y < VGA_CURSOR_SIZE; save_y++){
+		for(save_x = 0; save_x < VGA_CURSOR_SIZE; save_x++){
+			cursor_save1[save_y * VGA_CURSOR_SIZE + save_x] = get_pixel(fb1_mouse_x_prev + save_x, fb1_mouse_y_prev + save_y);
+		}
+	}
 }
 
 /*
@@ -398,7 +408,7 @@ void plot_pixel(int x, int y, uint8_t color){
 	int p_off = idx & 3; 						// which plane we are in
 	int p_idx = idx >> 2; 							// which index we are in within that plane
 	// build_buf[p_off * PLANE_DIM + p_idx] = color; 	// plot pixel into buffer
-
+	screen_buf[y * SCREEN_X_DIM + x] = color;
 	SET_WRITE_MASK(1 << (p_off + 8));							// set the write mask
 	memcpy((void*)(fb_addr + p_idx), (void*)&color, 1); 		// p_off * PLANE_DIM +
 	// build_buf[p_off * PLANE_DIM + p_idx] = color; 	// plot pixel into buffer
@@ -414,14 +424,15 @@ void plot_pixel(int x, int y, uint8_t color){
  *   SIDE EFFECTS: none
  */
 uint8_t get_pixel(int x, int y){
-	int idx = (y * SCREEN_X_DIM + x); 				// index of pixel row major form
-	int p_off = idx & 3; 						// which plane we are in
-	int p_idx = idx >> 2; 							// which index we are in within that plane
-	p_idx = p_idx;
-	// build_buf[p_off * PLANE_DIM + p_idx] = color; 	// plot pixel into buffer
+	return screen_buf[y * SCREEN_X_DIM + x];
+	// int idx = (y * SCREEN_X_DIM + x); 				// index of pixel row major form
+	// int p_off = idx & 3; 						// which plane we are in
+	// int p_idx = idx >> 2; 							// which index we are in within that plane
+	// p_idx = p_idx;
+	// // build_buf[p_off * PLANE_DIM + p_idx] = color; 	// plot pixel into buffer
 
-	SET_WRITE_MASK(1 << (p_off + 8));							// set the write mask
-	return (((uint8_t*)fb_addr)[p_idx] & (0xFF << (p_off << 3)));
+	// SET_WRITE_MASK(1 << (p_off + 8));							// set the write mask
+	// return (((uint8_t*)fb_addr)[p_idx] & (0xFF << (p_off << 3)));
 	// return 0;
 	// build_buf[p_off * PLANE_DIM + p_idx] = color; 	// plot pixel into buffer
 }
@@ -487,8 +498,6 @@ void draw_mouse_cursor(int * curr_x, int * curr_y, int dx, int dy, int frames, i
 		prev_x = (fb_addr == VGA_VIDEO) ? &fb1_mouse_x_prev : &fb2_mouse_x_prev;
 		prev_y = (fb_addr == VGA_VIDEO) ? &fb1_mouse_y_prev : &fb2_mouse_y_prev;
 
-		draw_rectangle(*prev_x, *prev_y, 0, VGA_CURSOR_SIZE, VGA_CURSOR_SIZE);
-
 		// write original screen
 		for(save_y = 0; save_y < VGA_CURSOR_SIZE; save_y++){
 			for(save_x = 0; save_x < VGA_CURSOR_SIZE; save_x++){
@@ -513,7 +522,8 @@ void draw_mouse_cursor(int * curr_x, int * curr_y, int dx, int dy, int frames, i
 			}
 		}
 
-		draw_rectangle(*curr_x, *curr_y, 3, VGA_CURSOR_SIZE, VGA_CURSOR_SIZE);
+		// draw_rectangle(*curr_x, *curr_y, 3, VGA_CURSOR_SIZE, VGA_CURSOR_SIZE);
+		plot_cursor(*curr_x, *curr_y);
 
 		// show_screen(); 				// whether to double buffer
 
@@ -524,7 +534,7 @@ void draw_mouse_cursor(int * curr_x, int * curr_y, int dx, int dy, int frames, i
 			break;
 		}
 	}
-	draw_rectangle(*curr_x, *curr_y, 3, VGA_CURSOR_SIZE, VGA_CURSOR_SIZE);
+	// draw_rectangle(*curr_x, *curr_y, 3, VGA_CURSOR_SIZE, VGA_CURSOR_SIZE);
 }
 
 /*
@@ -585,6 +595,52 @@ void draw_image_565_from_file(char * fname){
 
 	// draw the image
 	draw_image_565(img);
+}
+
+/*
+ * get_cursor_image
+ *   DESCRIPTION: 	buf - pointer to array of pixels
+ *   INPUTS: none
+ *   OUTPUTS: none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: loads cursor image into the buffer
+ */
+void get_cursor_image(pixel_565_t * buf){
+	dentry_t dentry;
+
+	// get the dentry information
+	read_dentry_by_name((uint8_t*)"cursor.bin", &dentry);
+
+	// read out the file into the buffer
+	read_data(dentry.inode, 0, (uint8_t*)buf, FILE_MAX_LEN);
+}
+
+/*
+ * plot_cursor
+ *   DESCRIPTION: 	x - x location of pointer
+ 					y - y loaction of pointer
+ *   INPUTS: none
+ *   OUTPUTS: none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: draws cursor to screen
+ */
+void plot_cursor(int x, int y){
+	int i, j;
+	for(i = 0; i < VGA_CURSOR_SIZE; i++){
+		for(j = 0; j < VGA_CURSOR_SIZE; j++){
+			switch(cursor_img[i * VGA_CURSOR_SIZE + j].pixel){
+				case WHITE_PIX:
+					plot_pixel(x + j, y + i, WHITE_PIX);
+					break;
+
+				case BLACK_PIX:
+					plot_pixel(x + j, y + i, BLACK_COL);
+					break;
+
+				default:;
+			}
+		}
+	}
 }
 
 /*
