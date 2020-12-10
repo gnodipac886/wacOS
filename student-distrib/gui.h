@@ -8,7 +8,7 @@
 #define RED                 48          // Palette index for Red
 #define YELLOW              60          // Palette index for Yellow
 #define GREEN               12          // Palette index for Green
-#define BUTTON_RAD          4           // Window button radius = 4 pixel
+#define BUTTON_RAD          3           // Window button radius = 4 pixel
 #define BUTTON_OFFSET       6           // Button center = 6 pixels from the top and side of the window
 #define BUTTON_GAP          10          // Button center to center  = 10 pixel    
 #define TOGGLE_BAR_HEIGHT   12          // Window toggle bar height  = 12 pixels 
@@ -45,7 +45,7 @@ void make_circle(int window_id, int radius, int x, int y, int color);
 int make_window(int x, int y, int width, int height);
 
 void __init_gui__();
-void gui_draw_rectangle(rectangle_t* rect);
-void gui_draw_circle(circle_t* circle);
+void gui_draw_rectangle(rectangle_t rect);
+void gui_draw_circle(circle_t circle);
 void gui_draw_window(int idx);
 #endif /* _GUI_H */
