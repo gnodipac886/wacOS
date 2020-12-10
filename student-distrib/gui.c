@@ -12,7 +12,7 @@
  */
 int rectangle_arr_count = 0;
 int circle_arr_count = 0;
-int window_count=0;
+int window_count = 0;
 rectangle_t* rectangle_arr[MAX_WINDOW][RECT_NUM];
 circle_t* circle_arr[MAX_WINDOW][CIRC_NUM];
 window_t* window_arr[MAX_WINDOW];
@@ -29,7 +29,7 @@ window_t* window_arr[MAX_WINDOW];
  *   RETURN VALUE: 0
  *   SIDE EFFECTS: none
  */   
-void make_rectangle(int window_id,  int width, int height, int x, int y, int color){
+void make_rectangle(int window_id, int width, int height, int x, int y, int color){
     
     rectangle_t* new_rectangle; 
     new_rectangle->window_id = window_id;
@@ -165,11 +165,3 @@ void gui_draw_window(int idx){
     //show_screen();
 }
 
-
-
-
-
-
-
-
-;

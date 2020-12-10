@@ -15,24 +15,23 @@
 #define TOGGLE_BAR_COLOR    21          // Palette index Window toggle bar color
 #define WINDOW_COLOR        42          // Palette index Main Window 
 
-
 typedef struct rectangle{
-    int window_id = -1;
-    int id = -1;
-    int width = 0;         // Dimension of the rectangle
-    int height =0;        
-    int x = 0;             // x location on the screen 
-    int y = 0;             // y location on the screen
-    int color = 0;         // r5g6b5
+    int window_id;
+    int id;
+    int width;         // Dimension of the rectangle
+    int height;        
+    int x;             // x location on the screen 
+    int y;             // y location on the screen
+    int color;         // r5g6b5
 }rectangle_t;
 
 typedef struct circle{    
-    int window_id = -1;
-    int id = -1;
-    int radius = 0;
-    int x = 0;             //center = x + y*screenwidth
-    int y = 0;
-    int color = 0;         // r5g6b5
+    int window_id;
+    int id;
+    int radius;
+    int x;             //center = x + y*screenwidth
+    int y;
+    int color;         // r5g6b5
 }circle_t;
 
 typedef struct window{
