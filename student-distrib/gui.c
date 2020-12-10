@@ -13,9 +13,14 @@
 int rectangle_arr_count = 0;
 int circle_arr_count = 0;
 int window_count = 0;
-rectangle_t* rectangle_arr[MAX_WINDOW][RECT_NUM];
-circle_t* circle_arr[MAX_WINDOW][CIRC_NUM];
-window_t* window_arr[MAX_WINDOW];
+rectangle_t rectangle_arr[MAX_WINDOW][RECT_NUM];
+circle_t circle_arr[MAX_WINDOW][CIRC_NUM];
+window_t window_arr[MAX_WINDOW];
+
+void __init_gui__(){
+    make_window(80, 40, 160, 120);
+    gui_draw_window(0);
+}
 
 /*
  * make_rectangle
@@ -31,14 +36,14 @@ window_t* window_arr[MAX_WINDOW];
  */   
 void make_rectangle(int window_id, int width, int height, int x, int y, int color){
     
-    rectangle_t* new_rectangle; 
-    new_rectangle->window_id = window_id;
-    new_rectangle->id = rectangle_arr_size;
-    new_rectangle->x = x;
-    new_rectangle->y = y;
-    new_rectangle->color = color;
-    new_rectangle->width = width;
-    new_rectangle->height = height;
+    rectangle_t new_rectangle; 
+    new_rectangle.window_id = window_id;
+    new_rectangle.id = rectangle_arr_count;
+    new_rectangle.x = x;
+    new_rectangle.y = y;
+    new_rectangle.color = color;
+    new_rectangle.width = width;
+    new_rectangle.height = height;
     rectangle_arr[window_id][rectangle_arr_count] = new_rectangle;
     rectangle_arr_count ++;
 } 
@@ -55,13 +60,13 @@ void make_rectangle(int window_id, int width, int height, int x, int y, int colo
  *   SIDE EFFECTS: none
  */   
 void make_circle(int window_id, int radius, int x, int y, int color){
-    circle_t* new_circle;
-    new_circle->window_id = window_id;
-    new_circle->id = circle_arr_size;
-    new_circle->x = x;
-    new_circle->y = y;
-    new_circle->color = color;
-    new_circle->radius = radius;
+    circle_t new_circle;
+    new_circle.window_id = window_id;
+    new_circle.id = circle_arr_count;
+    new_circle.x = x;
+    new_circle.y = y;
+    new_circle.color = color;
+    new_circle.radius = radius;
     circle_arr[window_id][circle_arr_count] = new_circle;
     circle_arr_count ++;
 }
@@ -79,14 +84,14 @@ void make_circle(int window_id, int radius, int x, int y, int color){
  *   RETURN VALUE: 0 on successful. -1 on already maxed window count
  *   SIDE EFFECTS: none
  */   
-int make_window(int x, int y, int color, int width, int height){
+int make_window(int x, int y, int width, int height){
 
     // Sanity check: If 3 windows already created, return -1;
     if(window_count>2){
         return -1;
     }
-    make_rectangle(window_count, width, TOGGLE_BAR_HEIGHT, x, y, TOGGLE_BAR_COLOR); // Create toggle bar
     make_rectangle(window_count, width, height, x, y, WINDOW_COLOR);                // Create main window
+    make_rectangle(window_count, width, TOGGLE_BAR_HEIGHT, x, y, TOGGLE_BAR_COLOR); // Create toggle bar
     make_circle(window_count, BUTTON_RAD, x + BUTTON_OFFSET, y + BUTTON_OFFSET, RED);                               // Create Red button
     make_circle(window_count, BUTTON_RAD, x + BUTTON_OFFSET + BUTTON_GAP, y + BUTTON_OFFSET, YELLOW);               // Create Yellow button 
     make_circle(window_count, BUTTON_RAD, x + BUTTON_OFFSET + BUTTON_GAP + BUTTON_GAP, y + BUTTON_OFFSET, GREEN);   // Create Green button.
@@ -106,17 +111,17 @@ int make_window(int x, int y, int color, int width, int height){
  *   SIDE EFFECTS: plots rectangle on screen
  */   
 
-void gui_draw_rectangle(rectangle_t* rect){
+void gui_draw_rectangle(rectangle_t rect){
 
 	int i, j;
 	// put the colors into the build buffer
-	for(i = 0; i < rect->width; i++){
-		for(j = 0; j < rect->height; j++){
+	for(i = 0; i < rect.width; i++){
+		for(j = 0; j < rect.height; j++){
             /* Only plot the pixels inside the screen */
-            if((rect->x + rect->width) < SCREEN_X_DIM && (rect->y + rect->height) < SCREEN_Y_DIM){
-			    plot_pixel(rect->x + rect->width, rect->y + rect->height, rect->color);
+            //if((rect.x + rect.width) < SCREEN_X_DIM && (rect.y + rect.height) < SCREEN_Y_DIM){
+			    plot_pixel(rect.x + i, rect.y + j, rect.color);
                 
-            }
+            //}
 		}
 	}
 	// show_screen();
@@ -131,13 +136,13 @@ void gui_draw_rectangle(rectangle_t* rect){
  *   SIDE EFFECTS: plots circle on screen
  */   
 
-void gui_draw_circle(circle_t* circle){
+void gui_draw_circle(circle_t circle){
 	int i, j;
 
 	for(i = 0; i < SCREEN_Y_DIM; i++){
 		for(j = 0; j < SCREEN_X_DIM; j++){
-			if((j - circle->x) * (j - circle->x) + (i - circle->y) * (i - circle->y) <= (circle->radius * circle->radius)){
-				plot_pixel(j, i, circle->color);
+			if((j - circle.x) * (j - circle.x) + (i - circle.y) * (i - circle.y) <= (circle.radius * circle.radius)){
+				plot_pixel(j, i, circle.color);
 			}
 		}
 	}
