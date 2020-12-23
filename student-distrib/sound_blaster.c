@@ -116,17 +116,12 @@ void handle_sb_interrupt() {
 	}
 
 	if(offset >= curr_wav.subchunck2size){
-		if (repeat_until_stopped == 0) {
-			//memset((uint8_t*)WAV_DATA_PG_ADDR, 0, MAX_CHUNK_SIZE);	// clear sound data in memory (wava data page)
-			stop_playback();
-			//speaker_off();
-			//offset = 0;
-			//curr_chunk_size = 0;
-		} else {
+		if (repeat_until_stopped) {
 			resume_playback();
+		} else {
+			stop_playback();
 		}
-	}
-	else{
+	} else{
 		memset((uint8_t*)WAV_DATA_PG_ADDR, 0, MAX_CHUNK_SIZE);	// clear sound data in memory (wava data page)
 		curr_chunk_size = (curr_wav.subchunck2size - offset > MAX_CHUNK_SIZE) ? MAX_CHUNK_SIZE : curr_wav.subchunck2size - offset;
 		offset += read_data(wav_dentry.inode, WAV_DATA_OFFSET + offset, audio_addr, curr_chunk_size);
@@ -218,8 +213,6 @@ void program_sb() {
 	audio_type |= curr_wav.bits_per_sample == 8 ? UNSIGNED : SIGNED;
 	uint8_t transfer_mode = curr_wav.bits_per_sample == 8 ? TRANSFER_8 : TRANSFER_16;
 
-	//outb(0x40,	DSP_WRITE);				//  ;set time constant..................................................
-	//outb(165,	DSP_WRITE);					//  ;set output sample rate		10989 Hz...........................
 	set_sampling_rate();
 
 	//transfer_mode = transfer_mode || 0x02;	// FIFO bit in DSP transfer mode = 1
