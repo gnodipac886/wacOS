@@ -90,18 +90,22 @@ int32_t execute(const uint8_t* command){
 		i++;																// increment until we find a space or null
 	}
 
-	if(strncmp(task_name, "play", 5) == 0){
+	if(strncmp(task_name, "play", 5) == 0){									// sound_blaster features
 		play_sound(task_arg, 0);
 		return 0;
-	}
-
-	if(strncmp(task_name, "fish", 4) == 0) {
+	} else if (strncmp(task_name, "stop", 4) == 0) {
+		/*
+		memset((uint8_t*)WAV_DATA_PG_ADDR, 0, MAX_CHUNK_SIZE);	// clear sound data in memory (wava data page)
+		stop_playback();
+		speaker_off();
+		offset = 0;
+		curr_chunk_size = 0;
+		*/
+		return 0;
+	} else if(strncmp(task_name, "fish", 4) == 0) {
 		play_sound("fish-bubbles.wav", 1);
 		song_background = 1;
-	} /*else if (strncmp(task_name, "pingpong", 8) == 0) {					// file system not large enough to support
-		play_sound("bts_dynamite.wav", 1);
-		song_background = 1;
-	} */
+	} 
 
 	// try to allocate a task
 	for (curr_avail_pid = 0; curr_avail_pid < MAX_TASKS; curr_avail_pid++) {
@@ -261,6 +265,7 @@ int32_t halt(uint8_t status){
 
 	if (song_background == 1) {
 		stop_audio_repetition();
+		song_background = 0;
 	}
 
 	if(pcb->pid == 0 && pcb->parent_pid == 0){								// base shell case
