@@ -117,11 +117,11 @@ void handle_sb_interrupt() {
 
 	if(offset >= curr_wav.subchunck2size){
 		if (repeat_until_stopped == 0) {
-			memset((uint8_t*)WAV_DATA_PG_ADDR, 0, MAX_CHUNK_SIZE);	// clear sound data in memory (wava data page)
+			//memset((uint8_t*)WAV_DATA_PG_ADDR, 0, MAX_CHUNK_SIZE);	// clear sound data in memory (wava data page)
 			stop_playback();
-			speaker_off();
-			offset = 0;
-			curr_chunk_size = 0;
+			//speaker_off();
+			//offset = 0;
+			//curr_chunk_size = 0;
 		} else {
 			resume_playback();
 		}
@@ -259,12 +259,18 @@ void resume_playback(){
 }
 
 void stop_playback(){
+
 	if(curr_wav.bits_per_sample == 8){
 		outb(STOP_PLAY_8, DSP_WRITE);
 	}
 	else if(curr_wav.bits_per_sample == 16){
 		outb(STOP_PLAY_16, DSP_WRITE);
 	}
+
+	speaker_off();
+	memset((uint8_t*)WAV_DATA_PG_ADDR, 0, MAX_CHUNK_SIZE);	// clear sound data in memory (wava data page)
+	offset = 0;
+	curr_chunk_size = 0;
 }
 
 void stop_audio_repetition() {

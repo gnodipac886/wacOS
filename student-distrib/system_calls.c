@@ -94,13 +94,7 @@ int32_t execute(const uint8_t* command){
 		play_sound(task_arg, 0);
 		return 0;
 	} else if (strncmp(task_name, "stop", 4) == 0) {
-		/*
-		memset((uint8_t*)WAV_DATA_PG_ADDR, 0, MAX_CHUNK_SIZE);	// clear sound data in memory (wava data page)
 		stop_playback();
-		speaker_off();
-		offset = 0;
-		curr_chunk_size = 0;
-		*/
 		return 0;
 	} else if(strncmp(task_name, "fish", 4) == 0) {
 		play_sound("fish-bubbles.wav", 1);
