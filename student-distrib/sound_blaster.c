@@ -11,6 +11,7 @@ uint8_t interrupt_count;
 uint8_t recording;
 int32_t offset;
 int32_t curr_chunk_size;
+uint8_t repeat_until_stopped;
 
 void __init_sb__(){
 	reset_dsp();
@@ -20,9 +21,12 @@ void __init_sb__(){
 	offset = 0;
 	curr_chunk_size = 0;
 	recording = 0;
+	repeat_until_stopped = 0;
 }
 
-void play_sound(char * fname) {
+void play_sound(char * fname, uint8_t repeat) {
+	offset = 0;
+	repeat_until_stopped = repeat;
 	reset_dsp();
 	if(read_wav_data(fname) == -1){
 		return;
@@ -95,7 +99,11 @@ void record_sound(){
 }
 
 void handle_sb_interrupt() {
-	inb(DSP_READ_STATUS);
+	if (curr_wav.bits_per_sample == 8) {
+		inb(DSP_READ_STATUS);
+	} else if (curr_wav.bits_per_sample == 16) {
+		inb(DSP_ACK);
+	}
 	// printf("SB got an interrupt lol\n");
 	//resume_playback();
 
@@ -107,14 +115,19 @@ void handle_sb_interrupt() {
 		return;
 	}
 
-	memset((uint8_t*)WAV_DATA_PG_ADDR, 0, MAX_CHUNK_SIZE);	// clear sound data in memory (wava data page)
-	if(offset == curr_wav.subchunck2size){
-		stop_playback();
-		speaker_off();
-		offset = 0;
-		curr_chunk_size = 0;
+	if(offset >= curr_wav.subchunck2size){
+		if (repeat_until_stopped == 0) {
+			memset((uint8_t*)WAV_DATA_PG_ADDR, 0, MAX_CHUNK_SIZE);	// clear sound data in memory (wava data page)
+			stop_playback();
+			speaker_off();
+			offset = 0;
+			curr_chunk_size = 0;
+		} else {
+			resume_playback();
+		}
 	}
 	else{
+		memset((uint8_t*)WAV_DATA_PG_ADDR, 0, MAX_CHUNK_SIZE);	// clear sound data in memory (wava data page)
 		curr_chunk_size = (curr_wav.subchunck2size - offset > MAX_CHUNK_SIZE) ? MAX_CHUNK_SIZE : curr_wav.subchunck2size - offset;
 		offset += read_data(wav_dentry.inode, WAV_DATA_OFFSET + offset, audio_addr, curr_chunk_size);
 		resume_playback();
@@ -147,7 +160,8 @@ int read_wav_data(char * fname){
 
 	curr_chunk_size = (curr_wav.subchunck2size - offset > MAX_CHUNK_SIZE) ? MAX_CHUNK_SIZE : curr_wav.subchunck2size - offset;
 
-	if(-1 == (num_read = read_data(wav_dentry.inode, WAV_DATA_OFFSET + offset, audio_addr, curr_chunk_size))){
+	num_read = read_data(wav_dentry.inode, WAV_DATA_OFFSET + offset, audio_addr, curr_chunk_size);
+	if(-1 == num_read){
 		return -1;
 	}
 
@@ -173,7 +187,7 @@ void dma_transfer() {
 		// DMA channel 1
 		outb(0x05,  0x0A);									// disable channel 1 (number of channel + 0x04)
 		outb(1,	 	0x0C);									// flip flop port
-		outb(0x59,  0x0B);									// set transfer mode (0x48 for single mode + channel number)
+		outb(0x59,  0x0B);									// set transfer mode (0x58 for auto mode + channel number)
 		outb((uint8_t)(WAV_DATA_PG_ADDR & 0x00FF),	0x02);	// send POSITION LOW BIT (WAV DATA POSITION IN MEMORY 0x0C00[00])
 		outb((uint8_t)(WAV_DATA_PG_ADDR >> 8),  	0x02);	// send POSITON HIGH BIT (WAV DATA POSITION IN MEMORY 0x0C[00]00)
 		outb(1,	 	0x0C);									// debug....................................................................................................
@@ -186,7 +200,7 @@ void dma_transfer() {
 		// DMA channel 5
 		outb(0x05,  0x0A);									// disable channel 1 (number of channel + 0x04)
 		outb(1,	 	0xD8);									// flip flop port
-		outb(0x59,  0xD6);									// set transfer mode (0x48 for single mode + channel number)
+		outb(0x59,  0xD6);									// set transfer mode (0x58 for auto mode + channel number)
 		outb((uint8_t)(WAV_DATA_PG_ADDR & 0x00FF),	0xC4);	// send POSITION LOW BIT (WAV DATA POSITION IN MEMORY 0x0C00[00])
 		outb((uint8_t)(WAV_DATA_PG_ADDR >> 8),  	0xC4);	// send POSITON HIGH BIT (WAV DATA POSITION IN MEMORY 0x0C[00]00)
 		outb(1,	 	0xD8);									// debug....................................................................................................
@@ -207,6 +221,8 @@ void program_sb() {
 	//outb(0x40,	DSP_WRITE);				//  ;set time constant..................................................
 	//outb(165,	DSP_WRITE);					//  ;set output sample rate		10989 Hz...........................
 	set_sampling_rate();
+
+	//transfer_mode = transfer_mode || 0x02;	// FIFO bit in DSP transfer mode = 1
 	outb(transfer_mode,		DSP_WRITE);		// write 8 bit transfer mode
 	outb(audio_type,		DSP_WRITE);		// write type of sound data - mono and unsigned sound data
 	outb(count_low_byte,	DSP_WRITE);		// COUNT LOW BYTE (Example: wav data length-1 = 0x03[FF])
@@ -251,4 +267,6 @@ void stop_playback(){
 	}
 }
 
-
+void stop_audio_repetition() {
+	repeat_until_stopped = 0;
+}

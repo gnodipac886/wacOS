@@ -102,7 +102,7 @@ void __screen_init__(){
 
 	// draw_image_565((pixel_565_t*)((void*)big_sur_map));
 	// while(1)
-	play_sound("mac.wav");
+	play_sound("mac.wav", (uint8_t)0);
 	play_loading_screen();
 	get_cursor_image(cursor_img);
 	// draw_image_565_from_file("big_sur.bin");

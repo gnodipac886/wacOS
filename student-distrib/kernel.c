@@ -167,7 +167,7 @@ void entry(unsigned long magic, unsigned long addr) {
 	__mouse_init__();
 	__init_filesystem__((void*)(mod->mod_start)); 							// enable filesystem
 	__init_paging__();														// enable paging
-	//__init_sb__();
+	__init_sb__();
 	
 	/* Enable interrupts */
 	/* Do not enable the following until after you have set up your

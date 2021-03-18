@@ -41,7 +41,7 @@
 
 #define WAV_DATA_PG_ADDR        0x80000  // wav data page at physical/virtual 0xC0000    
 
-#define MAX_CHUNK_SIZE			0x10000  // 64k physical page boundary for sound data buffer 
+#define MAX_CHUNK_SIZE			0xF9FC	 // 63996 ~ 64k physical page boundary for sound data buffer 
 
 #define WAV_SAMPLE_RATE_OFFSET  24      // 24 bytes to sample rate
 #define WAV_DATA_SIZE_OFFSET    40      // 40 bytes to data size in bytes
@@ -66,7 +66,7 @@ typedef struct wav_head{
 void __init_sb__();
 void handle_sb_interrupt();
 
-void play_sound();
+void play_sound(char * fname, uint8_t repeat);
 void record_sound();
 void reset_dsp();
 void set_sb_irq();
@@ -81,5 +81,6 @@ void dma_transfer();
 void program_sb();
 void set_sampling_rate();
 void stop_playback();
+void stop_audio_repetition();
 
 #endif /* _SOUNDER_BLASTER_H */

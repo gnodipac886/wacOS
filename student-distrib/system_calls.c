@@ -13,6 +13,7 @@ int32_t curr_avail_pid = 0;
 pcb_t* pcb_arr[MAX_TASKS];
 int8_t pid_avail[MAX_TASKS] = {0, 0, 0, 0, 0, 0};
 int non_user_shell_flg = 0;
+uint8_t song_background = 0;
 
 extern uint32_t is_exception;
 
@@ -90,9 +91,17 @@ int32_t execute(const uint8_t* command){
 	}
 
 	if(strncmp(task_name, "play", 5) == 0){
-		play_sound(task_arg);
+		play_sound(task_arg, 0);
 		return 0;
 	}
+
+	if(strncmp(task_name, "fish", 4) == 0) {
+		play_sound("fish-bubbles.wav", 1);
+		song_background = 1;
+	} /*else if (strncmp(task_name, "pingpong", 8) == 0) {					// file system not large enough to support
+		play_sound("bts_dynamite.wav", 1);
+		song_background = 1;
+	} */
 
 	// try to allocate a task
 	for (curr_avail_pid = 0; curr_avail_pid < MAX_TASKS; curr_avail_pid++) {
@@ -249,6 +258,10 @@ int32_t halt(uint8_t status){
 
 	clear_terminal_buf();													// clear keyboard buffer to prevent deleting the shell prompt
 	clear_kb_buf();
+
+	if (song_background == 1) {
+		stop_audio_repetition();
+	}
 
 	if(pcb->pid == 0 && pcb->parent_pid == 0){								// base shell case
 		execute((uint8_t*)"shell");
